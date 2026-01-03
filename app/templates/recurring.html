@@ -301,11 +301,27 @@ document.getElementById('recurring-form').addEventListener('submit', async (e) =
     }
 
     try {
-        await API.post(buildApiUrl('recurring'), payload);
+        let result;
+        if (editingRecurringId) {
+            // Update existing recurring rule
+            result = await API.put(buildApiUrl('recurring', editingRecurringId), payload);
+            showToast('อัพเดทรายการประจำสำเร็จ!', 'success');
+        } else {
+            // Create new recurring rule
+            result = await API.post(buildApiUrl('recurring'), payload);
+            showToast('บันทึกรายการประจำสำเร็จ!', 'success');
+        }
 
-        showToast('บันทึกรายการประจำสำเร็จ!', 'success');
-
+        // Reset form and state
         document.getElementById('recurring-form').reset();
+        editingRecurringId = null;
+
+        // Reset modal header and button text
+        const modalHeader = modal.querySelector('.modal-header h2');
+        modalHeader.textContent = 'รายการประจำ';
+        const submitBtn = document.querySelector('#recurring-form button[type="submit"] span');
+        submitBtn.textContent = 'บันทึก';
+
         closeModal();
 
         // Reload recurring list
@@ -330,14 +346,98 @@ async function loadRecurringRules() {
     try {
         const result = await API.get(buildApiUrl('recurring') + '?active_only=true');
 
+        const recurringList = document.querySelector('.recurring-list');
+
         if (result.recurring_rules && result.recurring_rules.length > 0) {
-            // TODO: Update recurring list UI with real data
-            console.log('Recurring rules loaded:', result.recurring_rules);
+            renderRecurringRules(result.recurring_rules);
         } else {
-            console.log('No recurring rules yet');
+            // Show empty state
+            recurringList.innerHTML = `
+                <div class="empty-state">
+                    <i data-lucide="calendar-off"></i>
+                    <p>ยังไม่มีรายการประจำ</p>
+                    <p class="empty-subtitle">เพิ่มรายการที่เกิดซ้ำ เช่น Netflix, ค่าเช่า, เงินเดือน</p>
+                </div>
+            `;
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
         }
     } catch (error) {
         console.error('Error loading recurring rules:', error);
+    }
+}
+
+// Render recurring rules
+function renderRecurringRules(rules) {
+    const recurringList = document.querySelector('.recurring-list');
+
+    const formatDate = (dateStr) => {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+    };
+
+    const formatAmount = (amount) => {
+        return (amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    const formatFrequency = (freq, dayOfWeek, dayOfMonth) => {
+        if (freq === 'daily') return 'ทุกวัน';
+        if (freq === 'weekly') {
+            const days = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
+            return `ทุกสัปดาห์ (${days[dayOfWeek]})`;
+        }
+        if (freq === 'monthly') return `ทุกเดือน (วันที่ ${dayOfMonth})`;
+        return freq;
+    };
+
+    const renderIcon = (iconName) => {
+        const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(iconName || '');
+        if (isEmoji || !iconName) {
+            return iconName || '📁';
+        } else {
+            return `<i data-lucide="${iconName}"></i>`;
+        }
+    };
+
+    recurringList.innerHTML = rules.map(rule => `
+        <div class="recurring-card" data-id="${rule.id}">
+            <div class="recurring-icon ${rule.type}">
+                ${renderIcon(rule.category?.icon)}
+            </div>
+            <div class="recurring-info">
+                <div class="recurring-title">${rule.category?.name_th || 'ไม่ระบุ'}</div>
+                <div class="recurring-meta">
+                    <span class="recurring-category">${rule.type === 'expense' ? 'รายจ่าย' : 'รายรับ'}</span>
+                    <span class="recurring-freq">${formatFrequency(rule.freq, rule.day_of_week, rule.day_of_month)}</span>
+                </div>
+                ${rule.next_run_date ? `
+                    <div class="recurring-alert">
+                        <i data-lucide="bell"></i>
+                        ${rule.remind_days > 0 ? `เตือนล่วงหน้า ${rule.remind_days} วัน • ` : ''}ครบกำหนด ${formatDate(rule.next_run_date)}
+                    </div>
+                ` : ''}
+            </div>
+            <div class="recurring-amount ${rule.type}">
+                ฿${formatAmount(rule.amount)}
+            </div>
+            <div class="recurring-actions">
+                <button class="btn-icon btn-execute" onclick="executeRecurring('${rule.id}')" title="บันทึกเลย">
+                    <i data-lucide="play"></i>
+                </button>
+                <button class="btn-icon btn-edit" onclick="editRecurring('${rule.id}')" title="แก้ไข">
+                    <i data-lucide="edit-2"></i>
+                </button>
+                <button class="btn-icon btn-delete" onclick="deleteRecurring('${rule.id}')" title="ลบ">
+                    <i data-lucide="trash-2"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
     }
 }
 
@@ -353,6 +453,44 @@ async function executeRecurring(recurringId) {
         await loadRecurringRules();
     } catch (error) {
         showToast(error.message || 'เกิดข้อผิดพลาด', 'error');
+    }
+}
+
+// Edit recurring rule
+let editingRecurringId = null;
+
+async function editRecurring(recurringId) {
+    try {
+        // Fetch recurring rule details
+        const result = await API.get(buildApiUrl('recurring', recurringId));
+        const rule = result.recurring_rule;
+
+        editingRecurringId = recurringId;
+
+        // Pre-fill form
+        document.getElementById('recurring-type').value = rule.type;
+        document.getElementById('recurring-category').value = rule.category_id;
+        document.getElementById('recurring-frequency').value = rule.freq;
+        document.getElementById('recurring-day').value = rule.day_of_month || rule.day_of_week || 1;
+        document.getElementById('recurring-start-date').value = rule.start_date;
+        document.getElementById('recurring-reminder').value = rule.remind_days || 0;
+        document.getElementById('recurring-note').value = rule.note || '';
+        document.getElementById('recurring-amount').value = (rule.amount / 100).toFixed(2);
+
+        // Trigger type change to show correct categories
+        document.getElementById('recurring-type').dispatchEvent(new Event('change'));
+
+        // Change modal header and button text
+        const modalHeader = modal.querySelector('.modal-header h2');
+        modalHeader.textContent = 'แก้ไขรายการประจำ';
+
+        const submitBtn = document.querySelector('#recurring-form button[type="submit"] span');
+        submitBtn.textContent = 'อัพเดท';
+
+        openModal();
+
+    } catch (error) {
+        showToast(error.message || 'ไม่สามารถโหลดข้อมูลได้', 'error');
     }
 }
 

@@ -376,14 +376,27 @@ document.getElementById('expense-form').addEventListener('submit', async (e) => 
     };
 
     try {
-        const result = await API.post(buildApiUrl('transactions'), payload);
+        let result;
+        if (editingTransactionId) {
+            // Update existing transaction
+            result = await API.put(buildApiUrl('transactions', editingTransactionId), payload);
+            showToast('อัพเดทรายจ่ายสำเร็จ!', 'success');
+        } else {
+            // Create new transaction
+            result = await API.post(buildApiUrl('transactions'), payload);
+            showToast('บันทึกรายจ่ายสำเร็จ!', 'success');
+        }
 
-        showToast('บันทึกรายจ่ายสำเร็จ!', 'success');
-
-        // Reset form
+        // Reset form and state
         document.getElementById('expense-form').reset();
         selectedCategory = null;
         selectedCategoryLabel = null;
+        editingTransactionId = null;
+
+        // Reset button text
+        const submitBtn = document.querySelector('#expense-form button[type="submit"] span');
+        submitBtn.textContent = 'บันทึก';
+
         closeAllModals();
 
         // Reload dashboard
@@ -437,14 +450,27 @@ document.getElementById('income-form').addEventListener('submit', async (e) => {
     };
 
     try {
-        const result = await API.post(buildApiUrl('transactions'), payload);
+        let result;
+        if (editingTransactionId) {
+            // Update existing transaction
+            result = await API.put(buildApiUrl('transactions', editingTransactionId), payload);
+            showToast('อัพเดทรายรับสำเร็จ!', 'success');
+        } else {
+            // Create new transaction
+            result = await API.post(buildApiUrl('transactions'), payload);
+            showToast('บันทึกรายรับสำเร็จ!', 'success');
+        }
 
-        showToast('บันทึกรายรับสำเร็จ!', 'success');
-
-        // Reset form
+        // Reset form and state
         document.getElementById('income-form').reset();
         selectedCategory = null;
         selectedCategoryLabel = null;
+        editingTransactionId = null;
+
+        // Reset button text
+        const submitBtn = document.querySelector('#income-form button[type="submit"] span');
+        submitBtn.textContent = 'บันทึก';
+
         closeAllModals();
 
         // Reload dashboard
@@ -570,14 +596,155 @@ async function loadDashboard() {
         const result = await API.get(buildApiUrl('transactions') + '?per_page=10&page=1');
 
         if (result.transactions && result.transactions.length > 0) {
-            // TODO: Update transaction list UI with real data
-            console.log('Transactions loaded:', result.transactions);
+            renderTransactions(result.transactions);
         } else {
-            console.log('No transactions yet');
+            // Show empty state
+            const transactionsList = document.getElementById('transactions-list');
+            transactionsList.innerHTML = `
+                <div class="empty-state">
+                    <i data-lucide="inbox"></i>
+                    <p>ยังไม่มีรายการ</p>
+                    <p class="empty-subtitle">เริ่มบันทึกรายรับรายจ่ายของคุณ</p>
+                </div>
+            `;
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
         }
     } catch (error) {
         console.error('Error loading dashboard:', error);
         // Don't show error toast on load - user might not have project yet
+    }
+}
+
+// ===== RENDER TRANSACTIONS =====
+function renderTransactions(transactions) {
+    const transactionsList = document.getElementById('transactions-list');
+
+    const formatDate = (dateStr) => {
+        const date = new Date(dateStr);
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        if (date.toDateString() === today.toDateString()) {
+            return 'วันนี้';
+        } else if (date.toDateString() === yesterday.toDateString()) {
+            return 'เมื่อวาน';
+        } else {
+            return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+        }
+    };
+
+    const formatAmount = (amount) => {
+        return (amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    const renderIcon = (iconName) => {
+        const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(iconName || '');
+        if (isEmoji || !iconName) {
+            return `<span class="transaction-icon-emoji">${iconName || '📁'}</span>`;
+        } else {
+            return `<i data-lucide="${iconName}"></i>`;
+        }
+    };
+
+    transactionsList.innerHTML = transactions.map(tx => `
+        <div class="transaction-item ${tx.type}" data-transaction-id="${tx.id}">
+            <div class="transaction-icon ${tx.type}">
+                ${renderIcon(tx.category?.icon)}
+            </div>
+            <div class="transaction-info">
+                <div class="transaction-title">${tx.category?.name_th || 'ไม่ระบุ'}</div>
+                <div class="transaction-meta">
+                    <span class="transaction-date">${formatDate(tx.occurred_at)}</span>
+                    ${tx.note ? `<span class="transaction-note">${tx.note}</span>` : ''}
+                </div>
+            </div>
+            <div class="transaction-amount ${tx.type}">
+                ${tx.type === 'expense' ? '-' : '+'}฿${formatAmount(tx.amount)}
+            </div>
+            <div class="transaction-actions">
+                <button class="btn-icon btn-edit" onclick="editTransaction('${tx.id}')" title="แก้ไข">
+                    <i data-lucide="edit-2"></i>
+                </button>
+                <button class="btn-icon btn-delete" onclick="deleteTransaction('${tx.id}')" title="ลบ">
+                    <i data-lucide="trash-2"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
+// ===== EDIT TRANSACTION =====
+let editingTransactionId = null;
+
+async function editTransaction(transactionId) {
+    try {
+        // Fetch transaction details
+        const result = await API.get(buildApiUrl('transactions', transactionId));
+        const tx = result.transaction;
+
+        editingTransactionId = transactionId;
+
+        // Pre-fill form based on type
+        if (tx.type === 'expense') {
+            document.getElementById('expense-category-display').value = `${tx.category?.icon || '📁'} ${tx.category?.name_th || ''}`;
+            selectedCategory = tx.category_id;
+
+            const occuredDate = new Date(tx.occurred_at);
+            document.getElementById('expense-date').valueAsDate = occuredDate;
+            document.getElementById('expense-time').value = occuredDate.toTimeString().substr(0,5);
+            document.getElementById('expense-note').value = tx.note || '';
+            document.getElementById('expense-amount').value = (tx.amount / 100).toFixed(2);
+
+            // Change button text to indicate editing
+            const submitBtn = document.querySelector('#expense-form button[type="submit"] span');
+            submitBtn.textContent = 'อัพเดท';
+
+            openModal(modals.expenseForm);
+        } else {
+            document.getElementById('income-category-display').value = `${tx.category?.icon || '💰'} ${tx.category?.name_th || ''}`;
+            selectedCategory = tx.category_id;
+
+            const occuredDate = new Date(tx.occurred_at);
+            document.getElementById('income-date').valueAsDate = occuredDate;
+            document.getElementById('income-time').value = occuredDate.toTimeString().substr(0,5);
+            document.getElementById('income-note').value = tx.note || '';
+            document.getElementById('income-amount').value = (tx.amount / 100).toFixed(2);
+
+            // Change button text
+            const submitBtn = document.querySelector('#income-form button[type="submit"] span');
+            submitBtn.textContent = 'อัพเดท';
+
+            openModal(modals.incomeForm);
+        }
+    } catch (error) {
+        showToast(error.message || 'ไม่สามารถโหลดข้อมูลได้', 'error');
+    }
+}
+
+// ===== DELETE TRANSACTION =====
+async function deleteTransaction(transactionId) {
+    if (!confirm('ต้องการลบรายการนี้หรือไม่?')) {
+        return;
+    }
+
+    try {
+        await API.delete(buildApiUrl('transactions', transactionId));
+
+        showToast('ลบรายการเรียบร้อยแล้ว', 'success');
+
+        // Reload dashboard
+        await loadDashboard();
+
+    } catch (error) {
+        showToast(error.message || 'ไม่สามารถลบได้', 'error');
     }
 }
 

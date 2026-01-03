@@ -1077,6 +1077,167 @@ h2 i[data-lucide] {
     color: var(--success);
 }
 
+.recurring-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.recurring-card:hover .recurring-actions {
+    opacity: 1;
+}
+
+.recurring-actions .btn-icon {
+    padding: 8px;
+}
+
+.recurring-actions .btn-execute:hover {
+    background: #10b98120;
+    color: var(--success);
+}
+
+.recurring-actions .btn-edit:hover {
+    background: #3b82f620;
+    color: var(--primary);
+}
+
+.recurring-actions .btn-delete:hover {
+    background: #ef444420;
+    color: var(--error);
+}
+
+/* Transaction Item */
+.transaction-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s ease;
+    position: relative;
+}
+
+.transaction-item:last-child {
+    border-bottom: none;
+}
+
+.transaction-item:hover {
+    background: var(--bg-secondary);
+}
+
+.transaction-item:hover .transaction-actions {
+    opacity: 1;
+}
+
+.transaction-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+}
+
+.transaction-icon.expense {
+    background: #ef444420;
+    color: var(--error);
+    border-color: var(--error);
+}
+
+.transaction-icon.income {
+    background: #10b98120;
+    color: var(--success);
+    border-color: var(--success);
+}
+
+.transaction-icon i {
+    width: 24px;
+    height: 24px;
+}
+
+.transaction-icon-emoji {
+    font-size: 24px;
+}
+
+.transaction-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.transaction-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.transaction-meta {
+    font-size: 13px;
+    color: var(--text-secondary);
+    display: flex;
+    gap: 8px;
+}
+
+.transaction-date {
+    font-size: 12px;
+}
+
+.transaction-note {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.transaction-note::before {
+    content: '•';
+    margin-right: 8px;
+}
+
+.transaction-amount {
+    font-size: 18px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.transaction-amount.expense {
+    color: var(--error);
+}
+
+.transaction-amount.income {
+    color: var(--success);
+}
+
+.transaction-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.transaction-actions .btn-icon {
+    padding: 8px;
+}
+
+.transaction-actions .btn-edit:hover {
+    background: #3b82f620;
+    color: var(--primary);
+}
+
+.transaction-actions .btn-delete:hover {
+    background: #ef444420;
+    color: var(--error);
+}
+
+/* Transactions List */
+.transactions-list {
+    background: var(--bg);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
 /* Period Selector */
 .period-selector {
     padding: 0 16px 16px;
