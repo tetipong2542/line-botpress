@@ -3,15 +3,28 @@
 {% block title %}บันทึกรายการ - จดรายรับรายจ่าย{% endblock %}
 
 {% block content %}
+<script>
+// Redirect to dashboard and open modal based on URL params
+(function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const type = urlParams.get('type');
+
+    if (type) {
+        // Redirect to dashboard with type parameter
+        window.location.href = '/app?openModal=' + type;
+    }
+})();
+</script>
+
 <div class="mobile-container">
     <!-- Header -->
     <div class="page-header">
         <div class="header-content">
             <h1>
                 <i data-lucide="edit"></i>
-                บันทึกรายการ
+                กำลังเปลี่ยนเส้นทาง...
             </h1>
-            <p class="subtitle">เพิ่มรายรับหรือรายจ่าย</p>
+            <p class="subtitle">กรุณารอสักครู่</p>
         </div>
     </div>
 

@@ -50,14 +50,14 @@
 
     <!-- Quick Actions -->
     <div class="quick-actions">
-        <a href="/transactions/new?type=expense" class="quick-action-btn expense">
+        <button class="quick-action-btn expense" id="btn-add-expense">
             <i data-lucide="minus-circle"></i>
             <span>บันทึกรายจ่าย</span>
-        </a>
-        <a href="/transactions/new?type=income" class="quick-action-btn income">
+        </button>
+        <button class="quick-action-btn income" id="btn-add-income">
             <i data-lucide="plus-circle"></i>
             <span>บันทึกรายรับ</span>
-        </a>
+        </button>
     </div>
 
     <!-- Recent Transactions -->
@@ -82,6 +82,186 @@
     <div class="footer-spacing"></div>
 </div>
 
+<!-- Modal: Expense Category Selector (Bottom Sheet) -->
+<div class="modal bottom-sheet" id="expense-category-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="bottom-sheet-handle"></div>
+        <div class="bottom-sheet-header">
+            <h2>เลือกหมวดรายจ่าย</h2>
+        </div>
+        <div class="bottom-sheet-body">
+            <div class="category-grid">
+                <div class="category-grid-item" data-category="food">
+                    <div class="category-grid-icon">🍔</div>
+                    <div class="category-grid-label">อาหาร</div>
+                </div>
+                <div class="category-grid-item" data-category="transport">
+                    <div class="category-grid-icon">🚗</div>
+                    <div class="category-grid-label">เดินทาง</div>
+                </div>
+                <div class="category-grid-item" data-category="housing">
+                    <div class="category-grid-icon">🏠</div>
+                    <div class="category-grid-label">ที่อยู่อาศัย</div>
+                </div>
+                <div class="category-grid-item" data-category="utilities">
+                    <div class="category-grid-icon">💡</div>
+                    <div class="category-grid-label">ค่าน้ำค่าไฟ</div>
+                </div>
+                <div class="category-grid-item" data-category="healthcare">
+                    <div class="category-grid-icon">🏥</div>
+                    <div class="category-grid-label">สุขภาพ</div>
+                </div>
+                <div class="category-grid-item" data-category="entertainment">
+                    <div class="category-grid-icon">🎬</div>
+                    <div class="category-grid-label">บันเทิง</div>
+                </div>
+                <div class="category-grid-item" data-category="education">
+                    <div class="category-grid-icon">📚</div>
+                    <div class="category-grid-label">การศึกษา</div>
+                </div>
+                <div class="category-grid-item" data-category="shopping">
+                    <div class="category-grid-icon">🛍️</div>
+                    <div class="category-grid-label">ช้อปปิ้ง</div>
+                </div>
+                <div class="category-grid-item" data-category="tax">
+                    <div class="category-grid-icon">💰</div>
+                    <div class="category-grid-label">ภาษี/ดอกเบี้ย</div>
+                </div>
+                <div class="category-grid-item" data-category="installment">
+                    <div class="category-grid-icon">💳</div>
+                    <div class="category-grid-label">ผ่อนชำระ</div>
+                </div>
+                <div class="category-grid-item" data-category="other">
+                    <div class="category-grid-icon">📦</div>
+                    <div class="category-grid-label">อื่นๆ</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Income Category Selector (Bottom Sheet) -->
+<div class="modal bottom-sheet" id="income-category-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="bottom-sheet-handle"></div>
+        <div class="bottom-sheet-header">
+            <h2>เลือกหมวดรายรับ</h2>
+        </div>
+        <div class="bottom-sheet-body">
+            <div class="category-grid">
+                <div class="category-grid-item" data-category="salary">
+                    <div class="category-grid-icon">💰</div>
+                    <div class="category-grid-label">เงินเดือน</div>
+                </div>
+                <div class="category-grid-item" data-category="bonus">
+                    <div class="category-grid-icon">🎁</div>
+                    <div class="category-grid-label">โบนัส</div>
+                </div>
+                <div class="category-grid-item" data-category="other-income">
+                    <div class="category-grid-icon">📈</div>
+                    <div class="category-grid-label">รายได้อื่นๆ</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add Expense Transaction -->
+<div class="modal" id="expense-form-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content modal-large">
+        <div class="modal-header expense">
+            <h2>เพิ่มรายจ่าย</h2>
+            <button class="modal-close">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <form class="modal-body" id="expense-form">
+            <div class="form-group">
+                <label class="form-label">หมวดหมู่</label>
+                <input type="text" class="form-input" id="expense-category-display" readonly>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">วันที่</label>
+                <input type="date" class="form-input" id="expense-date" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">เวลา</label>
+                <input type="time" class="form-input" id="expense-time" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">รายละเอียด (ไม่บังคับ)</label>
+                <textarea class="form-textarea" id="expense-note" placeholder="เช่น: ซื้อของที่ห้าง" rows="2"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">จำนวนเงิน (THB)</label>
+                <div class="amount-input-wrapper">
+                    <span class="currency">฿</span>
+                    <input type="number" class="form-input amount-input" id="expense-amount" placeholder="0.00" step="0.01" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary">
+                <i data-lucide="check"></i>
+                <span>บันทึก</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Add Income Transaction -->
+<div class="modal" id="income-form-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content modal-large">
+        <div class="modal-header income">
+            <h2>เพิ่มรายรับ</h2>
+            <button class="modal-close">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <form class="modal-body" id="income-form">
+            <div class="form-group">
+                <label class="form-label">หมวดหมู่</label>
+                <input type="text" class="form-input" id="income-category-display" readonly>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">วันที่</label>
+                <input type="date" class="form-input" id="income-date" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">เวลา</label>
+                <input type="time" class="form-input" id="income-time" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">รายละเอียด (ไม่บังคับ)</label>
+                <textarea class="form-textarea" id="income-note" placeholder="เช่น: เงินเดือนประจำเดือน" rows="2"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">จำนวนเงิน (THB)</label>
+                <div class="amount-input-wrapper">
+                    <span class="currency">฿</span>
+                    <input type="number" class="form-input amount-input" id="income-amount" placeholder="0.00" step="0.01" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary">
+                <i data-lucide="check"></i>
+                <span>บันทึก</span>
+            </button>
+        </form>
+    </div>
+</div>
+
 <!-- Sticky Footer Menu -->
 {% set current_page = 'home' %}
 {% include 'components/footer_menu.html' %}
@@ -89,7 +269,171 @@
 
 {% block extra_js %}
 <script>
-// Fetch dashboard data
+// ===== MODAL SYSTEM =====
+const modals = {
+    expenseCategory: document.getElementById('expense-category-modal'),
+    incomeCategory: document.getElementById('income-category-modal'),
+    expenseForm: document.getElementById('expense-form-modal'),
+    incomeForm: document.getElementById('income-form-modal')
+};
+
+let selectedCategory = null;
+let selectedCategoryLabel = null;
+
+// Helper functions
+function openModal(modal) {
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal(modal) {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+function closeAllModals() {
+    Object.values(modals).forEach(modal => closeModal(modal));
+}
+
+// ===== QUICK ACTIONS =====
+document.getElementById('btn-add-expense').addEventListener('click', () => {
+    openModal(modals.expenseCategory);
+});
+
+document.getElementById('btn-add-income').addEventListener('click', () => {
+    openModal(modals.incomeCategory);
+});
+
+// ===== EXPENSE CATEGORY SELECTION =====
+document.querySelectorAll('#expense-category-modal .category-grid-item').forEach(item => {
+    item.addEventListener('click', () => {
+        selectedCategory = item.dataset.category;
+        selectedCategoryLabel = item.querySelector('.category-grid-label').textContent;
+
+        // Close category modal
+        closeModal(modals.expenseCategory);
+
+        // Open expense form with selected category
+        setTimeout(() => {
+            document.getElementById('expense-category-display').value = selectedCategoryLabel;
+            setDefaultDateTime('expense');
+            openModal(modals.expenseForm);
+        }, 300);
+    });
+});
+
+// ===== INCOME CATEGORY SELECTION =====
+document.querySelectorAll('#income-category-modal .category-grid-item').forEach(item => {
+    item.addEventListener('click', () => {
+        selectedCategory = item.dataset.category;
+        selectedCategoryLabel = item.querySelector('.category-grid-label').textContent;
+
+        // Close category modal
+        closeModal(modals.incomeCategory);
+
+        // Open income form with selected category
+        setTimeout(() => {
+            document.getElementById('income-category-display').value = selectedCategoryLabel;
+            setDefaultDateTime('income');
+            openModal(modals.incomeForm);
+        }, 300);
+    });
+});
+
+// ===== SET DEFAULT DATE/TIME =====
+function setDefaultDateTime(type) {
+    const now = new Date();
+    const date = now.toISOString().split('T')[0];
+    const time = now.toTimeString().slice(0, 5);
+
+    document.getElementById(`${type}-date`).value = date;
+    document.getElementById(`${type}-time`).value = time;
+}
+
+// ===== CLOSE BUTTONS =====
+document.querySelectorAll('.modal-close').forEach(btn => {
+    btn.addEventListener('click', () => {
+        closeAllModals();
+    });
+});
+
+// ===== OVERLAY CLICKS =====
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', () => {
+        closeAllModals();
+    });
+});
+
+// ===== ESC KEY =====
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeAllModals();
+    }
+});
+
+// ===== EXPENSE FORM SUBMISSION =====
+document.getElementById('expense-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = {
+        type: 'expense',
+        category: selectedCategory,
+        categoryLabel: selectedCategoryLabel,
+        date: document.getElementById('expense-date').value,
+        time: document.getElementById('expense-time').value,
+        note: document.getElementById('expense-note').value,
+        amount: parseFloat(document.getElementById('expense-amount').value)
+    };
+
+    try {
+        // TODO: Send to API
+        console.log('Expense data:', formData);
+        alert('บันทึกรายจ่ายสำเร็จ!');
+
+        // Reset form
+        document.getElementById('expense-form').reset();
+        closeAllModals();
+
+        // Reload dashboard
+        loadDashboard();
+    } catch (error) {
+        console.error('Error:', error);
+        alert('เกิดข้อผิดพลาด');
+    }
+});
+
+// ===== INCOME FORM SUBMISSION =====
+document.getElementById('income-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = {
+        type: 'income',
+        category: selectedCategory,
+        categoryLabel: selectedCategoryLabel,
+        date: document.getElementById('income-date').value,
+        time: document.getElementById('income-time').value,
+        note: document.getElementById('income-note').value,
+        amount: parseFloat(document.getElementById('income-amount').value)
+    };
+
+    try {
+        // TODO: Send to API
+        console.log('Income data:', formData);
+        alert('บันทึกรายรับสำเร็จ!');
+
+        // Reset form
+        document.getElementById('income-form').reset();
+        closeAllModals();
+
+        // Reload dashboard
+        loadDashboard();
+    } catch (error) {
+        console.error('Error:', error);
+        alert('เกิดข้อผิดพลาด');
+    }
+});
+
+// ===== DASHBOARD DATA =====
 async function loadDashboard() {
     try {
         // TODO: Fetch from API when user has projects
@@ -100,9 +444,22 @@ async function loadDashboard() {
     }
 }
 
+// ===== DEEP LINKING SUPPORT =====
+function handleDeepLink() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const modalType = urlParams.get('openModal');
+
+    if (modalType === 'expense') {
+        setTimeout(() => openModal(modals.expenseCategory), 100);
+    } else if (modalType === 'income') {
+        setTimeout(() => openModal(modals.incomeCategory), 100);
+    }
+}
+
 // Load on page ready
 document.addEventListener('DOMContentLoaded', () => {
     loadDashboard();
+    handleDeepLink();
 });
 </script>
 {% endblock %}
