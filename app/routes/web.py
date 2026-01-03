@@ -19,8 +19,55 @@ def require_login(f):
 
 
 def get_user_project(user_id):
-    """Get user's default project (first project they own)"""
+    """Get user's default project (first project they own)
+
+    Auto-creates project if user doesn't have one
+    """
+    from app import db
+    from app.models.category import Category
+    from app.utils.helpers import generate_id
+
     project = Project.query.filter_by(owner_user_id=user_id).first()
+
+    # Auto-create project if user doesn't have one
+    if not project:
+        user = User.query.get(user_id)
+
+        # Create default project
+        project = Project(
+            name=f"บัญชี {user.display_name}",
+            owner_user_id=user_id
+        )
+        project.id = generate_id('prj')
+        db.session.add(project)
+        db.session.commit()
+
+        # Create default categories
+        default_categories = [
+            {'type': 'expense', 'name_th': 'อาหารและเครื่องดื่ม', 'icon': 'utensils', 'color': '#EF4444'},
+            {'type': 'expense', 'name_th': 'ค่าเดินทาง', 'icon': 'car', 'color': '#F59E0B'},
+            {'type': 'expense', 'name_th': 'ช้อปปิ้ง', 'icon': 'shopping-bag', 'color': '#EC4899'},
+            {'type': 'expense', 'name_th': 'ความบันเทิง', 'icon': 'tv', 'color': '#8B5CF6'},
+            {'type': 'expense', 'name_th': 'ค่าสาธารณูปโภค', 'icon': 'lightbulb', 'color': '#10B981'},
+            {'type': 'expense', 'name_th': 'สุขภาพ', 'icon': 'heart-pulse', 'color': '#06B6D4'},
+            {'type': 'income', 'name_th': 'เงินเดือน', 'icon': 'dollar-sign', 'color': '#10B981'},
+            {'type': 'income', 'name_th': 'รายได้เสริม', 'icon': 'trending-up', 'color': '#3B82F6'},
+            {'type': 'income', 'name_th': 'ของขวัญ', 'icon': 'gift', 'color': '#EC4899'},
+        ]
+
+        for idx, cat_data in enumerate(default_categories):
+            category = Category(
+                project_id=project.id,
+                type=cat_data['type'],
+                name_th=cat_data['name_th'],
+                icon=cat_data['icon'],
+                color=cat_data['color'],
+                sort_order=idx + 1
+            )
+            db.session.add(category)
+
+        db.session.commit()
+
     return project
 
 
