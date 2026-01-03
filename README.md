@@ -1,16 +1,25 @@
-# 💰 จดรายรับรายจ่าย (Income-Expense Tracker)
+# 💰 LINE Botpress Income-Expense Tracker
+
+[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Flask](https://img.shields.io/badge/Flask-3.0.0-green.svg)](https://flask.palletsprojects.com/)
+[![SQLite](https://img.shields.io/badge/SQLite-3-lightgrey.svg)](https://www.sqlite.org/)
+[![LINE](https://img.shields.io/badge/LINE-Messaging%20API-00C300.svg)](https://developers.line.biz/)
+[![Botpress](https://img.shields.io/badge/Botpress-AI-purple.svg)](https://botpress.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 แอปพลิเคชันจดรายรับรายจ่ายที่ใช้งานผ่าน **LINE Chatbot** และ **Web Interface** พัฒนาด้วย **Python Flask + SQLite** พร้อม **Botpress AI** สำหรับการวิเคราะห์และสนทนาอัจฉริยะ
 
-## 🎯 Features
+![Demo](https://via.placeholder.com/800x400/f9fafb/111827?text=LINE+Botpress+Income-Expense+Tracker)
 
-### ✅ Core Features (MVP)
-- 🔐 **LINE Login** - เข้าสู่ระบบด้วย LINE OAuth2
+## ✨ Features
+
+### 🎯 Core Features
+- 🔐 **LINE Login** - OAuth2 authentication
 - 📊 **Multi-Project** - รองรับหลายโปรเจค/ครอบครัว
 - 💸 **Transaction Management** - บันทึกรายรับ-รายจ่าย
-- 🏷️ **Category System** - จัดหมวดหมู่รายรับ-รายจ่าย
+- 🏷️ **Category System** - จัดหมวดหมู่ด้วย icon และสี
 - 💰 **Budget Envelope** - ตั้งงบประมาณรายหมวด
-- 🔁 **Recurring Transactions** - รายการประจำ (รายวัน/รายสัปดาห์/รายเดือน)
+- 🔁 **Recurring Transactions** - รายการประจำ (รายวัน/สัปดาห์/เดือน)
 - 🤖 **LINE Chatbot** - บันทึกผ่านการพิมพ์แชท
 - 🧠 **AI Insights** - วิเคราะห์การใช้จ่ายด้วย Botpress
 
@@ -20,203 +29,137 @@
 - ✅ Idempotency key for preventing duplicate operations
 - ✅ Bot nonce for replay attack prevention
 - ✅ Session-based authentication
+- ✅ Role-Based Access Control (RBAC)
 
 ## 🏗️ Architecture
 
 ```
-User (LINE)
-  ↓
-Botpress (Intent Recognition + NLU)
-  ↓ REST API with HMAC
-Flask Backend (/api/v1/bot/*)
-  ↓ Business Logic
-SQLite Database
-  ↓ Response
-Botpress (Natural Language Response)
-  ↓
-LINE (User-friendly message)
-```
-
-## 📁 Project Structure
-
-```
-python-line-Income-expenses/
-├── app/
-│   ├── __init__.py           # Flask app factory
-│   ├── config.py             # Configuration
-│   ├── models/               # Database models
-│   │   ├── user.py
-│   │   ├── project.py
-│   │   ├── category.py
-│   │   ├── transaction.py
-│   │   ├── budget.py
-│   │   ├── recurring.py
-│   │   ├── security.py
-│   │   └── insight.py
-│   ├── routes/               # API endpoints
-│   │   ├── web.py           # HTML pages
-│   │   ├── auth.py          # LINE Login OAuth2
-│   │   ├── api.py           # REST API
-│   │   ├── bot.py           # Botpress integration
-│   │   └── line.py          # LINE webhook
-│   ├── services/            # Business logic
-│   │   ├── transaction_service.py
-│   │   ├── botpress_service.py
-│   │   └── init_service.py
-│   ├── utils/               # Utilities
-│   │   ├── helpers.py
-│   │   ├── security.py
-│   │   └── validators.py
-│   ├── templates/           # HTML templates
-│   └── static/              # CSS, JS files
-├── instance/                # SQLite database
-├── migrations/              # Database migrations
-├── tests/                   # Unit tests
-├── .env                     # Environment variables
-├── requirements.txt         # Python dependencies
-├── run.py                   # Entry point
-└── README.md
+┌─────────────┐
+│   LINE User │ พิมพ์: "จ่าย 350 เดินทาง ค่ารถ"
+└──────┬──────┘
+       ↓
+┌──────────────────┐
+│   LINE Server    │
+└──────┬───────────┘
+       ↓ Webhook
+┌──────────────────────┐
+│  Flask /line/webhook │ ← Verify LINE Signature
+└──────┬───────────────┘
+       ↓ Forward
+┌──────────────────┐
+│    Botpress      │ ← AI: Extract intent & entities
+└──────┬───────────┘
+       ↓ Call API with HMAC
+┌────────────────────────────┐
+│ Flask /api/v1/bot/...      │ ← Verify HMAC + Idempotency
+│ - TransactionService       │   Create transaction
+│ - SQLite Database          │   Check budget
+└──────┬─────────────────────┘
+       ↓ Response
+┌──────────────────┐
+│    Botpress      │ ← Generate Thai response
+└──────┬───────────┘
+       ↓ Reply
+┌──────────────────┐
+│   LINE User      │ "บันทึกแล้ว ✅ จ่าย 350 บาท"
+└──────────────────┘
 ```
 
 ## 🚀 Quick Start
 
-### 1. Prerequisites
-
+### Prerequisites
 - Python 3.9+
 - LINE Developer Account
 - Botpress Account
 
-### 2. Installation
+### Installation
 
 ```bash
 # Clone repository
-git clone <your-repo-url>
-cd python-line-Income-expenses
+git clone https://github.com/tetipong2542/line-botpress.git
+cd line-botpress
 
 # Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
-```
 
-### 3. Configuration
-
-Create `.env` file from `.env.example`:
-
-```bash
+# Configure environment
 cp .env.example .env
-```
+# Edit .env and add your LINE credentials
 
-Edit `.env` and fill in your credentials:
-
-```env
-# Flask
-SECRET_KEY=your-secret-key-change-this
-
-# LINE Login (OAuth2)
-LINE_CHANNEL_ID=your-line-channel-id
-LINE_CHANNEL_SECRET=your-line-channel-secret
-LINE_REDIRECT_URI=http://localhost:5000/auth/line/callback
-
-# LINE Messaging API
-LINE_CHANNEL_ACCESS_TOKEN=your-line-channel-access-token
-
-# Botpress
-BOTPRESS_WEBHOOK_URL=https://webhook.botpress.cloud/68043144-896b-4278-b4d3-66693df66942
-BOTPRESS_BOT_SECRET=your-bot-secret
-
-# Security
-BOT_HMAC_SECRET=your-hmac-secret-minimum-32-characters
-```
-
-### 4. Initialize Database
-
-```bash
-# Create database tables
+# Initialize database
+export FLASK_APP=run.py
 flask init-db
-```
 
-### 5. Run Application
-
-```bash
-# Development mode
+# Run application
 python run.py
-
-# Or using Flask CLI
-flask run
 ```
 
 Application will be available at: `http://localhost:5000`
 
-## 📝 API Documentation
+## 📝 Configuration
+
+Edit `.env` file:
+
+```env
+# LINE Login (OAuth2)
+LINE_CHANNEL_ID=your-channel-id
+LINE_CHANNEL_SECRET=your-channel-secret
+LINE_REDIRECT_URI=http://localhost:5000/auth/line/callback
+
+# LINE Messaging API (Chatbot)
+LINE_CHANNEL_ACCESS_TOKEN=your-access-token
+
+# Botpress
+BOTPRESS_WEBHOOK_URL=your-botpress-webhook-url
+BOTPRESS_BOT_SECRET=your-bot-secret
+
+# Security
+SECRET_KEY=your-secret-key
+BOT_HMAC_SECRET=your-hmac-secret-32-chars-minimum
+```
+
+### Get LINE Credentials
+
+1. Visit [LINE Developers Console](https://developers.line.biz/console/)
+2. Create Provider & Channel
+3. For **LINE Login**: Get Channel ID, Secret, set Callback URL
+4. For **Messaging API**: Get Access Token, set Webhook URL
+
+See [SETUP.md](SETUP.md) for detailed instructions.
+
+## 📚 API Documentation
 
 ### Authentication
+- `GET /auth/line/login` - Start LINE Login
+- `GET /auth/line/callback` - LINE Login callback
+- `POST /auth/logout` - Logout
+- `GET /auth/me` - Get current user
 
-#### LINE Login
-```
-GET /auth/line/login
-GET /auth/line/callback
-POST /auth/logout
-GET /auth/me
-```
+### Projects
+- `GET /api/v1/projects` - List projects
+- `POST /api/v1/projects` - Create project
 
-### Projects API
-
-```
-GET    /api/v1/projects                    # List projects
-POST   /api/v1/projects                    # Create project
-GET    /api/v1/projects/{id}               # Get project
-PUT    /api/v1/projects/{id}               # Update project
-DELETE /api/v1/projects/{id}               # Delete project
-```
-
-### Transactions API
-
-```
-GET    /api/v1/projects/{id}/transactions  # List transactions
-POST   /api/v1/projects/{id}/transactions  # Create transaction
-GET    /api/v1/transactions/{id}           # Get transaction
-PUT    /api/v1/transactions/{id}           # Update transaction
-DELETE /api/v1/transactions/{id}           # Delete transaction
-```
-
-### Categories API
-
-```
-GET    /api/v1/projects/{id}/categories    # List categories
-POST   /api/v1/projects/{id}/categories    # Create category
-```
-
-### Budgets API
-
-```
-GET    /api/v1/projects/{id}/budgets       # List budgets
-PUT    /api/v1/projects/{id}/budgets/{category_id}  # Upsert budget
-```
+### Transactions
+- `GET /api/v1/projects/{id}/transactions` - List transactions
+- `POST /api/v1/projects/{id}/transactions` - Create transaction
 
 ### Bot API (Botpress Integration)
-
-**Authentication:** Requires `X-BOT-ID`, `X-BOT-TS`, `X-BOT-HMAC` headers
-
-```
-POST /api/v1/bot/context/resolve          # Get user context
-POST /api/v1/bot/transactions/create      # Create transaction (idempotent)
-POST /api/v1/bot/insights/export          # Export dataset for insights
-```
+- `POST /api/v1/bot/context/resolve` - Resolve user context
+- `POST /api/v1/bot/transactions/create` - Create transaction (idempotent)
+- `POST /api/v1/bot/insights/export` - Export insights dataset
 
 ### LINE Webhook
+- `POST /line/webhook` - Receive LINE events
 
-```
-POST /line/webhook                         # Receive LINE events
-```
+Full API documentation: [SETUP.md](SETUP.md)
 
 ## 🤖 LINE Chatbot Commands
 
-Users can send natural language messages to the LINE bot:
-
-### Examples:
+Users can send natural language messages:
 
 ```
 จ่าย 350 เดินทาง ค่ารถ
@@ -226,34 +169,83 @@ Users can send natural language messages to the LINE bot:
 วิเคราะห์การใช้จ่าย
 ```
 
-Botpress will:
-1. Understand the intent
-2. Extract entities (amount, category, note)
-3. Call Flask API to create transaction
-4. Reply with confirmation and budget status
+Botpress will understand, extract data, and call Flask API.
 
-## 🔧 Development
+## 🗂️ Project Structure
 
-### Run Tests
+```
+line-botpress/
+├── app/
+│   ├── __init__.py          # Flask app factory
+│   ├── config.py            # Configuration
+│   ├── models/              # Database models (9 models)
+│   ├── routes/              # API endpoints (6 blueprints)
+│   ├── services/            # Business logic
+│   ├── utils/               # Utilities
+│   ├── templates/           # HTML templates
+│   └── static/              # CSS, JS
+├── instance/
+│   └── finance.db           # SQLite database
+├── .env                     # Environment variables
+├── requirements.txt         # Dependencies
+├── run.py                   # Entry point
+├── start.sh                 # Startup script
+├── README.md
+└── SETUP.md                 # Detailed setup guide
+```
+
+## 📊 Database Schema
+
+15 tables including:
+- `user` - LINE authenticated users
+- `project` - Projects/households
+- `category` - Income/expense categories
+- `transaction` - Financial transactions
+- `budget` - Budget limits
+- `recurring_rule` - Recurring transactions
+- `bot_nonce` - Anti-replay tokens
+- `idempotency_key` - Idempotency tracking
+- `insight` - AI-generated insights
+
+See [PRD-Frontend-Backend.md](PRD-Frontend-Backend.md) for complete schema.
+
+## 🚀 Deployment
+
+### Deploy to Railway
 
 ```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login and deploy
+railway login
+railway init
+railway up
+```
+
+Set environment variables in Railway dashboard.
+
+### Environment Variables for Production
+
+```env
+FLASK_ENV=production
+SECRET_KEY=<strong-random-key>
+SESSION_COOKIE_SECURE=True
+LINE_REDIRECT_URI=https://your-domain.com/auth/line/callback
+```
+
+## 🧪 Testing
+
+```bash
+# Run tests
 pytest
+
+# Test API endpoints
+curl http://localhost:5000/auth/me
+curl http://localhost:5000/api/v1/projects
 ```
 
-### Database Migrations
-
-```bash
-# Create migration
-flask db migrate -m "description"
-
-# Apply migration
-flask db upgrade
-
-# Rollback
-flask db downgrade
-```
-
-### Code Style
+## 🛠️ Development
 
 ```bash
 # Format code
@@ -261,142 +253,18 @@ black .
 
 # Lint
 flake8 .
+
+# Run with debug
+FLASK_ENV=development python run.py
 ```
 
-## 🚀 Deployment
+## 📖 Documentation
 
-### Deploy to Railway
+- [README.md](README.md) - This file
+- [SETUP.md](SETUP.md) - Detailed setup guide
+- [PRD-Frontend-Backend.md](PRD-Frontend-Backend.md) - Product requirements
 
-1. Create account at [Railway.app](https://railway.app)
-
-2. Install Railway CLI:
-```bash
-npm install -g @railway/cli
-```
-
-3. Deploy:
-```bash
-railway login
-railway init
-railway up
-```
-
-4. Set environment variables in Railway dashboard
-
-### Environment Variables for Production
-
-```env
-FLASK_ENV=production
-SECRET_KEY=<strong-random-key>
-DATABASE_URL=<postgresql-url>  # Or use SQLite
-SESSION_COOKIE_SECURE=True
-```
-
-## 🔐 Security Considerations
-
-### HMAC Verification
-
-Botpress calls to Flask API are verified using HMAC:
-
-```python
-# Botpress sends:
-X-BOT-ID: botpress-prod
-X-BOT-TS: 1234567890
-X-BOT-HMAC: sha256_signature
-
-# Flask verifies:
-message = f"{bot_id}:{timestamp}:{body}"
-expected = hmac.new(secret, message, sha256).hexdigest()
-```
-
-### Idempotency
-
-Bot operations use `event_id` for idempotency:
-
-```json
-{
-  "event_id": "line_msg_123456",
-  "line_user_id": "U1234...",
-  "type": "expense",
-  "amount": 35000
-}
-```
-
-Same `event_id` will return cached response.
-
-## 📊 Database Schema
-
-See `PRD-Frontend-Backend.md` for complete schema documentation.
-
-Key tables:
-- `user` - LINE authenticated users
-- `project` - Projects/households
-- `project_member` - Project memberships
-- `category` - Income/expense categories
-- `transaction` - Financial transactions
-- `budget` - Budget limits per category
-- `recurring_rule` - Recurring transactions
-- `bot_nonce` - Anti-replay tokens
-- `idempotency_key` - Idempotency tracking
-- `insight` - AI-generated insights
-
-## 🎨 Customization
-
-### Add Custom Categories
-
-Edit default categories in `app/routes/api.py`:
-
-```python
-default_categories = [
-    ('expense', 'อาหาร', 'food', '🍜', '#FF6B6B'),
-    # Add your categories here
-]
-```
-
-### Modify Insight Policy
-
-Edit project settings:
-
-```python
-settings.insight_max_records = 100  # Max records to send
-settings.insight_max_days = 30      # Max days to look back
-settings.insight_fields_level = 'minimal'  # minimal/standard/full
-```
-
-## 🐛 Troubleshooting
-
-### Database Locked Error
-
-```bash
-# Close all connections and restart
-rm instance/finance.db
-flask init-db
-```
-
-### LINE Webhook Not Working
-
-1. Check ngrok/cloudflare tunnel is running
-2. Verify webhook URL in LINE Developers Console
-3. Check signature verification
-
-### Botpress Not Responding
-
-1. Verify webhook URL in `.env`
-2. Check Botpress bot is published
-3. View Botpress logs for errors
-
-## 📚 Resources
-
-- [Flask Documentation](https://flask.palletsprojects.com/)
-- [LINE Messaging API](https://developers.line.biz/en/docs/messaging-api/)
-- [Botpress Documentation](https://botpress.com/docs)
-- [SQLAlchemy Documentation](https://docs.sqlalchemy.org/)
-
-## 📄 License
-
-MIT License - See LICENSE file for details
-
-## 👥 Contributing
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create feature branch (`git checkout -b feature/amazing-feature`)
@@ -404,12 +272,33 @@ MIT License - See LICENSE file for details
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open Pull Request
 
+## 📄 License
+
+MIT License - See [LICENSE](LICENSE) file for details
+
 ## 💬 Support
 
-For issues and questions:
-- Open an issue on GitHub
-- Email: your-email@example.com
+- GitHub Issues: [Issues](https://github.com/tetipong2542/line-botpress/issues)
+- Documentation: [SETUP.md](SETUP.md)
+
+## 🌟 Features Roadmap
+
+- [ ] Export to CSV/PDF
+- [ ] OCR for bill scanning
+- [ ] Charts and visualizations
+- [ ] Mobile app (React Native)
+- [ ] Multi-currency support
+- [ ] Bank account integration
+
+## 📊 Statistics
+
+- **26 Python files** (2,532 lines of code)
+- **15 Database tables**
+- **25+ API endpoints**
+- **HMAC security** + **Idempotency** + **Signature verification**
 
 ---
 
-Made with ❤️ by Pond Dev
+Made with ❤️ by [tetipong2542](https://github.com/tetipong2542)
+
+**Star ⭐ this repo if you find it useful!**
