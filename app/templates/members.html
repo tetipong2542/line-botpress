@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}สมาชิก - จดรายรับรายจ่าย{% endblock %}
+
+{% block content %}
+<div class="mobile-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>
+                <i data-lucide="users"></i>
+                สมาชิก
+            </h1>
+            <p class="subtitle">จัดการสมาชิกในโปรเจค</p>
+        </div>
+    </div>
+
+    <!-- Project Selector (if multiple projects) -->
+    <div class="book-switcher">
+        <button class="book-pill active" data-project="personal">
+            Pond Titipong
+        </button>
+        <button class="book-pill" data-project="family">
+            Family POND
+        </button>
+    </div>
+
+    <!-- Members List -->
+    <div class="section">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="user-check"></i>
+                สมาชิกทั้งหมด (2)
+            </h2>
+        </div>
+
+        <div class="member-list">
+            <!-- Owner -->
+            <div class="member-card owner">
+                <div class="member-avatar">
+                    <i data-lucide="user"></i>
+                </div>
+                <div class="member-info">
+                    <div class="member-name">
+                        Pond Titipong
+                        <span class="member-badge owner">เจ้าของ</span>
+                    </div>
+                    <div class="member-meta">
+                        <i data-lucide="mail"></i>
+                        pond@example.com
+                    </div>
+                    <div class="member-meta">
+                        <i data-lucide="calendar"></i>
+                        เข้าร่วมเมื่อ 01/01/2026
+                    </div>
+                </div>
+                <div class="member-actions">
+                    <button class="btn-icon" disabled>
+                        <i data-lucide="more-vertical"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Member -->
+            <div class="member-card">
+                <div class="member-avatar">
+                    <i data-lucide="user"></i>
+                </div>
+                <div class="member-info">
+                    <div class="member-name">
+                        Jane Doe
+                        <span class="member-badge member">สมาชิก</span>
+                    </div>
+                    <div class="member-meta">
+                        <i data-lucide="mail"></i>
+                        jane@example.com
+                    </div>
+                    <div class="member-meta">
+                        <i data-lucide="calendar"></i>
+                        เข้าร่วมเมื่อ 02/01/2026
+                    </div>
+                </div>
+                <div class="member-actions">
+                    <button class="btn-icon member-menu-btn">
+                        <i data-lucide="more-vertical"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Empty State (Hidden when has members) -->
+            <div class="empty-state" style="display: none;">
+                <i data-lucide="user-plus"></i>
+                <p>ยังไม่มีสมาชิก</p>
+                <p class="empty-subtitle">เชิญเพื่อนหรือคนในครอบครัวมาใช้งานร่วมกัน</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Invitations -->
+    <div class="section">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="clock"></i>
+                คำเชิญที่รอดำเนินการ (1)
+            </h2>
+        </div>
+
+        <div class="invitation-list">
+            <div class="invitation-card">
+                <div class="invitation-icon">
+                    <i data-lucide="send"></i>
+                </div>
+                <div class="invitation-info">
+                    <div class="invitation-email">john@example.com</div>
+                    <div class="invitation-meta">
+                        ส่งคำเชิญเมื่อ 03/01/2026
+                    </div>
+                </div>
+                <div class="invitation-actions">
+                    <button class="btn-text danger">
+                        <i data-lucide="x"></i>
+                        ยกเลิก
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom spacing -->
+    <div class="footer-spacing"></div>
+</div>
+
+<!-- Floating Action Button -->
+<div class="floating-action">
+    <button class="btn-fab" id="add-member-btn">
+        <i data-lucide="user-plus"></i>
+    </button>
+</div>
+
+<!-- Modal: Invite Member -->
+<div class="modal" id="invite-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>เชิญสมาชิกใหม่</h2>
+            <button class="modal-close">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <form class="modal-body" id="invite-form">
+            <div class="form-group">
+                <label class="form-label">อีเมล</label>
+                <input
+                    type="email"
+                    class="form-input"
+                    id="invite-email"
+                    placeholder="example@email.com"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">บทบาท</label>
+                <select class="form-select" id="invite-role">
+                    <option value="member">สมาชิก (ดู + แก้ไข)</option>
+                    <option value="viewer">ผู้ดู (ดูอย่างเดียว)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">ข้อความ (ไม่บังคับ)</label>
+                <textarea
+                    class="form-textarea"
+                    id="invite-message"
+                    placeholder="มาร่วมจัดการรายรับรายจ่ายไปด้วยกัน!"
+                    rows="3"
+                ></textarea>
+            </div>
+
+            <button type="submit" class="btn-primary">
+                <i data-lucide="send"></i>
+                <span>ส่งคำเชิญ</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Sticky Footer Menu -->
+{% set current_page = 'members' %}
+{% include 'components/footer_menu.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Project Switcher
+const projectPills = document.querySelectorAll('.book-pill');
+projectPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+        projectPills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        // TODO: Load members for selected project
+    });
+});
+
+// Modal controls
+const modal = document.getElementById('invite-modal');
+const addBtn = document.getElementById('add-member-btn');
+const closeBtn = modal.querySelector('.modal-close');
+const overlay = modal.querySelector('.modal-overlay');
+
+function openModal() {
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+addBtn.addEventListener('click', openModal);
+closeBtn.addEventListener('click', closeModal);
+overlay.addEventListener('click', closeModal);
+
+// Form submission
+document.getElementById('invite-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = {
+        email: document.getElementById('invite-email').value,
+        role: document.getElementById('invite-role').value,
+        message: document.getElementById('invite-message').value
+    };
+
+    try {
+        // TODO: Send to API
+        console.log('Invite data:', formData);
+        alert('ส่งคำเชิญสำเร็จ!');
+        closeModal();
+    } catch (error) {
+        console.error('Error:', error);
+        alert('เกิดข้อผิดพลาด');
+    }
+});
+
+// Member menu actions
+document.querySelectorAll('.member-menu-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // TODO: Show member actions menu (edit role, remove, etc.)
+        alert('เมนูการจัดการสมาชิก (Coming soon)');
+    });
+});
+</script>
+{% endblock %}

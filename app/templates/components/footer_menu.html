@@ -1,0 +1,33 @@
+{#
+  Footer Menu Component
+  Usage: {% include 'components/footer_menu.html' with context %}
+
+  Requires: current_page variable set in template
+  Example: {% set current_page = 'home' %}
+#}
+<nav class="footer-menu">
+    <a href="/app" class="menu-item {% if current_page == 'home' %}active{% endif %}">
+        <i data-lucide="home"></i>
+        <span>หน้าแรก</span>
+    </a>
+    <a href="/transactions/new" class="menu-item {% if current_page == 'transactions' %}active{% endif %}">
+        <i data-lucide="plus-circle"></i>
+        <span>บันทึก</span>
+    </a>
+    <a href="/recurring" class="menu-item {% if current_page == 'recurring' %}active{% endif %}">
+        <i data-lucide="refresh-cw"></i>
+        <span>รายการประจำ</span>
+    </a>
+    <a href="/analytics" class="menu-item {% if current_page == 'analytics' %}active{% endif %}">
+        <i data-lucide="bar-chart-2"></i>
+        <span>รายงาน</span>
+    </a>
+    <a href="/categories" class="menu-item {% if current_page == 'categories' %}active{% endif %}">
+        <i data-lucide="folder"></i>
+        <span>หมวดหมู่</span>
+    </a>
+    <a href="/members" class="menu-item {% if current_page == 'members' %}active{% endif %}">
+        <i data-lucide="users"></i>
+        <span>สมาชิก</span>
+    </a>
+</nav>

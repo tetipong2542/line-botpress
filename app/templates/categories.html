@@ -166,20 +166,8 @@
 </div>
 
 <!-- Sticky Footer Menu -->
-<nav class="footer-menu">
-    <a href="/app" class="menu-item">
-        <i data-lucide="home"></i>
-        <span>หน้าแรก</span>
-    </a>
-    <a href="/transactions/new" class="menu-item">
-        <i data-lucide="plus-circle"></i>
-        <span>บันทึก</span>
-    </a>
-    <a href="/categories" class="menu-item active">
-        <i data-lucide="folder"></i>
-        <span>หมวดหมู่</span>
-    </a>
-</nav>
+{% set current_page = 'categories' %}
+{% include 'components/footer_menu.html' %}
 {% endblock %}
 
 {% block extra_js %}

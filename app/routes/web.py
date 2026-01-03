@@ -51,3 +51,39 @@ def categories():
     user_id = session.get('user_id')
     user = User.query.get(user_id)
     return render_template('categories.html', user=user)
+
+
+@bp.route('/recurring')
+@require_login
+def recurring():
+    """Recurring transactions page"""
+    user_id = session.get('user_id')
+    user = User.query.get(user_id)
+    return render_template('recurring.html', user=user)
+
+
+@bp.route('/analytics')
+@require_login
+def analytics():
+    """Analytics and reports page"""
+    user_id = session.get('user_id')
+    user = User.query.get(user_id)
+    return render_template('analytics.html', user=user)
+
+
+@bp.route('/members')
+@require_login
+def members():
+    """Members management page"""
+    user_id = session.get('user_id')
+    user = User.query.get(user_id)
+    return render_template('members.html', user=user)
+
+
+@bp.route('/profile')
+@require_login
+def profile():
+    """User profile page"""
+    user_id = session.get('user_id')
+    user = User.query.get(user_id)
+    return render_template('profile.html', user=user)

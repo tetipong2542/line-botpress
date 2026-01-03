@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}โปรไฟล์ - จดรายรับรายจ่าย{% endblock %}
+
+{% block content %}
+<div class="mobile-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>
+                <i data-lucide="user"></i>
+                โปรไฟล์
+            </h1>
+            <p class="subtitle">จัดการบัญชีและการตั้งค่า</p>
+        </div>
+    </div>
+
+    <!-- User Profile Section -->
+    <div class="section">
+        <div class="profile-card">
+            <div class="profile-avatar">
+                <i data-lucide="user"></i>
+            </div>
+            <div class="profile-info">
+                <h2>{% if user %}{{ user.display_name }}{% else %}Guest User{% endif %}</h2>
+                <p class="profile-email">{% if user %}{{ user.line_user_id }}{% else %}ไม่ได้เข้าสู่ระบบ{% endif %}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Settings -->
+    <div class="section">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="settings"></i>
+                การตั้งค่าบัญชี
+            </h2>
+        </div>
+
+        <div class="settings-list">
+            <a href="#" class="setting-item">
+                <div class="setting-icon">
+                    <i data-lucide="user-circle"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">แก้ไขโปรไฟล์</div>
+                    <div class="setting-desc">ชื่อ, รูปโปรไฟล์</div>
+                </div>
+                <i data-lucide="chevron-right"></i>
+            </a>
+
+            <a href="#" class="setting-item">
+                <div class="setting-icon">
+                    <i data-lucide="bell"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">การแจ้งเตือน</div>
+                    <div class="setting-desc">จัดการการแจ้งเตือนผ่าน LINE</div>
+                </div>
+                <i data-lucide="chevron-right"></i>
+            </a>
+
+            <a href="#" class="setting-item">
+                <div class="setting-icon">
+                    <i data-lucide="globe"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">ภาษา</div>
+                    <div class="setting-desc">ภาษาไทย</div>
+                </div>
+                <i data-lucide="chevron-right"></i>
+            </a>
+
+            <a href="#" class="setting-item">
+                <div class="setting-icon">
+                    <i data-lucide="dollar-sign"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">สกุลเงิน</div>
+                    <div class="setting-desc">บาท (THB)</div>
+                </div>
+                <i data-lucide="chevron-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- App Settings -->
+    <div class="section">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="sliders"></i>
+                การตั้งค่าแอป
+            </h2>
+        </div>
+
+        <div class="settings-list">
+            <a href="#" class="setting-item">
+                <div class="setting-icon">
+                    <i data-lucide="moon"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">โหมดมืด</div>
+                    <div class="setting-desc">ปิดอยู่</div>
+                </div>
+                <div class="setting-toggle">
+                    <label class="switch">
+                        <input type="checkbox" id="dark-mode-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </a>
+
+            <a href="#" class="setting-item">
+                <div class="setting-icon">
+                    <i data-lucide="database"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">ข้อมูลและการสำรองข้อมูล</div>
+                    <div class="setting-desc">สำรองข้อมูลล่าสุด: ไม่เคย</div>
+                </div>
+                <i data-lucide="chevron-right"></i>
+            </a>
+
+            <a href="#" class="setting-item">
+                <div class="setting-icon">
+                    <i data-lucide="shield"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">ความเป็นส่วนตัว</div>
+                    <div class="setting-desc">จัดการข้อมูลส่วนบุคคล</div>
+                </div>
+                <i data-lucide="chevron-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- About & Support -->
+    <div class="section">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="info"></i>
+                เกี่ยวกับ & ช่วยเหลือ
+            </h2>
+        </div>
+
+        <div class="settings-list">
+            <a href="#" class="setting-item">
+                <div class="setting-icon">
+                    <i data-lucide="help-circle"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">ศูนย์ช่วยเหลือ</div>
+                    <div class="setting-desc">คำถามที่พบบ่อย, คู่มือการใช้งาน</div>
+                </div>
+                <i data-lucide="chevron-right"></i>
+            </a>
+
+            <a href="#" class="setting-item">
+                <div class="setting-icon">
+                    <i data-lucide="file-text"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">เงื่อนไขการใช้งาน</div>
+                    <div class="setting-desc">นโยบายความเป็นส่วนตัว</div>
+                </div>
+                <i data-lucide="chevron-right"></i>
+            </a>
+
+            <a href="#" class="setting-item">
+                <div class="setting-icon">
+                    <i data-lucide="info"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">เกี่ยวกับแอป</div>
+                    <div class="setting-desc">เวอร์ชัน 1.0.0</div>
+                </div>
+                <i data-lucide="chevron-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Logout Button -->
+    <div class="section">
+        <button class="btn-logout" id="logout-btn">
+            <i data-lucide="log-out"></i>
+            <span>ออกจากระบบ</span>
+        </button>
+    </div>
+
+    <!-- Bottom spacing -->
+    <div class="footer-spacing"></div>
+</div>
+
+<!-- Sticky Footer Menu -->
+{% set current_page = 'profile' %}
+{% include 'components/footer_menu.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Dark mode toggle
+document.getElementById('dark-mode-toggle').addEventListener('change', (e) => {
+    if (e.target.checked) {
+        // TODO: Enable dark mode
+        alert('โหมดมืด (Coming soon!)');
+    } else {
+        // TODO: Disable dark mode
+    }
+});
+
+// Logout
+document.getElementById('logout-btn').addEventListener('click', () => {
+    if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
+        window.location.href = '/logout';
+    }
+});
+
+// Setting items
+document.querySelectorAll('.setting-item').forEach(item => {
+    if (!item.querySelector('.setting-toggle')) {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            alert('ฟีเจอร์นี้กำลังพัฒนา (Coming soon!)');
+        });
+    }
+});
+</script>
+{% endblock %}

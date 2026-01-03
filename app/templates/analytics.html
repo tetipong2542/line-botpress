@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}รายงาน - จดรายรับรายจ่าย{% endblock %}
+
+{% block content %}
+<div class="mobile-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>
+                <i data-lucide="bar-chart-2"></i>
+                รายงาน
+            </h1>
+            <p class="subtitle">วิเคราะห์รายรับรายจ่าย</p>
+        </div>
+    </div>
+
+    <!-- Period Selector -->
+    <div class="period-selector">
+        <button class="period-nav" id="prev-period">
+            <i data-lucide="chevron-left"></i>
+        </button>
+        <div class="period-display">
+            <span id="current-period">มกราคม 2026</span>
+        </div>
+        <button class="period-nav" id="next-period">
+            <i data-lucide="chevron-right"></i>
+        </button>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-section">
+        <div class="summary-card income">
+            <div class="summary-icon">
+                <i data-lucide="trending-up"></i>
+            </div>
+            <div class="summary-content">
+                <div class="summary-label">รายรับเดือนนี้</div>
+                <div class="summary-amount">฿0</div>
+            </div>
+        </div>
+
+        <div class="summary-card expense">
+            <div class="summary-icon">
+                <i data-lucide="trending-down"></i>
+            </div>
+            <div class="summary-content">
+                <div class="summary-label">รายจ่ายเดือนนี้</div>
+                <div class="summary-amount">฿350</div>
+            </div>
+        </div>
+
+        <div class="summary-card balance">
+            <div class="summary-icon">
+                <i data-lucide="wallet"></i>
+            </div>
+            <div class="summary-content">
+                <div class="summary-label">คงเหลือ</div>
+                <div class="summary-amount">-฿350</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="section">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="pie-chart"></i>
+                สัดส่วนรายจ่าย
+            </h2>
+        </div>
+        <div class="chart-container">
+            <div class="chart-placeholder">
+                <i data-lucide="pie-chart"></i>
+                <p>แผนภูมิแสดงที่นี่</p>
+                <p class="chart-note">จะเชื่อมต่อกับ API ในอนาคต</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Categories -->
+    <div class="section">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="trending-up"></i>
+                หมวดหมู่ยอดนิยม
+            </h2>
+        </div>
+        <div class="category-stats">
+            <div class="category-stat-item">
+                <div class="category-stat-icon">🚗</div>
+                <div class="category-stat-info">
+                    <div class="category-stat-name">เดินทาง</div>
+                    <div class="category-stat-bar">
+                        <div class="category-stat-progress" style="width: 75%;"></div>
+                    </div>
+                </div>
+                <div class="category-stat-amount">
+                    ฿350
+                </div>
+            </div>
+
+            <div class="category-stat-item">
+                <div class="category-stat-icon">🍔</div>
+                <div class="category-stat-info">
+                    <div class="category-stat-name">อาหาร</div>
+                    <div class="category-stat-bar">
+                        <div class="category-stat-progress" style="width: 0%;"></div>
+                    </div>
+                </div>
+                <div class="category-stat-amount">
+                    ฿0
+                </div>
+            </div>
+
+            <div class="category-stat-item">
+                <div class="category-stat-icon">🎬</div>
+                <div class="category-stat-info">
+                    <div class="category-stat-name">บันเทิง</div>
+                    <div class="category-stat-bar">
+                        <div class="category-stat-progress" style="width: 0%;"></div>
+                    </div>
+                </div>
+                <div class="category-stat-amount">
+                    ฿0
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Trend -->
+    <div class="section">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="activity"></i>
+                แนวโน้มรายเดือน
+            </h2>
+        </div>
+        <div class="chart-container">
+            <div class="chart-placeholder">
+                <i data-lucide="activity"></i>
+                <p>กราฟแนวโน้มแสดงที่นี่</p>
+                <p class="chart-note">เปรียบเทียบรายรับ-รายจ่าย 6 เดือนย้อนหลัง</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom spacing -->
+    <div class="footer-spacing"></div>
+</div>
+
+<!-- Sticky Footer Menu -->
+{% set current_page = 'analytics' %}
+{% include 'components/footer_menu.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Period navigation
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
+
+const monthNames = [
+    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+];
+
+function updatePeriodDisplay() {
+    document.getElementById('current-period').textContent =
+        `${monthNames[currentMonth]} ${currentYear}`;
+}
+
+document.getElementById('prev-period').addEventListener('click', () => {
+    currentMonth--;
+    if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+    }
+    updatePeriodDisplay();
+    // TODO: Load data for new period
+});
+
+document.getElementById('next-period').addEventListener('click', () => {
+    currentMonth++;
+    if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+    }
+    updatePeriodDisplay();
+    // TODO: Load data for new period
+});
+
+// Initialize
+updatePeriodDisplay();
+</script>
+{% endblock %}

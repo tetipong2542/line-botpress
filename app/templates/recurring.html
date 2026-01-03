@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}รายการประจำ - จดรายรับรายจ่าย{% endblock %}
+
+{% block content %}
+<div class="mobile-container">
+    <!-- App-Title Bar -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>
+                <i data-lucide="refresh-cw"></i>
+                รายการประจำ{% if user %} - {{ user.display_name }}{% endif %}
+            </h1>
+            <p class="subtitle">จัดการรายการที่เกิดซ้ำ</p>
+        </div>
+    </div>
+
+    <!-- Book-Switcher Strip (Account / Family Switcher) -->
+    <div class="book-switcher">
+        <button class="book-pill active" data-book="personal">
+            Pond Titipong
+        </button>
+        <button class="book-pill" data-book="family">
+            Family POND
+        </button>
+    </div>
+
+    <!-- Summary Strip -->
+    <div class="summary-strip">
+        <div class="summary-col income">
+            <div class="summary-strip-label">รายรับ</div>
+            <div class="summary-strip-amount">0.00</div>
+        </div>
+        <div class="summary-col expense">
+            <div class="summary-strip-label">รายจ่าย</div>
+            <div class="summary-strip-amount">300.00</div>
+        </div>
+        <div class="summary-col balance">
+            <div class="summary-strip-label">คงเหลือ</div>
+            <div class="summary-strip-amount">-300.00</div>
+        </div>
+    </div>
+
+    <!-- Recurring List -->
+    <div class="section">
+        <div class="recurring-list">
+            <!-- Sample Recurring Item (Expense) -->
+            <div class="recurring-card" data-id="1">
+                <div class="recurring-icon expense">
+                    <i data-lucide="tv"></i>
+                </div>
+                <div class="recurring-info">
+                    <div class="recurring-title">Netflix</div>
+                    <div class="recurring-meta">
+                        <span class="recurring-category">บันเทิง</span>
+                        <span class="recurring-freq">ทุกเดือน (วันที่ 1)</span>
+                    </div>
+                    <div class="recurring-alert">
+                        <i data-lucide="bell"></i>
+                        เตือนล่วงหน้า 3 วัน • ครบกำหนด 01/02/2026
+                    </div>
+                </div>
+                <div class="recurring-amount expense">
+                    300.00
+                </div>
+            </div>
+
+            <!-- Empty State (Hidden when has data) -->
+            <div class="empty-state" style="display: none;">
+                <i data-lucide="calendar-off"></i>
+                <p>ยังไม่มีรายการประจำ</p>
+                <p class="empty-subtitle">เพิ่มรายการที่เกิดซ้ำ เช่น Netflix, ค่าเช่า, เงินเดือน</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom spacing -->
+    <div class="footer-spacing"></div>
+</div>
+
+<!-- Floating Action Button -->
+<div class="floating-action">
+    <button class="btn-fab" id="add-recurring-btn">
+        <i data-lucide="plus"></i>
+    </button>
+</div>
+
+<!-- Modal: Add/Edit Recurring Transaction -->
+<div class="modal" id="recurring-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content modal-large">
+        <div class="modal-header expense">
+            <h2>รายการประจำ</h2>
+            <button class="modal-close">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <form class="modal-body" id="recurring-form">
+            <!-- ประเภท -->
+            <div class="form-group">
+                <label class="form-label">ประเภท</label>
+                <select class="form-select" id="recurring-type">
+                    <option value="expense">รายจ่าย</option>
+                    <option value="income">รายรับ</option>
+                </select>
+            </div>
+
+            <!-- หมวดหมู่ -->
+            <div class="form-group">
+                <label class="form-label">หมวดหมู่</label>
+                <select class="form-select" id="recurring-category">
+                    <option value="">เลือกหมวดหมู่</option>
+                    <optgroup label="รายจ่าย" id="expense-categories">
+                        <option value="food">🍔 อาหาร</option>
+                        <option value="transport">🚗 เดินทาง</option>
+                        <option value="entertainment">🎬 บันเทิง</option>
+                        <option value="utilities">💡 ค่าสาธารณูปโภค</option>
+                        <option value="rent">🏠 ค่าเช่า</option>
+                    </optgroup>
+                    <optgroup label="รายรับ" id="income-categories" style="display: none;">
+                        <option value="salary">💰 เงินเดือน</option>
+                        <option value="bonus">🎁 โบนัส</option>
+                        <option value="investment">📈 รายได้จากการลงทุน</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <!-- ความถี่ -->
+            <div class="form-group">
+                <label class="form-label">ความถี่</label>
+                <select class="form-select" id="recurring-frequency">
+                    <option value="monthly">ทุกเดือน</option>
+                    <option value="weekly">ทุกสัปดาห์</option>
+                    <option value="yearly">ทุกปี</option>
+                </select>
+            </div>
+
+            <!-- วันที่ -->
+            <div class="form-group">
+                <label class="form-label">วันที่</label>
+                <select class="form-select" id="recurring-day">
+                    <option value="1">1</option>
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="25">25</option>
+                    <option value="28">28</option>
+                </select>
+            </div>
+
+            <!-- วันที่เริ่มต้น -->
+            <div class="form-group">
+                <label class="form-label">วันที่เริ่มต้น</label>
+                <input type="date" class="form-input" id="recurring-start-date" required>
+            </div>
+
+            <!-- ครบกำหนดครั้งถัดไป (Readonly) -->
+            <div class="form-group">
+                <label class="form-label">ครบกำหนดครั้งถัดไป</label>
+                <input type="text" class="form-input" id="recurring-next-date" readonly value="01/02/2026">
+            </div>
+
+            <!-- เตือนล่วงหน้า -->
+            <div class="form-group">
+                <label class="form-label">เตือนล่วงหน้า</label>
+                <select class="form-select" id="recurring-reminder">
+                    <option value="0">ไม่เตือน</option>
+                    <option value="1">1 วัน</option>
+                    <option value="3" selected>3 วัน</option>
+                    <option value="7">7 วัน</option>
+                </select>
+            </div>
+
+            <!-- บันทึก -->
+            <div class="form-group">
+                <label class="form-label">บันทึกรายจ่าย/รายรับ</label>
+                <textarea class="form-textarea" id="recurring-note" placeholder="ระบุรายละเอียดสั้นๆ" rows="2"></textarea>
+            </div>
+
+            <!-- จำนวนเงิน -->
+            <div class="form-group">
+                <label class="form-label">จำนวนเงิน (THB)</label>
+                <div class="amount-input-wrapper">
+                    <span class="currency">฿</span>
+                    <input type="number" class="form-input amount-input" id="recurring-amount" placeholder="0.00" step="0.01" required>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn-primary">
+                <i data-lucide="check"></i>
+                <span>บันทึก</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Sticky Footer Menu -->
+{% set current_page = 'recurring' %}
+{% include 'components/footer_menu.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Book Switcher
+const bookPills = document.querySelectorAll('.book-pill');
+bookPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+        bookPills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        // TODO: Load data for selected book
+    });
+});
+
+// Modal controls
+const modal = document.getElementById('recurring-modal');
+const addBtn = document.getElementById('add-recurring-btn');
+const closeBtn = modal.querySelector('.modal-close');
+const overlay = modal.querySelector('.modal-overlay');
+
+function openModal() {
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+addBtn.addEventListener('click', openModal);
+closeBtn.addEventListener('click', closeModal);
+overlay.addEventListener('click', closeModal);
+
+// Type change - toggle header color and category options
+const typeSelect = document.getElementById('recurring-type');
+const modalHeader = modal.querySelector('.modal-header');
+const expenseCategories = document.getElementById('expense-categories');
+const incomeCategories = document.getElementById('income-categories');
+
+typeSelect.addEventListener('change', (e) => {
+    const type = e.target.value;
+
+    if (type === 'expense') {
+        modalHeader.classList.remove('income');
+        modalHeader.classList.add('expense');
+        expenseCategories.style.display = '';
+        incomeCategories.style.display = 'none';
+    } else {
+        modalHeader.classList.remove('expense');
+        modalHeader.classList.add('income');
+        expenseCategories.style.display = 'none';
+        incomeCategories.style.display = '';
+    }
+});
+
+// Form submission
+document.getElementById('recurring-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = {
+        type: document.getElementById('recurring-type').value,
+        category_id: document.getElementById('recurring-category').value,
+        frequency: document.getElementById('recurring-frequency').value,
+        day: document.getElementById('recurring-day').value,
+        start_date: document.getElementById('recurring-start-date').value,
+        reminder_days: document.getElementById('recurring-reminder').value,
+        note: document.getElementById('recurring-note').value,
+        amount: parseFloat(document.getElementById('recurring-amount').value)
+    };
+
+    try {
+        // TODO: Send to API
+        console.log('Recurring transaction data:', formData);
+        alert('บันทึกสำเร็จ!');
+        closeModal();
+    } catch (error) {
+        console.error('Error:', error);
+        alert('เกิดข้อผิดพลาด');
+    }
+});
+
+// Set default start date to today
+document.getElementById('recurring-start-date').valueAsDate = new Date();
+
+// Click recurring card to edit
+document.querySelectorAll('.recurring-card').forEach(card => {
+    card.addEventListener('click', () => {
+        // TODO: Load recurring data and open modal
+        openModal();
+    });
+});
+</script>
+{% endblock %}
