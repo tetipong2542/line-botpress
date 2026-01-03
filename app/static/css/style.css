@@ -207,6 +207,36 @@ ol li {
     margin: 12px 0;
 }
 
+/* Lucide Icons */
+i[data-lucide] {
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+    vertical-align: middle;
+    stroke-width: 2;
+}
+
+.logo i[data-lucide] {
+    width: 32px;
+    height: 32px;
+    stroke-width: 1.5;
+}
+
+.feature-icon i[data-lucide] {
+    width: 14px;
+    height: 14px;
+}
+
+.btn i[data-lucide] {
+    width: 18px;
+    height: 18px;
+}
+
+h1 i[data-lucide],
+h2 i[data-lucide] {
+    margin-right: 4px;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
     .container {

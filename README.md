@@ -213,6 +213,8 @@ See [PRD-Frontend-Backend.md](PRD-Frontend-Backend.md) for complete schema.
 
 ### Deploy to Railway
 
+#### 1. Setup Railway Project
+
 ```bash
 # Install Railway CLI
 npm install -g @railway/cli
@@ -223,16 +225,54 @@ railway init
 railway up
 ```
 
-Set environment variables in Railway dashboard.
+#### 2. Configure Volume Mount
 
-### Environment Variables for Production
+Railway automatically creates volume mount at `/data` based on `railway.json` configuration:
+
+```json
+{
+  "volumes": [
+    {
+      "mountPath": "/data"
+    }
+  ]
+}
+```
+
+#### 3. Set Environment Variables
+
+Configure these in Railway dashboard:
 
 ```env
+# Production Mode
 FLASK_ENV=production
-SECRET_KEY=<strong-random-key>
+SECRET_KEY=<strong-random-key-min-32-chars>
 SESSION_COOKIE_SECURE=True
-LINE_REDIRECT_URI=https://your-domain.com/auth/line/callback
+
+# Database (use volume mount)
+DATA_DIR=/data
+
+# LINE Credentials
+LINE_CHANNEL_ID=<your-channel-id>
+LINE_CHANNEL_SECRET=<your-channel-secret>
+LINE_REDIRECT_URI=https://your-domain.railway.app/auth/line/callback
+LINE_CHANNEL_ACCESS_TOKEN=<your-access-token>
+
+# Botpress
+BOTPRESS_WEBHOOK_URL=<your-botpress-webhook>
+BOTPRESS_BOT_SECRET=<your-bot-secret>
+BOT_HMAC_SECRET=<strong-random-key-min-32-chars>
 ```
+
+#### 4. Initialize Database
+
+After first deployment, initialize database via Railway CLI:
+
+```bash
+railway run flask init-db
+```
+
+The database will be persisted in `/data/finance.db` volume.
 
 ## 🧪 Testing
 

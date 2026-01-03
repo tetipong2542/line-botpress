@@ -264,6 +264,144 @@ python run.py --port 8000
 
 ---
 
+## 🚀 Railway Deployment Guide
+
+### 1. Prepare for Deployment
+
+Ensure these files exist in your repository:
+- `railway.json` - Railway configuration with volume mount
+- `.env.example` - Template for environment variables
+- `requirements.txt` - Python dependencies
+- `run.py` - Application entry point
+
+### 2. Deploy to Railway
+
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login to Railway
+railway login
+
+# Initialize project (first time only)
+railway init
+
+# Link to existing project (if already created)
+railway link
+
+# Deploy application
+railway up
+```
+
+### 3. Configure Environment Variables
+
+In Railway dashboard, add these variables:
+
+**Required:**
+```env
+# Flask
+FLASK_ENV=production
+SECRET_KEY=<generate-strong-random-key-min-32-chars>
+
+# Database (uses volume mount)
+DATA_DIR=/data
+
+# LINE Login
+LINE_CHANNEL_ID=<your-line-login-channel-id>
+LINE_CHANNEL_SECRET=<your-line-login-channel-secret>
+LINE_REDIRECT_URI=https://<your-app>.railway.app/auth/line/callback
+
+# LINE Messaging API
+LINE_CHANNEL_ACCESS_TOKEN=<your-messaging-api-token>
+
+# Botpress
+BOTPRESS_WEBHOOK_URL=<your-botpress-webhook-url>
+BOTPRESS_BOT_SECRET=<your-botpress-bot-secret>
+
+# Security
+BOT_HMAC_SECRET=<generate-strong-random-key-min-32-chars>
+SESSION_COOKIE_SECURE=True
+```
+
+**Optional:**
+```env
+APP_NAME=จดรายรับรายจ่าย
+APP_TIMEZONE=Asia/Bangkok
+DEFAULT_CURRENCY=THB
+```
+
+### 4. Setup Volume Mount
+
+Railway automatically mounts volume at `/data` based on `railway.json`:
+
+```json
+{
+  "volumes": [
+    {
+      "mountPath": "/data"
+    }
+  ]
+}
+```
+
+The SQLite database will be stored in `/data/finance.db` for persistence.
+
+### 5. Initialize Database
+
+After first deployment:
+
+```bash
+# Connect to Railway shell
+railway run flask init-db
+```
+
+Or use Railway's web-based shell in the dashboard.
+
+### 6. Update LINE Webhook URL
+
+1. Go to [LINE Developers Console](https://developers.line.biz/console/)
+2. Select your Messaging API channel
+3. Update Webhook URL to: `https://<your-app>.railway.app/line/webhook`
+4. Enable "Use webhook"
+5. Verify the webhook (should return 200 OK)
+
+### 7. Update LINE Login Callback URL
+
+1. In LINE Developers Console
+2. Select your LINE Login channel
+3. Update Callback URL to: `https://<your-app>.railway.app/auth/line/callback`
+
+### 8. Verify Deployment
+
+Test your deployment:
+
+```bash
+# Check app status
+curl https://<your-app>.railway.app/
+
+# Check API (should return 401 - not logged in)
+curl https://<your-app>.railway.app/auth/me
+```
+
+### Troubleshooting Railway
+
+**Database not persisting:**
+- Verify `DATA_DIR=/data` is set in environment variables
+- Check volume mount is configured in `railway.json`
+- Verify database is created in `/data/finance.db`
+
+**App not starting:**
+- Check logs in Railway dashboard
+- Verify all required environment variables are set
+- Ensure `requirements.txt` includes all dependencies
+
+**LINE webhook errors:**
+- Verify webhook URL is correct
+- Check `LINE_CHANNEL_SECRET` matches your channel
+- View logs for signature verification errors
+
+---
+
 ## 🎯 Key Endpoints
 
 | Endpoint | Method | Description |
