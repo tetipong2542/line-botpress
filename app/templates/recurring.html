@@ -371,9 +371,41 @@ async function deleteRecurring(recurringId) {
     }
 }
 
+// Load categories for dropdown
+async function loadCategories() {
+    try {
+        const result = await API.get(buildApiUrl('categories'));
+
+        if (result.categories && result.categories.length > 0) {
+            const categories = result.categories;
+
+            const expenseCategories = categories.filter(cat => cat.type === 'expense' && cat.is_active);
+            const incomeCategories = categories.filter(cat => cat.type === 'income' && cat.is_active);
+
+            const expenseGroup = document.getElementById('expense-categories');
+            const incomeGroup = document.getElementById('income-categories');
+
+            if (expenseGroup) {
+                expenseGroup.innerHTML = expenseCategories.map(cat =>
+                    `<option value="${cat.id}">${cat.icon} ${cat.name_th}</option>`
+                ).join('');
+            }
+
+            if (incomeGroup) {
+                incomeGroup.innerHTML = incomeCategories.map(cat =>
+                    `<option value="${cat.id}">${cat.icon} ${cat.name_th}</option>`
+                ).join('');
+            }
+        }
+    } catch (error) {
+        console.error('Error loading categories:', error);
+    }
+}
+
 // Load on page ready
-document.addEventListener('DOMContentLoaded', () => {
-    loadRecurringRules();
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadCategories();
+    await loadRecurringRules();
 });
 </script>
 {% endblock %}

@@ -304,41 +304,9 @@ document.getElementById('btn-add-income').addEventListener('click', () => {
     openModal(modals.incomeCategory);
 });
 
-// ===== EXPENSE CATEGORY SELECTION =====
-document.querySelectorAll('#expense-category-modal .category-grid-item').forEach(item => {
-    item.addEventListener('click', () => {
-        selectedCategory = item.dataset.category;
-        selectedCategoryLabel = item.querySelector('.category-grid-label').textContent;
-
-        // Close category modal
-        closeModal(modals.expenseCategory);
-
-        // Open expense form with selected category
-        setTimeout(() => {
-            document.getElementById('expense-category-display').value = selectedCategoryLabel;
-            setDefaultDateTime('expense');
-            openModal(modals.expenseForm);
-        }, 300);
-    });
-});
-
-// ===== INCOME CATEGORY SELECTION =====
-document.querySelectorAll('#income-category-modal .category-grid-item').forEach(item => {
-    item.addEventListener('click', () => {
-        selectedCategory = item.dataset.category;
-        selectedCategoryLabel = item.querySelector('.category-grid-label').textContent;
-
-        // Close category modal
-        closeModal(modals.incomeCategory);
-
-        // Open income form with selected category
-        setTimeout(() => {
-            document.getElementById('income-category-display').value = selectedCategoryLabel;
-            setDefaultDateTime('income');
-            openModal(modals.incomeForm);
-        }, 300);
-    });
-});
+// ===== CATEGORY SELECTION =====
+// Category click handlers are now dynamically attached in loadCategories() and attachCategoryHandlers()
+// This ensures categories are loaded from the database with proper IDs
 
 // ===== SET DEFAULT DATE/TIME =====
 function setDefaultDateTime(type) {
@@ -493,6 +461,84 @@ document.getElementById('income-form').addEventListener('submit', async (e) => {
     }
 });
 
+// ===== LOAD CATEGORIES =====
+async function loadCategories() {
+    try {
+        const result = await API.get(buildApiUrl('categories'));
+
+        if (result.categories && result.categories.length > 0) {
+            const categories = result.categories;
+
+            // Separate by type
+            const expenseCategories = categories.filter(cat => cat.type === 'expense' && cat.is_active);
+            const incomeCategories = categories.filter(cat => cat.type === 'income' && cat.is_active);
+
+            // Update expense category grid
+            const expenseCategoryGrid = document.querySelector('#expense-category-modal .category-grid');
+            if (expenseCategoryGrid) {
+                expenseCategoryGrid.innerHTML = expenseCategories.map(cat => `
+                    <div class="category-grid-item" data-category-id="${cat.id}">
+                        <div class="category-grid-icon">${cat.icon || '📁'}</div>
+                        <div class="category-grid-label">${cat.name_th}</div>
+                    </div>
+                `).join('');
+
+                // Re-attach click handlers
+                attachCategoryHandlers('#expense-category-modal');
+            }
+
+            // Update income category grid
+            const incomeCategoryGrid = document.querySelector('#income-category-modal .category-grid');
+            if (incomeCategoryGrid) {
+                incomeCategoryGrid.innerHTML = incomeCategories.map(cat => `
+                    <div class="category-grid-item" data-category-id="${cat.id}">
+                        <div class="category-grid-icon">${cat.icon || '💰'}</div>
+                        <div class="category-grid-label">${cat.name_th}</div>
+                    </div>
+                `).join('');
+
+                // Re-attach click handlers
+                attachCategoryHandlers('#income-category-modal');
+            }
+        }
+    } catch (error) {
+        console.error('Error loading categories:', error);
+    }
+}
+
+// ===== ATTACH CATEGORY CLICK HANDLERS =====
+function attachCategoryHandlers(modalSelector) {
+    const modal = document.querySelector(modalSelector);
+    if (!modal) return;
+
+    const categoryItems = modal.querySelectorAll('.category-grid-item');
+    categoryItems.forEach(item => {
+        item.addEventListener('click', () => {
+            const categoryId = item.dataset.categoryId;
+            const label = item.querySelector('.category-grid-label').textContent;
+            const icon = item.querySelector('.category-grid-icon').textContent;
+
+            selectedCategory = categoryId;
+            selectedCategoryLabel = `${icon} ${label}`;
+
+            // Show in next modal
+            closeModal(modal);
+
+            setTimeout(() => {
+                if (modalSelector.includes('expense')) {
+                    document.getElementById('expense-category-display').value = selectedCategoryLabel;
+                    setDefaultDateTime('expense');
+                    openModal(modals.expenseForm);
+                } else {
+                    document.getElementById('income-category-display').value = selectedCategoryLabel;
+                    setDefaultDateTime('income');
+                    openModal(modals.incomeForm);
+                }
+            }, 300);
+        });
+    });
+}
+
 // ===== DASHBOARD DATA =====
 async function loadDashboard() {
     try {
@@ -524,8 +570,9 @@ function handleDeepLink() {
 }
 
 // Load on page ready
-document.addEventListener('DOMContentLoaded', () => {
-    loadDashboard();
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadCategories(); // Load categories first
+    await loadDashboard();
     handleDeepLink();
 });
 </script>

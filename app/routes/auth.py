@@ -126,6 +126,48 @@ def line_callback():
         )
         db.session.add(user)
         db.session.commit()
+
+        # Create default project for new user
+        from app.models.project import Project
+        from app.utils.helpers import generate_id
+
+        default_project = Project(
+            name=f"บัญชี {user.display_name}",
+            owner_user_id=user.id
+        )
+        default_project.id = generate_id('prj')
+        db.session.add(default_project)
+        db.session.commit()
+
+        # Create default categories for the project
+        from app.models.category import Category
+
+        default_categories = [
+            # Expense categories
+            {'type': 'expense', 'name_th': 'อาหารและเครื่องดื่ม', 'icon': '🍔', 'color': '#EF4444'},
+            {'type': 'expense', 'name_th': 'ค่าเดินทาง', 'icon': '🚗', 'color': '#F59E0B'},
+            {'type': 'expense', 'name_th': 'ช้อปปิ้ง', 'icon': '🛍️', 'color': '#EC4899'},
+            {'type': 'expense', 'name_th': 'ความบันเทิง', 'icon': '🎬', 'color': '#8B5CF6'},
+            {'type': 'expense', 'name_th': 'ค่าสาธารณูปโภค', 'icon': '💡', 'color': '#10B981'},
+            {'type': 'expense', 'name_th': 'สุขภาพ', 'icon': '🏥', 'color': '#06B6D4'},
+            # Income categories
+            {'type': 'income', 'name_th': 'เงินเดือน', 'icon': '💰', 'color': '#10B981'},
+            {'type': 'income', 'name_th': 'รายได้เสริม', 'icon': '📈', 'color': '#3B82F6'},
+            {'type': 'income', 'name_th': 'ของขวัญ', 'icon': '🎁', 'color': '#EC4899'},
+        ]
+
+        for idx, cat_data in enumerate(default_categories):
+            category = Category(
+                project_id=default_project.id,
+                type=cat_data['type'],
+                name_th=cat_data['name_th'],
+                icon=cat_data['icon'],
+                color=cat_data['color'],
+                sort_order=idx + 1
+            )
+            db.session.add(category)
+
+        db.session.commit()
     else:
         # Update existing user
         user.display_name = profile_json.get('displayName', user.display_name)
@@ -133,6 +175,48 @@ def line_callback():
         if token_json.get('email'):
             user.email = token_json.get('email')
         db.session.commit()
+
+        # Check if user has at least one project, if not create default
+        from app.models.project import Project
+        from app.utils.helpers import generate_id
+
+        existing_project = Project.query.filter_by(owner_user_id=user.id).first()
+        if not existing_project:
+            default_project = Project(
+                name=f"บัญชี {user.display_name}",
+                owner_user_id=user.id
+            )
+            default_project.id = generate_id('prj')
+            db.session.add(default_project)
+            db.session.commit()
+
+            # Create default categories
+            from app.models.category import Category
+
+            default_categories = [
+                {'type': 'expense', 'name_th': 'อาหารและเครื่องดื่ม', 'icon': '🍔', 'color': '#EF4444'},
+                {'type': 'expense', 'name_th': 'ค่าเดินทาง', 'icon': '🚗', 'color': '#F59E0B'},
+                {'type': 'expense', 'name_th': 'ช้อปปิ้ง', 'icon': '🛍️', 'color': '#EC4899'},
+                {'type': 'expense', 'name_th': 'ความบันเทิง', 'icon': '🎬', 'color': '#8B5CF6'},
+                {'type': 'expense', 'name_th': 'ค่าสาธารณูปโภค', 'icon': '💡', 'color': '#10B981'},
+                {'type': 'expense', 'name_th': 'สุขภาพ', 'icon': '🏥', 'color': '#06B6D4'},
+                {'type': 'income', 'name_th': 'เงินเดือน', 'icon': '💰', 'color': '#10B981'},
+                {'type': 'income', 'name_th': 'รายได้เสริม', 'icon': '📈', 'color': '#3B82F6'},
+                {'type': 'income', 'name_th': 'ของขวัญ', 'icon': '🎁', 'color': '#EC4899'},
+            ]
+
+            for idx, cat_data in enumerate(default_categories):
+                category = Category(
+                    project_id=default_project.id,
+                    type=cat_data['type'],
+                    name_th=cat_data['name_th'],
+                    icon=cat_data['icon'],
+                    color=cat_data['color'],
+                    sort_order=idx + 1
+                )
+                db.session.add(category)
+
+            db.session.commit()
 
     # Create session
     session['user_id'] = user.id
