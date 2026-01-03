@@ -15,6 +15,20 @@
     <script>
         lucide.createIcons();
     </script>
+
+    <!-- Global Configuration -->
+    <script>
+        {% if project %}
+        window.PROJECT_ID = '{{ project.id }}';
+        {% endif %}
+    </script>
+
+    <!-- Toast Notification System -->
+    <script src="{{ url_for('static', filename='js/toast.js') }}"></script>
+
+    <!-- API Utilities -->
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

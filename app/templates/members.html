@@ -226,30 +226,110 @@ overlay.addEventListener('click', closeModal);
 document.getElementById('invite-form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const formData = {
-        email: document.getElementById('invite-email').value,
-        role: document.getElementById('invite-role').value,
-        message: document.getElementById('invite-message').value
-    };
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalBtnContent = submitBtn.innerHTML;
+
+    const email = document.getElementById('invite-email').value;
+    const role = document.getElementById('invite-role').value;
+
+    // Validation
+    if (!email || !email.includes('@')) {
+        showToast('กรุณากรอกอีเมลที่ถูกต้อง', 'error');
+        return;
+    }
+
+    // Loading state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังส่ง...</span>';
+    lucide.createIcons();
 
     try {
-        // TODO: Send to API
-        console.log('Invite data:', formData);
-        alert('ส่งคำเชิญสำเร็จ!');
+        const result = await API.post(buildApiUrl('members/invite'), {
+            email: email,
+            role: role
+        });
+
+        showToast('ส่งคำเชิญสำเร็จ!', 'success');
+
+        document.getElementById('invite-form').reset();
         closeModal();
+
+        await loadMembers();
+
     } catch (error) {
-        console.error('Error:', error);
-        alert('เกิดข้อผิดพลาด');
+        console.error('Invite error:', error);
+        showToast(error.message || 'ไม่สามารถส่งคำเชิญได้', 'error');
+
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnContent;
+        lucide.createIcons();
     }
 });
 
-// Member menu actions
-document.querySelectorAll('.member-menu-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        // TODO: Show member actions menu (edit role, remove, etc.)
-        alert('เมนูการจัดการสมาชิก (Coming soon)');
-    });
+// Load members
+async function loadMembers() {
+    try {
+        const result = await API.get(buildApiUrl('members'));
+
+        if (result.members && result.members.length > 0) {
+            // TODO: Update member list UI with real data
+            console.log('Members loaded:', result.members);
+        }
+
+        // Load pending invites
+        const invites = await API.get(buildApiUrl('invites'));
+        if (invites.invites && invites.invites.length > 0) {
+            console.log('Pending invites:', invites.invites);
+        }
+
+    } catch (error) {
+        console.error('Error loading members:', error);
+    }
+}
+
+// Remove member
+async function removeMember(memberId) {
+    if (!confirm('ต้องการลบสมาชิกนี้หรือไม่?')) {
+        return;
+    }
+
+    try {
+        await API.delete(buildApiUrl('members') + `/${memberId}`);
+        showToast('ลบสมาชิกสำเร็จ!', 'success');
+        await loadMembers();
+    } catch (error) {
+        showToast(error.message || 'ไม่สามารถลบสมาชิกได้', 'error');
+    }
+}
+
+// Change member role
+async function changeMemberRole(memberId, currentRole) {
+    const newRole = prompt('เปลี่ยนบทบาทเป็น (admin/member):', currentRole);
+
+    if (!newRole || newRole === currentRole) {
+        return;
+    }
+
+    if (newRole !== 'admin' && newRole !== 'member') {
+        showToast('บทบาทไม่ถูกต้อง ใช้ได้เฉพาะ admin หรือ member', 'error');
+        return;
+    }
+
+    try {
+        await API.put(buildApiUrl('members') + `/${memberId}`, {
+            role: newRole
+        });
+        showToast('เปลี่ยนบทบาทสำเร็จ!', 'success');
+        await loadMembers();
+    } catch (error) {
+        showToast(error.message || 'ไม่สามารถเปลี่ยนบทบาทได้', 'error');
+    }
+}
+
+// Load on page ready
+document.addEventListener('DOMContentLoaded', () => {
+    loadMembers();
 });
 </script>
 {% endblock %}

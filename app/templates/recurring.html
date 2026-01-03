@@ -258,37 +258,122 @@ typeSelect.addEventListener('change', (e) => {
 document.getElementById('recurring-form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const formData = {
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalBtnContent = submitBtn.innerHTML;
+
+    // Get form values
+    const frequency = document.getElementById('recurring-frequency').value;
+    const day = parseInt(document.getElementById('recurring-day').value);
+    const amount = parseFloat(document.getElementById('recurring-amount').value);
+    const category_id = document.getElementById('recurring-category').value;
+
+    // Validation
+    if (!category_id) {
+        showToast('กรุณาเลือกหมวดหมู่', 'error');
+        return;
+    }
+    if (!amount || amount <= 0) {
+        showToast('กรุณากรอกจำนวนเงินที่ถูกต้อง', 'error');
+        return;
+    }
+
+    // Loading state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังบันทึก...</span>';
+    lucide.createIcons();
+
+    // Prepare payload based on frequency
+    const payload = {
         type: document.getElementById('recurring-type').value,
-        category_id: document.getElementById('recurring-category').value,
-        frequency: document.getElementById('recurring-frequency').value,
-        day: document.getElementById('recurring-day').value,
+        category_id: category_id,
+        amount: amount,
+        freq: frequency,
         start_date: document.getElementById('recurring-start-date').value,
-        reminder_days: document.getElementById('recurring-reminder').value,
-        note: document.getElementById('recurring-note').value,
-        amount: parseFloat(document.getElementById('recurring-amount').value)
+        remind_days: parseInt(document.getElementById('recurring-reminder').value) || 0,
+        note: document.getElementById('recurring-note').value || null
     };
 
+    // Add day_of_month for monthly or day_of_week for weekly
+    if (frequency === 'monthly') {
+        payload.day_of_month = day;
+    } else if (frequency === 'weekly') {
+        payload.day_of_week = day;
+    }
+
     try {
-        // TODO: Send to API
-        console.log('Recurring transaction data:', formData);
-        alert('บันทึกสำเร็จ!');
+        await API.post(buildApiUrl('recurring'), payload);
+
+        showToast('บันทึกรายการประจำสำเร็จ!', 'success');
+
+        document.getElementById('recurring-form').reset();
         closeModal();
+
+        // Reload recurring list
+        await loadRecurringRules();
+
     } catch (error) {
-        console.error('Error:', error);
-        alert('เกิดข้อผิดพลาด');
+        console.error('Recurring error:', error);
+        showToast(error.message || 'ไม่สามารถบันทึกได้ กรุณาลองใหม่', 'error');
+
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnContent;
+        lucide.createIcons();
     }
 });
 
 // Set default start date to today
 document.getElementById('recurring-start-date').valueAsDate = new Date();
 
-// Click recurring card to edit
-document.querySelectorAll('.recurring-card').forEach(card => {
-    card.addEventListener('click', () => {
-        // TODO: Load recurring data and open modal
-        openModal();
-    });
+// Load recurring rules
+async function loadRecurringRules() {
+    try {
+        const result = await API.get(buildApiUrl('recurring') + '?active_only=true');
+
+        if (result.recurring_rules && result.recurring_rules.length > 0) {
+            // TODO: Update recurring list UI with real data
+            console.log('Recurring rules loaded:', result.recurring_rules);
+        } else {
+            console.log('No recurring rules yet');
+        }
+    } catch (error) {
+        console.error('Error loading recurring rules:', error);
+    }
+}
+
+// Execute recurring rule now
+async function executeRecurring(recurringId) {
+    if (!confirm('ต้องการบันทึกรายการนี้เลยหรือไม่?')) {
+        return;
+    }
+
+    try {
+        await API.post(buildApiUrl('recurring') + `/${recurringId}/execute`, {});
+        showToast('บันทึกรายการสำเร็จ!', 'success');
+        await loadRecurringRules();
+    } catch (error) {
+        showToast(error.message || 'เกิดข้อผิดพลาด', 'error');
+    }
+}
+
+// Delete recurring rule
+async function deleteRecurring(recurringId) {
+    if (!confirm('ต้องการลบรายการประจำนี้หรือไม่?')) {
+        return;
+    }
+
+    try {
+        await API.delete(buildApiUrl('recurring') + `/${recurringId}`);
+        showToast('ลบรายการประจำสำเร็จ!', 'success');
+        await loadRecurringRules();
+    } catch (error) {
+        showToast(error.message || 'เกิดข้อผิดพลาด', 'error');
+    }
+}
+
+// Load on page ready
+document.addEventListener('DOMContentLoaded', () => {
+    loadRecurringRules();
 });
 </script>
 {% endblock %}

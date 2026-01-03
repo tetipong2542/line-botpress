@@ -187,6 +187,268 @@ def create_transaction(project_id):
         }), 400
 
 
+@bp.route('/projects/<project_id>/transactions/<transaction_id>', methods=['PUT'])
+def update_transaction(project_id, transaction_id):
+    """Update transaction"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    data = request.json
+
+    try:
+        transaction = TransactionService.update_transaction(
+            transaction_id=transaction_id,
+            user_id=user.id,
+            updates=data
+        )
+
+        return jsonify({
+            'transaction': transaction.to_dict(include_category=True)
+        })
+
+    except ValueError as e:
+        return jsonify({
+            'error': {
+                'code': 'VALIDATION_ERROR',
+                'message': str(e)
+            }
+        }), 400
+    except PermissionError as e:
+        return jsonify({
+            'error': {
+                'code': 'FORBIDDEN',
+                'message': str(e)
+            }
+        }), 403
+
+
+@bp.route('/projects/<project_id>/transactions/<transaction_id>', methods=['DELETE'])
+def delete_transaction(project_id, transaction_id):
+    """Soft delete transaction"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+
+    try:
+        TransactionService.delete_transaction(
+            transaction_id=transaction_id,
+            user_id=user.id
+        )
+
+        return jsonify({
+            'success': True,
+            'message': 'ลบรายการเรียบร้อยแล้ว'
+        })
+
+    except ValueError as e:
+        return jsonify({
+            'error': {
+                'code': 'NOT_FOUND',
+                'message': str(e)
+            }
+        }), 404
+    except PermissionError as e:
+        return jsonify({
+            'error': {
+                'code': 'FORBIDDEN',
+                'message': str(e)
+            }
+        }), 403
+
+
+# Recurring Transactions
+@bp.route('/projects/<project_id>/recurring', methods=['POST'])
+def create_recurring(project_id):
+    """Create recurring transaction rule"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    data = request.json
+
+    try:
+        from app.services.recurring_service import RecurringService
+
+        recurring_rule = RecurringService.create_recurring_rule(
+            project_id=project_id,
+            user_id=user.id,
+            type=data.get('type'),
+            category_id=data.get('category_id'),
+            amount=data.get('amount'),
+            freq=data.get('freq'),
+            start_date=data.get('start_date'),
+            day_of_week=data.get('day_of_week'),
+            day_of_month=data.get('day_of_month'),
+            note=data.get('note'),
+            member_id=data.get('member_id'),
+            remind_days=data.get('remind_days', 0)
+        )
+
+        return jsonify({
+            'recurring_rule': recurring_rule.to_dict()
+        }), 201
+
+    except (ValueError, PermissionError) as e:
+        return jsonify({
+            'error': {
+                'code': 'VALIDATION_ERROR',
+                'message': str(e)
+            }
+        }), 400
+
+
+@bp.route('/projects/<project_id>/recurring', methods=['GET'])
+def list_recurring(project_id):
+    """List recurring transaction rules"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    active_only = request.args.get('active_only', 'true').lower() == 'true'
+
+    try:
+        from app.services.recurring_service import RecurringService
+
+        recurring_rules = RecurringService.get_recurring_rules(
+            project_id=project_id,
+            user_id=user.id,
+            active_only=active_only
+        )
+
+        return jsonify({
+            'recurring_rules': [rule.to_dict() for rule in recurring_rules]
+        })
+
+    except PermissionError as e:
+        return jsonify({
+            'error': {
+                'code': 'FORBIDDEN',
+                'message': str(e)
+            }
+        }), 403
+
+
+@bp.route('/projects/<project_id>/recurring/<recurring_id>', methods=['PUT'])
+def update_recurring(project_id, recurring_id):
+    """Update recurring transaction rule"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    data = request.json
+
+    try:
+        from app.services.recurring_service import RecurringService
+
+        recurring_rule = RecurringService.update_recurring_rule(
+            recurring_id=recurring_id,
+            user_id=user.id,
+            updates=data
+        )
+
+        return jsonify({
+            'recurring_rule': recurring_rule.to_dict()
+        })
+
+    except ValueError as e:
+        return jsonify({
+            'error': {
+                'code': 'VALIDATION_ERROR',
+                'message': str(e)
+            }
+        }), 400
+    except PermissionError as e:
+        return jsonify({
+            'error': {
+                'code': 'FORBIDDEN',
+                'message': str(e)
+            }
+        }), 403
+
+
+@bp.route('/projects/<project_id>/recurring/<recurring_id>', methods=['DELETE'])
+def delete_recurring(project_id, recurring_id):
+    """Delete (deactivate) recurring transaction rule"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+
+    try:
+        from app.services.recurring_service import RecurringService
+
+        RecurringService.delete_recurring_rule(
+            recurring_id=recurring_id,
+            user_id=user.id
+        )
+
+        return jsonify({
+            'success': True,
+            'message': 'ลบรายการประจำเรียบร้อยแล้ว'
+        })
+
+    except ValueError as e:
+        return jsonify({
+            'error': {
+                'code': 'NOT_FOUND',
+                'message': str(e)
+            }
+        }), 404
+    except PermissionError as e:
+        return jsonify({
+            'error': {
+                'code': 'FORBIDDEN',
+                'message': str(e)
+            }
+        }), 403
+
+
+@bp.route('/projects/<project_id>/recurring/<recurring_id>/execute', methods=['POST'])
+def execute_recurring(project_id, recurring_id):
+    """Manually execute recurring transaction rule"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+
+    try:
+        from app.services.recurring_service import RecurringService
+
+        transaction = RecurringService.execute_recurring_rule(
+            recurring_id=recurring_id,
+            user_id=user.id
+        )
+
+        return jsonify({
+            'transaction': transaction.to_dict(include_category=True),
+            'message': 'บันทึกรายการสำเร็จ'
+        }), 201
+
+    except ValueError as e:
+        return jsonify({
+            'error': {
+                'code': 'VALIDATION_ERROR',
+                'message': str(e)
+            }
+        }), 400
+    except PermissionError as e:
+        return jsonify({
+            'error': {
+                'code': 'FORBIDDEN',
+                'message': str(e)
+            }
+        }), 403
+
+
 # Categories
 @bp.route('/projects/<project_id>/categories', methods=['GET'])
 def get_categories(project_id):
@@ -207,6 +469,115 @@ def get_categories(project_id):
     return jsonify({
         'categories': [c.to_dict() for c in categories]
     })
+
+
+@bp.route('/projects/<project_id>/categories', methods=['POST'])
+def create_category(project_id):
+    """Create new category"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    data = request.json
+
+    try:
+        from app.services.category_service import CategoryService
+
+        category = CategoryService.create_category(
+            project_id=project_id,
+            user_id=user.id,
+            name_th=data.get('name_th'),
+            type=data.get('type'),
+            icon=data.get('icon'),
+            color=data.get('color')
+        )
+
+        return jsonify({
+            'category': category.to_dict()
+        }), 201
+
+    except (ValueError, PermissionError) as e:
+        return jsonify({
+            'error': {
+                'code': 'VALIDATION_ERROR',
+                'message': str(e)
+            }
+        }), 400
+
+
+@bp.route('/projects/<project_id>/categories/<category_id>', methods=['PUT'])
+def update_category_route(project_id, category_id):
+    """Update category"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    data = request.json
+
+    try:
+        from app.services.category_service import CategoryService
+
+        category = CategoryService.update_category(
+            category_id=category_id,
+            user_id=user.id,
+            updates=data
+        )
+
+        return jsonify({
+            'category': category.to_dict()
+        })
+
+    except ValueError as e:
+        return jsonify({
+            'error': {
+                'code': 'VALIDATION_ERROR',
+                'message': str(e)
+            }
+        }), 400
+    except PermissionError as e:
+        return jsonify({
+            'error': {
+                'code': 'FORBIDDEN',
+                'message': str(e)
+            }
+        }), 403
+
+
+@bp.route('/projects/<project_id>/categories/<category_id>', methods=['DELETE'])
+def delete_category_route(project_id, category_id):
+    """Soft delete category"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+
+    try:
+        from app.services.category_service import CategoryService
+
+        result = CategoryService.delete_category(
+            category_id=category_id,
+            user_id=user.id
+        )
+
+        return jsonify(result)
+
+    except ValueError as e:
+        return jsonify({
+            'error': {
+                'code': 'NOT_FOUND',
+                'message': str(e)
+            }
+        }), 404
+    except PermissionError as e:
+        return jsonify({
+            'error': {
+                'code': 'FORBIDDEN',
+                'message': str(e)
+            }
+        }), 403
 
 
 # Budgets
@@ -279,3 +650,270 @@ def upsert_budget(project_id, category_id):
     return jsonify({
         'budget': budget.to_dict()
     })
+
+
+# Members & Invitations
+@bp.route('/projects/<project_id>/members/invite', methods=['POST'])
+def invite_member(project_id):
+    """Send invitation to new member"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    data = request.json
+
+    try:
+        from app.services.member_service import MemberService
+
+        invite = MemberService.invite_member(
+            project_id=project_id,
+            inviter_user_id=user.id,
+            invitee_email=data.get('email'),
+            role=data.get('role', 'member')
+        )
+
+        return jsonify({
+            'invite': {
+                'id': invite.id,
+                'email': invite.email,
+                'role': invite.role,
+                'token': invite.token,
+                'invite_url': f'/invites/{invite.token}/accept'
+            }
+        }), 201
+
+    except (ValueError, PermissionError) as e:
+        return jsonify({
+            'error': {
+                'code': 'VALIDATION_ERROR',
+                'message': str(e)
+            }
+        }), 400
+
+
+@bp.route('/projects/<project_id>/members', methods=['GET'])
+def list_members(project_id):
+    """List project members"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+
+    try:
+        from app.services.member_service import MemberService
+
+        members = MemberService.get_project_members(
+            project_id=project_id,
+            user_id=user.id
+        )
+
+        return jsonify({
+            'members': [{
+                'id': m.id,
+                'user_id': m.user_id,
+                'role': m.role,
+                'joined_at': m.joined_at.isoformat() if m.joined_at else None,
+                'user': {
+                    'display_name': m.user.display_name if m.user else None,
+                    'email': m.user.email if m.user else None
+                }
+            } for m in members]
+        })
+
+    except PermissionError as e:
+        return jsonify({
+            'error': {
+                'code': 'FORBIDDEN',
+                'message': str(e)
+            }
+        }), 403
+
+
+@bp.route('/projects/<project_id>/members/<member_id>', methods=['PUT'])
+def update_member(project_id, member_id):
+    """Update member role"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    data = request.json
+
+    try:
+        from app.services.member_service import MemberService
+
+        member = MemberService.update_member_role(
+            member_id=member_id,
+            user_id=user.id,
+            new_role=data.get('role')
+        )
+
+        return jsonify({
+            'member': {
+                'id': member.id,
+                'role': member.role
+            }
+        })
+
+    except ValueError as e:
+        return jsonify({
+            'error': {
+                'code': 'VALIDATION_ERROR',
+                'message': str(e)
+            }
+        }), 400
+    except PermissionError as e:
+        return jsonify({
+            'error': {
+                'code': 'FORBIDDEN',
+                'message': str(e)
+            }
+        }), 403
+
+
+@bp.route('/projects/<project_id>/members/<member_id>', methods=['DELETE'])
+def remove_member(project_id, member_id):
+    """Remove member from project"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+
+    try:
+        from app.services.member_service import MemberService
+
+        MemberService.remove_member(
+            member_id=member_id,
+            user_id=user.id
+        )
+
+        return jsonify({
+            'success': True,
+            'message': 'ลบสมาชิกเรียบร้อยแล้ว'
+        })
+
+    except ValueError as e:
+        return jsonify({
+            'error': {
+                'code': 'NOT_FOUND',
+                'message': str(e)
+            }
+        }), 404
+    except PermissionError as e:
+        return jsonify({
+            'error': {
+                'code': 'FORBIDDEN',
+                'message': str(e)
+            }
+        }), 403
+
+
+@bp.route('/projects/<project_id>/invites', methods=['GET'])
+def list_invites(project_id):
+    """List pending invitations"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+
+    try:
+        from app.services.member_service import MemberService
+
+        invites = MemberService.list_pending_invites(
+            project_id=project_id,
+            user_id=user.id
+        )
+
+        return jsonify({
+            'invites': [{
+                'id': inv.id,
+                'email': inv.email,
+                'role': inv.role,
+                'created_at': inv.created_at.isoformat() if inv.created_at else None
+            } for inv in invites]
+        })
+
+    except PermissionError as e:
+        return jsonify({
+            'error': {
+                'code': 'FORBIDDEN',
+                'message': str(e)
+            }
+        }), 403
+
+
+@bp.route('/projects/<project_id>/invites/<invite_id>', methods=['DELETE'])
+def cancel_invite(project_id, invite_id):
+    """Cancel pending invitation"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+
+    try:
+        from app.services.member_service import MemberService
+
+        MemberService.cancel_invite(
+            invite_id=invite_id,
+            user_id=user.id
+        )
+
+        return jsonify({
+            'success': True,
+            'message': 'ยกเลิกคำเชิญเรียบร้อยแล้ว'
+        })
+
+    except ValueError as e:
+        return jsonify({
+            'error': {
+                'code': 'NOT_FOUND',
+                'message': str(e)
+            }
+        }), 404
+    except PermissionError as e:
+        return jsonify({
+            'error': {
+                'code': 'FORBIDDEN',
+                'message': str(e)
+            }
+        }), 403
+
+
+@bp.route('/invites/<token>/accept', methods=['POST'])
+def accept_invite(token):
+    """Accept invitation (public route)"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+
+    try:
+        from app.services.member_service import MemberService
+
+        member = MemberService.accept_invite(
+            token=token,
+            user_id=user.id
+        )
+
+        return jsonify({
+            'member': {
+                'id': member.id,
+                'project_id': member.project_id,
+                'role': member.role
+            },
+            'message': 'เข้าร่วมโปรเจกต์เรียบร้อยแล้ว'
+        }), 201
+
+    except ValueError as e:
+        return jsonify({
+            'error': {
+                'code': 'VALIDATION_ERROR',
+                'message': str(e)
+            }
+        }), 400

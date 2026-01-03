@@ -18,6 +18,12 @@ def require_login(f):
     return decorated_function
 
 
+def get_user_project(user_id):
+    """Get user's default project (first project they own)"""
+    project = Project.query.filter_by(owner_user_id=user_id).first()
+    return project
+
+
 @bp.route('/')
 def index():
     """Home page"""
@@ -32,7 +38,8 @@ def app():
     """Dashboard page"""
     user_id = session.get('user_id')
     user = User.query.get(user_id)
-    return render_template('dashboard.html', user=user)
+    project = get_user_project(user_id)
+    return render_template('dashboard.html', user=user, project=project)
 
 
 @bp.route('/transactions/new')
@@ -50,7 +57,8 @@ def categories():
     """Categories management page"""
     user_id = session.get('user_id')
     user = User.query.get(user_id)
-    return render_template('categories.html', user=user)
+    project = get_user_project(user_id)
+    return render_template('categories.html', user=user, project=project)
 
 
 @bp.route('/recurring')
@@ -59,7 +67,8 @@ def recurring():
     """Recurring transactions page"""
     user_id = session.get('user_id')
     user = User.query.get(user_id)
-    return render_template('recurring.html', user=user)
+    project = get_user_project(user_id)
+    return render_template('recurring.html', user=user, project=project)
 
 
 @bp.route('/analytics')
@@ -68,7 +77,8 @@ def analytics():
     """Analytics and reports page"""
     user_id = session.get('user_id')
     user = User.query.get(user_id)
-    return render_template('analytics.html', user=user)
+    project = get_user_project(user_id)
+    return render_template('analytics.html', user=user, project=project)
 
 
 @bp.route('/members')
@@ -77,7 +87,8 @@ def members():
     """Members management page"""
     user_id = session.get('user_id')
     user = User.query.get(user_id)
-    return render_template('members.html', user=user)
+    project = get_user_project(user_id)
+    return render_template('members.html', user=user, project=project)
 
 
 @bp.route('/profile')

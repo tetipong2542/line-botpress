@@ -375,30 +375,60 @@ document.addEventListener('keydown', (e) => {
 document.getElementById('expense-form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const formData = {
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalBtnContent = submitBtn.innerHTML;
+
+    // Validation
+    const amount = parseFloat(document.getElementById('expense-amount').value);
+    if (!selectedCategory) {
+        showToast('กรุณาเลือกหมวดหมู่', 'error');
+        return;
+    }
+    if (!amount || amount <= 0) {
+        showToast('กรุณากรอกจำนวนเงินที่ถูกต้อง', 'error');
+        return;
+    }
+
+    // Loading state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังบันทึก...</span>';
+    lucide.createIcons();
+
+    // Prepare data
+    const date = document.getElementById('expense-date').value;
+    const time = document.getElementById('expense-time').value;
+    const occurred_at = `${date}T${time}:00`;
+
+    const payload = {
         type: 'expense',
-        category: selectedCategory,
-        categoryLabel: selectedCategoryLabel,
-        date: document.getElementById('expense-date').value,
-        time: document.getElementById('expense-time').value,
-        note: document.getElementById('expense-note').value,
-        amount: parseFloat(document.getElementById('expense-amount').value)
+        category_id: selectedCategory,
+        amount: amount,
+        occurred_at: occurred_at,
+        note: document.getElementById('expense-note').value || null
     };
 
     try {
-        // TODO: Send to API
-        console.log('Expense data:', formData);
-        alert('บันทึกรายจ่ายสำเร็จ!');
+        const result = await API.post(buildApiUrl('transactions'), payload);
+
+        showToast('บันทึกรายจ่ายสำเร็จ!', 'success');
 
         // Reset form
         document.getElementById('expense-form').reset();
+        selectedCategory = null;
+        selectedCategoryLabel = null;
         closeAllModals();
 
         // Reload dashboard
-        loadDashboard();
+        await loadDashboard();
+
     } catch (error) {
-        console.error('Error:', error);
-        alert('เกิดข้อผิดพลาด');
+        console.error('Transaction error:', error);
+        showToast(error.message || 'ไม่สามารถบันทึกได้ กรุณาลองใหม่', 'error');
+
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnContent;
+        lucide.createIcons();
     }
 });
 
@@ -406,41 +436,78 @@ document.getElementById('expense-form').addEventListener('submit', async (e) => 
 document.getElementById('income-form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const formData = {
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalBtnContent = submitBtn.innerHTML;
+
+    // Validation
+    const amount = parseFloat(document.getElementById('income-amount').value);
+    if (!selectedCategory) {
+        showToast('กรุณาเลือกหมวดหมู่', 'error');
+        return;
+    }
+    if (!amount || amount <= 0) {
+        showToast('กรุณากรอกจำนวนเงินที่ถูกต้อง', 'error');
+        return;
+    }
+
+    // Loading state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังบันทึก...</span>';
+    lucide.createIcons();
+
+    // Prepare data
+    const date = document.getElementById('income-date').value;
+    const time = document.getElementById('income-time').value;
+    const occurred_at = `${date}T${time}:00`;
+
+    const payload = {
         type: 'income',
-        category: selectedCategory,
-        categoryLabel: selectedCategoryLabel,
-        date: document.getElementById('income-date').value,
-        time: document.getElementById('income-time').value,
-        note: document.getElementById('income-note').value,
-        amount: parseFloat(document.getElementById('income-amount').value)
+        category_id: selectedCategory,
+        amount: amount,
+        occurred_at: occurred_at,
+        note: document.getElementById('income-note').value || null
     };
 
     try {
-        // TODO: Send to API
-        console.log('Income data:', formData);
-        alert('บันทึกรายรับสำเร็จ!');
+        const result = await API.post(buildApiUrl('transactions'), payload);
+
+        showToast('บันทึกรายรับสำเร็จ!', 'success');
 
         // Reset form
         document.getElementById('income-form').reset();
+        selectedCategory = null;
+        selectedCategoryLabel = null;
         closeAllModals();
 
         // Reload dashboard
-        loadDashboard();
+        await loadDashboard();
+
     } catch (error) {
-        console.error('Error:', error);
-        alert('เกิดข้อผิดพลาด');
+        console.error('Transaction error:', error);
+        showToast(error.message || 'ไม่สามารถบันทึกได้ กรุณาลองใหม่', 'error');
+
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnContent;
+        lucide.createIcons();
     }
 });
 
 // ===== DASHBOARD DATA =====
 async function loadDashboard() {
     try {
-        // TODO: Fetch from API when user has projects
-        // For now, show empty state
-        console.log('Dashboard loaded');
+        // Fetch recent transactions
+        const result = await API.get(buildApiUrl('transactions') + '?per_page=10&page=1');
+
+        if (result.transactions && result.transactions.length > 0) {
+            // TODO: Update transaction list UI with real data
+            console.log('Transactions loaded:', result.transactions);
+        } else {
+            console.log('No transactions yet');
+        }
     } catch (error) {
         console.error('Error loading dashboard:', error);
+        // Don't show error toast on load - user might not have project yet
     }
 }
 
