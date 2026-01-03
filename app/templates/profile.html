@@ -19,11 +19,26 @@
     <div class="section">
         <div class="profile-card">
             <div class="profile-avatar">
-                <i data-lucide="user"></i>
+                {% if user and user.picture_url %}
+                    <img src="{{ user.picture_url }}" alt="{{ user.display_name }}" class="profile-avatar-img">
+                {% else %}
+                    <i data-lucide="user"></i>
+                {% endif %}
             </div>
             <div class="profile-info">
                 <h2>{% if user %}{{ user.display_name }}{% else %}Guest User{% endif %}</h2>
-                <p class="profile-email">{% if user %}{{ user.line_user_id }}{% else %}ไม่ได้เข้าสู่ระบบ{% endif %}</p>
+                {% if user and user.status_message %}
+                    <p class="profile-status">{{ user.status_message }}</p>
+                {% endif %}
+                <p class="profile-email">
+                    {% if user and user.email %}
+                        {{ user.email }}
+                    {% elif user %}
+                        LINE ID: {{ user.line_user_id }}
+                    {% else %}
+                        ไม่ได้เข้าสู่ระบบ
+                    {% endif %}
+                </p>
             </div>
         </div>
     </div>

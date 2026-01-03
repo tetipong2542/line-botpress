@@ -1413,11 +1413,25 @@ h2 i[data-lucide] {
     color: var(--text-secondary);
 }
 
+.profile-avatar-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
 .profile-info h2 {
     font-size: 20px;
     font-weight: 600;
     color: var(--text);
     margin-bottom: 4px;
+}
+
+.profile-status {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+    font-style: italic;
 }
 
 .profile-email {
