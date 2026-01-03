@@ -3,14 +3,14 @@ Main entry point for the Flask application
 """
 import os
 from app import create_app
-from app.services.init_service import init_database
+from app.services.init_service import initialize_database
 
 app = create_app()
 
 # Auto-initialize database on first run (for Railway deployment)
 with app.app_context():
     try:
-        init_database()
+        initialize_database()
         print("✅ Database initialized successfully")
     except Exception as e:
         print(f"⚠️ Database initialization: {e}")
