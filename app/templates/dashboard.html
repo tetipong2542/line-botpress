@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}หน้าแรก - จดรายรับรายจ่าย{% endblock %}
+
+{% block content %}
+<div class="mobile-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>
+                <i data-lucide="sparkles"></i>
+                สวัสดี{% if user %}, {{ user.display_name }}{% endif %}!
+            </h1>
+            <p class="subtitle">ภาพรวมการเงินของคุณ</p>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-section">
+        <div class="summary-card income">
+            <div class="summary-icon">
+                <i data-lucide="trending-up"></i>
+            </div>
+            <div class="summary-content">
+                <div class="summary-label">รายรับเดือนนี้</div>
+                <div class="summary-amount" id="income-amount">฿0</div>
+            </div>
+        </div>
+
+        <div class="summary-card expense">
+            <div class="summary-icon">
+                <i data-lucide="trending-down"></i>
+            </div>
+            <div class="summary-content">
+                <div class="summary-label">รายจ่ายเดือนนี้</div>
+                <div class="summary-amount" id="expense-amount">฿0</div>
+            </div>
+        </div>
+
+        <div class="summary-card balance">
+            <div class="summary-icon">
+                <i data-lucide="wallet"></i>
+            </div>
+            <div class="summary-content">
+                <div class="summary-label">คงเหลือ</div>
+                <div class="summary-amount" id="balance-amount">฿0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <a href="/transactions/new?type=expense" class="quick-action-btn expense">
+            <i data-lucide="minus-circle"></i>
+            <span>บันทึกรายจ่าย</span>
+        </a>
+        <a href="/transactions/new?type=income" class="quick-action-btn income">
+            <i data-lucide="plus-circle"></i>
+            <span>บันทึกรายรับ</span>
+        </a>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="section">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="list"></i>
+                รายการล่าสุด
+            </h2>
+        </div>
+
+        <div class="transactions-list" id="transactions-list">
+            <div class="empty-state">
+                <i data-lucide="inbox"></i>
+                <p>ยังไม่มีรายการ</p>
+                <p class="empty-subtitle">เริ่มบันทึกรายรับรายจ่ายของคุณ</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom spacing for footer menu -->
+    <div class="footer-spacing"></div>
+</div>
+
+<!-- Sticky Footer Menu -->
+<nav class="footer-menu">
+    <a href="/app" class="menu-item active">
+        <i data-lucide="home"></i>
+        <span>หน้าแรก</span>
+    </a>
+    <a href="/transactions/new" class="menu-item">
+        <i data-lucide="plus-circle"></i>
+        <span>บันทึก</span>
+    </a>
+    <a href="/categories" class="menu-item">
+        <i data-lucide="folder"></i>
+        <span>หมวดหมู่</span>
+    </a>
+</nav>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Fetch dashboard data
+async function loadDashboard() {
+    try {
+        // TODO: Fetch from API when user has projects
+        // For now, show empty state
+        console.log('Dashboard loaded');
+    } catch (error) {
+        console.error('Error loading dashboard:', error);
+    }
+}
+
+// Load on page ready
+document.addEventListener('DOMContentLoaded', () => {
+    loadDashboard();
+});
+</script>
+{% endblock %}
