@@ -385,15 +385,22 @@ async function loadCategories() {
             const expenseGroup = document.getElementById('expense-categories');
             const incomeGroup = document.getElementById('income-categories');
 
+            // Helper to get icon display (emoji stays as is, Lucide shows as text for dropdown)
+            const getIconDisplay = (icon) => {
+                // Check if it's emoji
+                const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(icon || '');
+                return isEmoji ? icon : '📁'; // Use folder emoji as fallback for Lucide icons in dropdown
+            };
+
             if (expenseGroup) {
                 expenseGroup.innerHTML = expenseCategories.map(cat =>
-                    `<option value="${cat.id}">${cat.icon} ${cat.name_th}</option>`
+                    `<option value="${cat.id}">${getIconDisplay(cat.icon)} ${cat.name_th}</option>`
                 ).join('');
             }
 
             if (incomeGroup) {
                 incomeGroup.innerHTML = incomeCategories.map(cat =>
-                    `<option value="${cat.id}">${cat.icon} ${cat.name_th}</option>`
+                    `<option value="${cat.id}">${getIconDisplay(cat.icon)} ${cat.name_th}</option>`
                 ).join('');
             }
         }

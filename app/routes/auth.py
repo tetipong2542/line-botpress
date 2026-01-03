@@ -144,16 +144,16 @@ def line_callback():
 
         default_categories = [
             # Expense categories
-            {'type': 'expense', 'name_th': 'อาหารและเครื่องดื่ม', 'icon': '🍔', 'color': '#EF4444'},
-            {'type': 'expense', 'name_th': 'ค่าเดินทาง', 'icon': '🚗', 'color': '#F59E0B'},
-            {'type': 'expense', 'name_th': 'ช้อปปิ้ง', 'icon': '🛍️', 'color': '#EC4899'},
-            {'type': 'expense', 'name_th': 'ความบันเทิง', 'icon': '🎬', 'color': '#8B5CF6'},
-            {'type': 'expense', 'name_th': 'ค่าสาธารณูปโภค', 'icon': '💡', 'color': '#10B981'},
-            {'type': 'expense', 'name_th': 'สุขภาพ', 'icon': '🏥', 'color': '#06B6D4'},
+            {'type': 'expense', 'name_th': 'อาหารและเครื่องดื่ม', 'icon': 'utensils', 'color': '#EF4444'},
+            {'type': 'expense', 'name_th': 'ค่าเดินทาง', 'icon': 'car', 'color': '#F59E0B'},
+            {'type': 'expense', 'name_th': 'ช้อปปิ้ง', 'icon': 'shopping-bag', 'color': '#EC4899'},
+            {'type': 'expense', 'name_th': 'ความบันเทิง', 'icon': 'tv', 'color': '#8B5CF6'},
+            {'type': 'expense', 'name_th': 'ค่าสาธารณูปโภค', 'icon': 'lightbulb', 'color': '#10B981'},
+            {'type': 'expense', 'name_th': 'สุขภาพ', 'icon': 'heart-pulse', 'color': '#06B6D4'},
             # Income categories
-            {'type': 'income', 'name_th': 'เงินเดือน', 'icon': '💰', 'color': '#10B981'},
-            {'type': 'income', 'name_th': 'รายได้เสริม', 'icon': '📈', 'color': '#3B82F6'},
-            {'type': 'income', 'name_th': 'ของขวัญ', 'icon': '🎁', 'color': '#EC4899'},
+            {'type': 'income', 'name_th': 'เงินเดือน', 'icon': 'dollar-sign', 'color': '#10B981'},
+            {'type': 'income', 'name_th': 'รายได้เสริม', 'icon': 'trending-up', 'color': '#3B82F6'},
+            {'type': 'income', 'name_th': 'ของขวัญ', 'icon': 'gift', 'color': '#EC4899'},
         ]
 
         for idx, cat_data in enumerate(default_categories):
@@ -194,15 +194,15 @@ def line_callback():
             from app.models.category import Category
 
             default_categories = [
-                {'type': 'expense', 'name_th': 'อาหารและเครื่องดื่ม', 'icon': '🍔', 'color': '#EF4444'},
-                {'type': 'expense', 'name_th': 'ค่าเดินทาง', 'icon': '🚗', 'color': '#F59E0B'},
-                {'type': 'expense', 'name_th': 'ช้อปปิ้ง', 'icon': '🛍️', 'color': '#EC4899'},
-                {'type': 'expense', 'name_th': 'ความบันเทิง', 'icon': '🎬', 'color': '#8B5CF6'},
-                {'type': 'expense', 'name_th': 'ค่าสาธารณูปโภค', 'icon': '💡', 'color': '#10B981'},
-                {'type': 'expense', 'name_th': 'สุขภาพ', 'icon': '🏥', 'color': '#06B6D4'},
-                {'type': 'income', 'name_th': 'เงินเดือน', 'icon': '💰', 'color': '#10B981'},
-                {'type': 'income', 'name_th': 'รายได้เสริม', 'icon': '📈', 'color': '#3B82F6'},
-                {'type': 'income', 'name_th': 'ของขวัญ', 'icon': '🎁', 'color': '#EC4899'},
+                {'type': 'expense', 'name_th': 'อาหารและเครื่องดื่ม', 'icon': 'utensils', 'color': '#EF4444'},
+                {'type': 'expense', 'name_th': 'ค่าเดินทาง', 'icon': 'car', 'color': '#F59E0B'},
+                {'type': 'expense', 'name_th': 'ช้อปปิ้ง', 'icon': 'shopping-bag', 'color': '#EC4899'},
+                {'type': 'expense', 'name_th': 'ความบันเทิง', 'icon': 'tv', 'color': '#8B5CF6'},
+                {'type': 'expense', 'name_th': 'ค่าสาธารณูปโภค', 'icon': 'lightbulb', 'color': '#10B981'},
+                {'type': 'expense', 'name_th': 'สุขภาพ', 'icon': 'heart-pulse', 'color': '#06B6D4'},
+                {'type': 'income', 'name_th': 'เงินเดือน', 'icon': 'dollar-sign', 'color': '#10B981'},
+                {'type': 'income', 'name_th': 'รายได้เสริม', 'icon': 'trending-up', 'color': '#3B82F6'},
+                {'type': 'income', 'name_th': 'ของขวัญ', 'icon': 'gift', 'color': '#EC4899'},
             ]
 
             for idx, cat_data in enumerate(default_categories):

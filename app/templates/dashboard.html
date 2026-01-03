@@ -473,15 +473,34 @@ async function loadCategories() {
             const expenseCategories = categories.filter(cat => cat.type === 'expense' && cat.is_active);
             const incomeCategories = categories.filter(cat => cat.type === 'income' && cat.is_active);
 
+            // Helper function to render icon (Lucide or Emoji)
+            const renderIcon = (iconName, defaultIcon = 'folder') => {
+                // Check if it's emoji (unicode character) or Lucide icon name
+                const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(iconName || '');
+
+                if (isEmoji || !iconName) {
+                    // Return emoji or default emoji
+                    return iconName || '📁';
+                } else {
+                    // Return Lucide icon
+                    return `<i data-lucide="${iconName}"></i>`;
+                }
+            };
+
             // Update expense category grid
             const expenseCategoryGrid = document.querySelector('#expense-category-modal .category-grid');
             if (expenseCategoryGrid) {
                 expenseCategoryGrid.innerHTML = expenseCategories.map(cat => `
                     <div class="category-grid-item" data-category-id="${cat.id}">
-                        <div class="category-grid-icon">${cat.icon || '📁'}</div>
+                        <div class="category-grid-icon">${renderIcon(cat.icon, 'folder')}</div>
                         <div class="category-grid-label">${cat.name_th}</div>
                     </div>
                 `).join('');
+
+                // Initialize Lucide icons
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
 
                 // Re-attach click handlers
                 attachCategoryHandlers('#expense-category-modal');
@@ -492,10 +511,15 @@ async function loadCategories() {
             if (incomeCategoryGrid) {
                 incomeCategoryGrid.innerHTML = incomeCategories.map(cat => `
                     <div class="category-grid-item" data-category-id="${cat.id}">
-                        <div class="category-grid-icon">${cat.icon || '💰'}</div>
+                        <div class="category-grid-icon">${renderIcon(cat.icon, 'dollar-sign')}</div>
                         <div class="category-grid-label">${cat.name_th}</div>
                     </div>
                 `).join('');
+
+                // Initialize Lucide icons
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
 
                 // Re-attach click handlers
                 attachCategoryHandlers('#income-category-modal');

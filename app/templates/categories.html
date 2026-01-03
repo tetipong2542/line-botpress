@@ -226,8 +226,69 @@ async function loadCategories() {
         const result = await API.get(buildApiUrl('categories'));
 
         if (result.categories && result.categories.length > 0) {
-            // TODO: Update category cards UI with real data
-            console.log('Categories loaded:', result.categories);
+            const categories = result.categories;
+
+            // Separate by type
+            const expenseCategories = categories.filter(cat => cat.type === 'expense' && cat.is_active);
+            const incomeCategories = categories.filter(cat => cat.type === 'income' && cat.is_active);
+
+            // Helper to render icon (Lucide or Emoji)
+            const renderIcon = (iconName) => {
+                const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(iconName || '');
+                if (isEmoji || !iconName) {
+                    return `<div class="category-icon">${iconName || '📁'}</div>`;
+                } else {
+                    return `<div class="category-icon"><i data-lucide="${iconName}"></i></div>`;
+                }
+            };
+
+            // Update expense categories
+            const expenseContent = document.querySelector('#expense-categories .category-list');
+            if (expenseContent) {
+                expenseContent.innerHTML = expenseCategories.map(cat => `
+                    <div class="category-item">
+                        ${renderIcon(cat.icon)}
+                        <div class="category-info">
+                            <div class="category-name">${cat.name_th}</div>
+                            <div class="category-meta">รายจ่าย • 0 รายการ</div>
+                        </div>
+                        <div class="category-actions">
+                            <button class="btn-icon" onclick="editCategory('${cat.id}', '${cat.name_th}')">
+                                <i data-lucide="edit-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Initialize Lucide icons
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            }
+
+            // Update income categories
+            const incomeContent = document.querySelector('#income-categories .category-list');
+            if (incomeContent) {
+                incomeContent.innerHTML = incomeCategories.map(cat => `
+                    <div class="category-item">
+                        ${renderIcon(cat.icon)}
+                        <div class="category-info">
+                            <div class="category-name">${cat.name_th}</div>
+                            <div class="category-meta">รายรับ • 0 รายการ</div>
+                        </div>
+                        <div class="category-actions">
+                            <button class="btn-icon" onclick="editCategory('${cat.id}', '${cat.name_th}')">
+                                <i data-lucide="edit-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Initialize Lucide icons
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            }
         }
     } catch (error) {
         console.error('Error loading categories:', error);
