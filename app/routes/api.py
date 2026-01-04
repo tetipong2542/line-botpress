@@ -757,7 +757,8 @@ def list_members(project_id):
                 'joined_at': m.joined_at.isoformat() if m.joined_at else None,
                 'user': {
                     'display_name': m.user.display_name if m.user else None,
-                    'email': m.user.email if m.user else None
+                    'email': m.user.email if m.user else None,
+                    'picture_url': m.user.picture_url if m.user else None
                 }
             } for m in members]
         })
@@ -769,6 +770,16 @@ def list_members(project_id):
                 'message': str(e)
             }
         }), 403
+    except Exception as e:
+        import traceback
+        print(f"ERROR in list_members: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': f'เกิดข้อผิดพลาด: {str(e)}'
+            }
+        }), 500
 
 
 @bp.route('/projects/<project_id>/members/<member_id>', methods=['PUT'])
@@ -873,6 +884,7 @@ def list_invites(project_id):
                 'id': inv.id,
                 'email': inv.email,
                 'role': inv.role,
+                'token': inv.token,
                 'created_at': inv.created_at.isoformat() if inv.created_at else None
             } for inv in invites]
         })
@@ -884,6 +896,16 @@ def list_invites(project_id):
                 'message': str(e)
             }
         }), 403
+    except Exception as e:
+        import traceback
+        print(f"ERROR in list_invites: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': f'เกิดข้อผิดพลาด: {str(e)}'
+            }
+        }), 500
 
 
 @bp.route('/projects/<project_id>/invites/<invite_id>', methods=['DELETE'])
