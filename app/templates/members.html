@@ -185,6 +185,98 @@
     </div>
 </div>
 
+<!-- Modal: Show Invite Link -->
+<div class="modal" id="invite-link-modal">
+    <div class="modal-overlay" onclick="closeInviteLinkModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>
+                <i data-lucide="link"></i>
+                ลิงก์เชิญสมาชิก
+            </h2>
+            <button class="modal-close" onclick="closeInviteLinkModal()">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p class="invite-success-message">
+                <i data-lucide="check-circle" style="color: var(--success)"></i>
+                ส่งคำเชิญสำเร็จ! คัดลอกลิงก์ด้านล่างแล้วส่งให้สมาชิกใหม่
+            </p>
+
+            <div class="invite-link-display">
+                <input type="text"
+                       id="invite-link-input"
+                       class="form-input"
+                       readonly
+                       value=""
+                       onclick="this.select()">
+            </div>
+
+            <div class="invite-link-actions">
+                <button class="btn-primary" onclick="copyInviteLink()">
+                    <i data-lucide="copy"></i>
+                    <span>คัดลอกลิงก์</span>
+                </button>
+                <button class="btn-secondary" onclick="closeInviteLinkModal()">
+                    <i data-lucide="x"></i>
+                    <span>ปิด</span>
+                </button>
+            </div>
+
+            <div class="invite-info">
+                <i data-lucide="info"></i>
+                <span>ลิงก์นี้จะหมดอายุใน 7 วัน</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.invite-success-message {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background: rgba(16, 185, 129, 0.1);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    color: var(--text);
+}
+
+.invite-link-display {
+    margin-bottom: 16px;
+}
+
+.invite-link-display input {
+    font-family: monospace;
+    font-size: 13px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.invite-link-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.invite-link-actions button {
+    flex: 1;
+}
+
+.invite-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+</style>
+
 <!-- Sticky Footer Menu -->
 {% set current_page = 'members' %}
 {% include 'components/footer_menu.html' %}
@@ -222,6 +314,52 @@ addBtn.addEventListener('click', openModal);
 closeBtn.addEventListener('click', closeModal);
 overlay.addEventListener('click', closeModal);
 
+// Invite Link Modal functions
+function showInviteLinkModal(inviteUrl) {
+    const linkModal = document.getElementById('invite-link-modal');
+    const linkInput = document.getElementById('invite-link-input');
+
+    linkInput.value = inviteUrl;
+    linkModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Reinitialize icons
+    lucide.createIcons();
+}
+
+function closeInviteLinkModal() {
+    const linkModal = document.getElementById('invite-link-modal');
+    linkModal.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+async function copyInviteLink() {
+    const linkInput = document.getElementById('invite-link-input');
+    const link = linkInput.value;
+
+    try {
+        await navigator.clipboard.writeText(link);
+        showToast('คัดลอกลิงก์เรียบร้อยแล้ว!', 'success');
+
+        // Visual feedback
+        const copyBtn = event.target.closest('button');
+        const originalHTML = copyBtn.innerHTML;
+        copyBtn.innerHTML = '<i data-lucide="check"></i><span>คัดลอกแล้ว!</span>';
+        lucide.createIcons();
+
+        setTimeout(() => {
+            copyBtn.innerHTML = originalHTML;
+            lucide.createIcons();
+        }, 2000);
+
+    } catch (error) {
+        // Fallback for browsers that don't support clipboard API
+        linkInput.select();
+        document.execCommand('copy');
+        showToast('คัดลอกลิงก์เรียบร้อยแล้ว!', 'success');
+    }
+}
+
 // Form submission
 document.getElementById('invite-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -249,7 +387,9 @@ document.getElementById('invite-form').addEventListener('submit', async (e) => {
             role: role
         });
 
-        showToast('ส่งคำเชิญสำเร็จ!', 'success');
+        // Show invite link modal
+        const inviteUrl = window.location.origin + result.invite.invite_url;
+        showInviteLinkModal(inviteUrl);
 
         document.getElementById('invite-form').reset();
         closeModal();

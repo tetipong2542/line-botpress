@@ -78,7 +78,31 @@ async function apiRequest(url, options = {}) {
 
     try {
         const response = await fetch(url, defaultOptions);
-        const data = await response.json();
+
+        // Check content type before parsing
+        const contentType = response.headers.get('content-type');
+        const isJson = contentType && contentType.includes('application/json');
+
+        let data = null;
+        if (isJson) {
+            try {
+                data = await response.json();
+            } catch (jsonError) {
+                console.error('JSON Parse Error:', jsonError);
+                throw new Error('เซิร์ฟเวอร์ส่งข้อมูลผิดรูปแบบ');
+            }
+        } else {
+            // Response is not JSON (probably HTML error page)
+            const text = await response.text();
+            console.error('Non-JSON response:', response.status, text.substring(0, 200));
+
+            // Check if it's a redirect to login page
+            if (text.includes('login') || text.includes('<!DOCTYPE')) {
+                throw new Error('กรุณาเข้าสู่ระบบอีกครั้ง');
+            }
+
+            throw new Error(`เซิร์ฟเวอร์ส่ง HTML แทน JSON (Status: ${response.status})`);
+        }
 
         if (!response.ok) {
             const errorMessage = handleApiError(response, data);

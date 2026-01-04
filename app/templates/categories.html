@@ -165,6 +165,145 @@
     <div class="footer-spacing"></div>
 </div>
 
+<!-- Modal: Add/Edit Category -->
+<div class="modal" id="category-modal">
+    <div class="modal-overlay" onclick="closeCategoryModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="category-modal-title">เพิ่มหมวดหมู่</h2>
+            <button class="modal-close" onclick="closeCategoryModal()">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <form class="modal-body" id="category-form">
+            <div class="form-group">
+                <label class="form-label">ประเภท</label>
+                <select class="form-select" id="category-type" required>
+                    <option value="expense">รายจ่าย</option>
+                    <option value="income">รายรับ</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">ไอคอน</label>
+                <button type="button" class="icon-picker-trigger" onclick="openIconPicker()">
+                    <i data-lucide="folder" id="selected-icon-preview"></i>
+                    <span id="selected-icon-name">เลือกไอคอน</span>
+                </button>
+                <input type="hidden" id="category-icon" value="folder" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">ชื่อหมวดหมู่</label>
+                <input type="text" class="form-input" id="category-name" placeholder="เช่น อาหาร, เงินเดือน" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">สี</label>
+                <div class="color-picker">
+                    <input type="color" id="category-color" value="#EF4444">
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary">
+                <i data-lucide="check"></i>
+                <span>บันทึก</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Icon Picker -->
+<div class="modal" id="icon-picker-modal">
+    <div class="modal-overlay" onclick="closeIconPicker()"></div>
+    <div class="modal-content icon-picker-content">
+        <div class="modal-header">
+            <h2>เลือกไอคอน</h2>
+            <button class="modal-close" onclick="closeIconPicker()">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <input type="text" class="form-input" id="icon-search" placeholder="ค้นหาไอคอน..." onkeyup="filterIcons()">
+            <div class="icon-grid" id="icon-grid">
+                <!-- Icons will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.icon-picker-trigger {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+}
+
+.icon-picker-trigger:hover {
+    background: var(--border);
+}
+
+.icon-picker-trigger i {
+    width: 24px;
+    height: 24px;
+}
+
+.color-picker input {
+    width: 100%;
+    height: 48px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.icon-picker-content {
+    max-width: 500px;
+}
+
+.icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: 16px;
+}
+
+.icon-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: var(--bg-secondary);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.icon-item:hover {
+    background: var(--border);
+    border-color: var(--primary);
+}
+
+.icon-item.selected {
+    background: var(--primary-light);
+    border-color: var(--primary);
+}
+
+.icon-item i {
+    width: 24px;
+    height: 24px;
+}
+</style>
+
 <!-- Sticky Footer Menu -->
 {% set current_page = 'categories' %}
 {% include 'components/footer_menu.html' %}
@@ -317,26 +456,128 @@ async function deleteCategory(categoryId) {
     }
 }
 
-// Edit category
+// Edit category - Now uses modal instead of prompt
 async function editCategory(categoryId, currentName) {
-    const newName = prompt('แก้ไขชื่อหมวดหมู่:', currentName);
+    openCategoryModal(categoryId);
+    // TODO: Fetch and pre-fill category data in modal
+}
 
-    if (!newName || !newName.trim() || newName === currentName) {
-        return;
+// Popular Lucide icons for categories
+const CATEGORY_ICONS = [
+    'utensils', 'coffee', 'shopping-bag', 'car', 'bus', 'train', 'plane',
+    'home', 'zap', 'droplet', 'wifi', 'phone', 'smartphone', 'laptop',
+    'tv', 'music', 'film', 'gamepad', 'gift', 'heart', 'star',
+    'book', 'bookmark', 'briefcase', 'calendar', 'camera', 'clock',
+    'credit-card', 'dollar-sign', 'trending-up', 'trending-down',
+    'shopping-cart', 'package', 'truck', 'bicycle', 'football',
+    'dumbbell', 'umbrella', 'sun', 'cloud', 'shirt', 'scissors'
+];
+
+let editingCategoryId = null;
+
+// Modal functions
+function openCategoryModal(categoryId = null) {
+    const modal = document.getElementById('category-modal');
+    const title = document.getElementById('category-modal-title');
+    const form = document.getElementById('category-form');
+
+    if (categoryId) {
+        editingCategoryId = categoryId;
+        title.textContent = 'แก้ไขหมวดหมู่';
+        // Load category data (simplified - in real app, fetch from API)
+    } else {
+        editingCategoryId = null;
+        title.textContent = 'เพิ่มหมวดหมู่';
+        form.reset();
     }
 
-    try {
-        await API.put(buildApiUrl('categories') + `/${categoryId}`, {
-            name_th: newName.trim()
-        });
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    lucide.createIcons();
+}
 
-        showToast('แก้ไขหมวดหมู่สำเร็จ!', 'success');
+function closeCategoryModal() {
+    document.getElementById('category-modal').classList.remove('active');
+    document.body.style.overflow = '';
+    editingCategoryId = null;
+}
+
+function openIconPicker() {
+    const modal = document.getElementById('icon-picker-modal');
+    const grid = document.getElementById('icon-grid');
+
+    // Populate icon grid
+    grid.innerHTML = CATEGORY_ICONS.map(icon => `
+        <div class="icon-item" onclick="selectIcon('${icon}')">
+            <i data-lucide="${icon}"></i>
+        </div>
+    `).join('');
+
+    modal.classList.add('active');
+    lucide.createIcons();
+}
+
+function closeIconPicker() {
+    document.getElementById('icon-picker-modal').classList.remove('active');
+}
+
+function selectIcon(iconName) {
+    document.getElementById('category-icon').value = iconName;
+    document.getElementById('selected-icon-preview').setAttribute('data-lucide', iconName);
+    document.getElementById('selected-icon-name').textContent = iconName;
+    lucide.createIcons();
+    closeIconPicker();
+}
+
+function filterIcons() {
+    const search = document.getElementById('icon-search').value.toLowerCase();
+    const items = document.querySelectorAll('.icon-item');
+    items.forEach(item => {
+        const icon = item.querySelector('i').getAttribute('data-lucide');
+        item.style.display = icon.includes(search) ? 'flex' : 'none';
+    });
+}
+
+// Form submission
+document.getElementById('add-category-btn').addEventListener('click', () => openCategoryModal());
+
+document.getElementById('category-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalHTML = submitBtn.innerHTML;
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังบันทึก...</span>';
+    lucide.createIcons();
+
+    try {
+        const payload = {
+            type: document.getElementById('category-type').value,
+            name_th: document.getElementById('category-name').value,
+            icon: document.getElementById('category-icon').value,
+            color: document.getElementById('category-color').value
+        };
+
+        if (editingCategoryId) {
+            await API.put(buildApiUrl('categories', editingCategoryId), payload);
+            showToast('แก้ไขหมวดหมู่สำเร็จ!', 'success');
+        } else {
+            await API.post(buildApiUrl('categories'), payload);
+            showToast('เพิ่มหมวดหมู่สำเร็จ!', 'success');
+        }
+
+        closeCategoryModal();
         await loadCategories();
 
     } catch (error) {
-        showToast(error.message || 'ไม่สามารถแก้ไขหมวดหมู่ได้', 'error');
+        showToast(error.message || 'ไม่สามารถบันทึกได้', 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalHTML;
+        lucide.createIcons();
     }
-}
+});
 
 // Load on page ready
 document.addEventListener('DOMContentLoaded', () => {
