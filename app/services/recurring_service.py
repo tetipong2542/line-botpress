@@ -122,6 +122,33 @@ class RecurringService:
         return query.order_by(RecurringRule.next_run_date).all()
 
     @staticmethod
+    def get_recurring_rule(recurring_id, user_id):
+        """
+        Get a single recurring rule by ID
+
+        Args:
+            recurring_id: RecurringRule ID
+            user_id: User ID (for permission check)
+
+        Returns:
+            RecurringRule object
+
+        Raises:
+            ValueError: If rule not found
+            PermissionError: If user doesn't have access
+        """
+        recurring_rule = RecurringRule.query.get(recurring_id)
+
+        if not recurring_rule:
+            raise ValueError("Recurring rule not found")
+
+        # Check access
+        if not RecurringService._check_project_access(recurring_rule.project_id, user_id):
+            raise PermissionError("User doesn't have access to this recurring rule")
+
+        return recurring_rule
+
+    @staticmethod
     def update_recurring_rule(recurring_id, user_id, updates):
         """
         Update a recurring rule

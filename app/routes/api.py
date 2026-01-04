@@ -337,6 +337,43 @@ def list_recurring(project_id):
         }), 403
 
 
+@bp.route('/projects/<project_id>/recurring/<recurring_id>', methods=['GET'])
+def get_recurring(project_id, recurring_id):
+    """Get a single recurring transaction rule"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+
+    try:
+        from app.services.recurring_service import RecurringService
+
+        recurring_rule = RecurringService.get_recurring_rule(
+            recurring_id=recurring_id,
+            user_id=user.id
+        )
+
+        return jsonify({
+            'recurring_rule': recurring_rule.to_dict()
+        })
+
+    except ValueError as e:
+        return jsonify({
+            'error': {
+                'code': 'NOT_FOUND',
+                'message': str(e)
+            }
+        }), 404
+    except PermissionError as e:
+        return jsonify({
+            'error': {
+                'code': 'FORBIDDEN',
+                'message': str(e)
+            }
+        }), 403
+
+
 @bp.route('/projects/<project_id>/recurring/<recurring_id>', methods=['PUT'])
 def update_recurring(project_id, recurring_id):
     """Update recurring transaction rule"""

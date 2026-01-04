@@ -172,8 +172,8 @@ function renderTrendsChart(trends) {
 
     // Prepare data
     const labels = trends.map(t => t.month_label);
-    const incomeData = trends.map(t => t.income / 100); // Convert to baht
-    const expenseData = trends.map(t => t.expense / 100);
+    const incomeData = trends.map(t => t.income / 100); // Convert satang to baht
+    const expenseData = trends.map(t => t.expense / 100); // Convert satang to baht
 
     // Create chart
     charts.trends = new Chart(ctx, {
@@ -211,7 +211,7 @@ function renderTrendsChart(trends) {
                     callbacks: {
                         label: function(context) {
                             return context.dataset.label + ': ฿' +
-                                   context.parsed.y.toLocaleString('th-TH');
+                                   context.parsed.y.toLocaleString('th-TH', {minimumFractionDigits: 2});
                         }
                     }
                 }
@@ -266,7 +266,7 @@ function updateTopCategories(categories) {
             ${cat.budget ? `
                 <div class="category-stat-budget">
                     <span>งบ: ฿${cat.budget.formatted.toLocaleString('th-TH')}</span>
-                    <span>เหลือ: ฿${(cat.budget.remaining / 100).toLocaleString('th-TH')}</span>
+                    <span>เหลือ: ฿${((cat.budget.remaining || 0) / 100).toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
                     <span class="${cat.budget.usage_percentage > 100 ? 'over-budget' : ''}">
                         ${cat.budget.usage_percentage}%
                     </span>

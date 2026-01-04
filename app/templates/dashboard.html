@@ -370,7 +370,7 @@ document.getElementById('expense-form').addEventListener('submit', async (e) => 
     const payload = {
         type: 'expense',
         category_id: selectedCategory,
-        amount: amount,
+        amount: Math.round(amount * 100), // Convert baht to satang
         occurred_at: occurred_at,
         note: document.getElementById('expense-note').value || null
     };
@@ -444,7 +444,7 @@ document.getElementById('income-form').addEventListener('submit', async (e) => {
     const payload = {
         type: 'income',
         category_id: selectedCategory,
-        amount: amount,
+        amount: Math.round(amount * 100), // Convert baht to satang
         occurred_at: occurred_at,
         note: document.getElementById('income-note').value || null
     };
