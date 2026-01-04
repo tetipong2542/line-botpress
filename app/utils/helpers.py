@@ -4,6 +4,7 @@ Helper utilities
 import secrets
 import string
 from datetime import datetime
+from calendar import monthrange
 
 
 def generate_id(prefix='id'):
@@ -78,3 +79,25 @@ def format_currency(amount, currency='THB'):
     if currency == 'THB':
         return f"฿{baht:,.2f}"
     return f"{baht:,.2f} {currency}"
+
+
+def get_month_range(year, month):
+    """
+    Get start and end datetime for a month
+
+    Args:
+        year: Year (int)
+        month: Month (1-12)
+
+    Returns:
+        tuple: (start_date, end_date) where end_date is the first day of next month
+    """
+    start_date = datetime(year, month, 1)
+
+    # End date is first day of next month (for < comparison in SQL queries)
+    if month == 12:
+        end_date = datetime(year + 1, 1, 1)
+    else:
+        end_date = datetime(year, month + 1, 1)
+
+    return start_date, end_date

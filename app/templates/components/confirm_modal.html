@@ -1,0 +1,109 @@
+<!-- Confirmation Modal Component -->
+<div class="modal" id="confirm-modal">
+    <div class="modal-overlay" onclick="closeConfirmModal()"></div>
+    <div class="modal-content confirm-modal-content">
+        <div class="modal-header">
+            <i data-lucide="alert-circle" style="width: 48px; height: 48px; color: var(--error)"></i>
+        </div>
+        <div class="modal-body">
+            <h3 id="confirm-title">ยืนยันการทำรายการ</h3>
+            <p id="confirm-message"></p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="closeConfirmModal()">
+                <i data-lucide="x"></i>
+                <span>ยกเลิก</span>
+            </button>
+            <button class="btn-primary btn-danger" id="confirm-action-btn">
+                <i data-lucide="check"></i>
+                <span>ยืนยัน</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.confirm-modal-content {
+    max-width: 400px;
+    text-align: center;
+}
+
+.confirm-modal-content .modal-header {
+    padding: 24px 24px 16px;
+    border-bottom: none;
+}
+
+.confirm-modal-content .modal-body {
+    padding: 0 24px 24px;
+}
+
+.confirm-modal-content .modal-body h3 {
+    margin: 0 0 12px 0;
+    font-size: 20px;
+    color: var(--text);
+}
+
+.confirm-modal-content .modal-body p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.confirm-modal-content .modal-footer {
+    padding: 16px 24px;
+    display: flex;
+    gap: 12px;
+    border-top: 1px solid var(--border);
+}
+
+.confirm-modal-content .modal-footer button {
+    flex: 1;
+}
+
+.btn-danger {
+    background: var(--error) !important;
+}
+
+.btn-danger:hover {
+    background: #dc2626 !important;
+}
+</style>
+
+<script>
+let confirmCallback = null;
+
+function showConfirm(title, message, callback) {
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-message').textContent = message;
+    confirmCallback = callback;
+
+    const modal = document.getElementById('confirm-modal');
+    modal.classList.add('active');
+
+    // Setup action button
+    const actionBtn = document.getElementById('confirm-action-btn');
+    actionBtn.onclick = () => {
+        if (confirmCallback) confirmCallback();
+        closeConfirmModal();
+    };
+
+    // Reinitialize icons
+    lucide.createIcons();
+}
+
+function closeConfirmModal() {
+    const modal = document.getElementById('confirm-modal');
+    modal.classList.remove('active');
+    confirmCallback = null;
+}
+
+// ESC key support
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('confirm-modal');
+        if (modal && modal.classList.contains('active')) {
+            closeConfirmModal();
+        }
+    }
+});
+</script>

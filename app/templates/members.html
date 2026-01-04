@@ -270,21 +270,160 @@ document.getElementById('invite-form').addEventListener('submit', async (e) => {
 // Load members
 async function loadMembers() {
     try {
-        const result = await API.get(buildApiUrl('members'));
+        // Fetch members and invites in parallel
+        const [membersData, invitesData] = await Promise.all([
+            API.get(buildApiUrl('members')),
+            API.get(buildApiUrl('invites'))
+        ]);
 
-        if (result.members && result.members.length > 0) {
-            // TODO: Update member list UI with real data
-            console.log('Members loaded:', result.members);
-        }
-
-        // Load pending invites
-        const invites = await API.get(buildApiUrl('invites'));
-        if (invites.invites && invites.invites.length > 0) {
-            console.log('Pending invites:', invites.invites);
-        }
+        renderMembers(membersData.members);
+        renderInvites(invitesData.invites);
 
     } catch (error) {
-        console.error('Error loading members:', error);
+        console.error('Load members error:', error);
+        showToast(error.message || 'ไม่สามารถโหลดข้อมูลได้', 'error');
+    }
+}
+
+// Render members list
+function renderMembers(members) {
+    const container = document.getElementById('members-list');
+    if (!container) return;
+
+    if (!members || members.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i data-lucide="users"></i>
+                <p>ยังไม่มีสมาชิก</p>
+            </div>
+        `;
+        lucide.createIcons();
+        return;
+    }
+
+    container.innerHTML = members.map(member => `
+        <div class="member-item">
+            <div class="member-avatar">
+                ${member.user.picture_url ?
+                    `<img src="${member.user.picture_url}" alt="${member.user.display_name}">` :
+                    `<div class="initials-avatar">${getInitials(member.user.display_name)}</div>`
+                }
+            </div>
+            <div class="member-info">
+                <div class="member-name">${member.user.display_name}</div>
+                <div class="member-email">${member.user.email || 'ไม่มีอีเมล'}</div>
+                <div class="member-meta">เข้าร่วม ${formatDate(member.joined_at)}</div>
+            </div>
+            <div class="member-actions">
+                <span class="member-badge ${member.role}">${getRoleLabel(member.role)}</span>
+                ${member.role !== 'owner' ? `
+                    <button class="btn-icon" onclick="showMemberMenu('${member.id}', '${member.role}')">
+                        <i data-lucide="more-vertical"></i>
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `).join('');
+
+    lucide.createIcons();
+}
+
+// Render pending invites
+function renderInvites(invites) {
+    const container = document.getElementById('pending-invites-list');
+    if (!container) return;
+
+    if (!invites || invites.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i data-lucide="mail"></i>
+                <p>ไม่มีคำเชิญที่รอดำเนินการ</p>
+            </div>
+        `;
+        lucide.createIcons();
+        return;
+    }
+
+    container.innerHTML = invites.map(invite => `
+        <div class="invite-item">
+            <div class="invite-info">
+                <div class="invite-email">${invite.email || 'ไม่ระบุอีเมล'}</div>
+                <div class="invite-meta">
+                    <span class="member-badge ${invite.role}">${getRoleLabel(invite.role)}</span>
+                    <span>ส่งเมื่อ ${formatDate(invite.created_at)}</span>
+                </div>
+            </div>
+            <div class="invite-actions">
+                <button class="btn-icon" onclick="cancelInvite('${invite.id}')" title="ยกเลิก">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+
+    lucide.createIcons();
+}
+
+// Helper: Get initials for avatar
+function getInitials(name) {
+    if (!name) return '?';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+}
+
+// Helper: Get role label in Thai
+function getRoleLabel(role) {
+    const labels = {
+        'owner': 'เจ้าของ',
+        'admin': 'ผู้ดูแล',
+        'member': 'สมาชิก',
+        'viewer': 'ผู้ดู'
+    };
+    return labels[role] || role;
+}
+
+// Helper: Format date
+function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('th-TH', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+}
+
+// Cancel invite
+async function cancelInvite(inviteId) {
+    if (!confirm('ต้องการยกเลิกคำเชิญนี้หรือไม่?')) {
+        return;
+    }
+
+    try {
+        await API.delete(buildApiUrl('invites', inviteId));
+        showToast('ยกเลิกคำเชิญเรียบร้อยแล้ว', 'success');
+        await loadMembers();
+    } catch (error) {
+        showToast(error.message || 'ไม่สามารถยกเลิกคำเชิญได้', 'error');
+    }
+}
+
+// Show member menu
+function showMemberMenu(memberId, currentRole) {
+    const action = confirm('เปลี่ยน role (OK) หรือ ลบสมาชิก (Cancel)?');
+
+    if (action) {
+        // Change role
+        const newRole = prompt(`เปลี่ยน role เป็น (admin/member/viewer):`, currentRole);
+        if (newRole && ['admin', 'member', 'viewer'].includes(newRole)) {
+            changeMemberRole(memberId, newRole);
+        }
+    } else {
+        // Remove member
+        removeMember(memberId);
     }
 }
 
@@ -304,26 +443,13 @@ async function removeMember(memberId) {
 }
 
 // Change member role
-async function changeMemberRole(memberId, currentRole) {
-    const newRole = prompt('เปลี่ยนบทบาทเป็น (admin/member):', currentRole);
-
-    if (!newRole || newRole === currentRole) {
-        return;
-    }
-
-    if (newRole !== 'admin' && newRole !== 'member') {
-        showToast('บทบาทไม่ถูกต้อง ใช้ได้เฉพาะ admin หรือ member', 'error');
-        return;
-    }
-
+async function changeMemberRole(memberId, newRole) {
     try {
-        await API.put(buildApiUrl('members') + `/${memberId}`, {
-            role: newRole
-        });
-        showToast('เปลี่ยนบทบาทสำเร็จ!', 'success');
+        await API.put(buildApiUrl('members', memberId), { role: newRole });
+        showToast('เปลี่ยน role สำเร็จ', 'success');
         await loadMembers();
     } catch (error) {
-        showToast(error.message || 'ไม่สามารถเปลี่ยนบทบาทได้', 'error');
+        showToast(error.message || 'ไม่สามารถเปลี่ยน role ได้', 'error');
     }
 }
 

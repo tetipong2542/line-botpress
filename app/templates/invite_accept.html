@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}รับคำเชิญ{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="invite-accept-card">
+        <div class="invite-header">
+            <i data-lucide="mail" style="width: 64px; height: 64px; color: var(--primary)"></i>
+            <h2>คุณได้รับคำเชิญ!</h2>
+        </div>
+
+        <div class="invite-body">
+            <p>คุณได้รับเชิญให้เข้าร่วมโปรเจกต์</p>
+            <p class="invite-role">ในฐานะ: <span id="role-label">กำลังโหลด...</span></p>
+        </div>
+
+        <div class="invite-actions">
+            <button class="btn-primary" onclick="acceptInvite()">
+                <i data-lucide="check"></i>
+                <span>ยอมรับคำเชิญ</span>
+            </button>
+            <button class="btn-secondary" onclick="declineInvite()">
+                <i data-lucide="x"></i>
+                <span>ปฏิเสธ</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+const token = window.location.pathname.split('/')[2]; // Extract token from URL
+
+async function acceptInvite() {
+    try {
+        const result = await API.post(`/api/v1/invites/${token}/accept`, {});
+        showToast('เข้าร่วมโปรเจกต์เรียบร้อยแล้ว!', 'success');
+
+        // Redirect to dashboard
+        setTimeout(() => {
+            window.location.href = '/app';
+        }, 1500);
+
+    } catch (error) {
+        showToast(error.message || 'ไม่สามารถยอมรับคำเชิญได้', 'error');
+    }
+}
+
+function declineInvite() {
+    if (confirm('ต้องการปฏิเสธคำเชิญนี้หรือไม่?')) {
+        window.location.href = '/app';
+    }
+}
+
+lucide.createIcons();
+</script>
+
+<style>
+.invite-accept-card {
+    max-width: 500px;
+    margin: 48px auto;
+    padding: 32px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    text-align: center;
+}
+
+.invite-header i {
+    margin-bottom: 16px;
+}
+
+.invite-header h2 {
+    margin: 0 0 24px 0;
+}
+
+.invite-body {
+    margin-bottom: 32px;
+}
+
+.invite-role {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary);
+    margin: 16px 0;
+}
+
+.invite-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.btn-secondary {
+    padding: 14px 24px;
+    background: var(--bg-secondary);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.btn-secondary:hover {
+    background: var(--border);
+}
+</style>
+{% endblock %}

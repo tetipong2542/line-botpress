@@ -65,16 +65,12 @@
     <div class="section">
         <div class="section-header">
             <h2>
-                <i data-lucide="pie-chart"></i>
-                สัดส่วนรายจ่าย
+                <i data-lucide="bar-chart-2"></i>
+                สัดส่วนรายจ่ายตามหมวดหมู่
             </h2>
         </div>
-        <div class="chart-container">
-            <div class="chart-placeholder">
-                <i data-lucide="pie-chart"></i>
-                <p>แผนภูมิแสดงที่นี่</p>
-                <p class="chart-note">จะเชื่อมต่อกับ API ในอนาคต</p>
-            </div>
+        <div class="chart-container" style="height: 300px;">
+            <canvas id="categoryChart"></canvas>
         </div>
     </div>
 
@@ -83,48 +79,11 @@
         <div class="section-header">
             <h2>
                 <i data-lucide="trending-up"></i>
-                หมวดหมู่ยอดนิยม
+                หมวดหมู่ทั้งหมด
             </h2>
         </div>
-        <div class="category-stats">
-            <div class="category-stat-item">
-                <div class="category-stat-icon"><i data-lucide="car"></i></div>
-                <div class="category-stat-info">
-                    <div class="category-stat-name">เดินทาง</div>
-                    <div class="category-stat-bar">
-                        <div class="category-stat-progress" style="width: 75%;"></div>
-                    </div>
-                </div>
-                <div class="category-stat-amount">
-                    ฿350
-                </div>
-            </div>
-
-            <div class="category-stat-item">
-                <div class="category-stat-icon"><i data-lucide="utensils"></i></div>
-                <div class="category-stat-info">
-                    <div class="category-stat-name">อาหาร</div>
-                    <div class="category-stat-bar">
-                        <div class="category-stat-progress" style="width: 0%;"></div>
-                    </div>
-                </div>
-                <div class="category-stat-amount">
-                    ฿0
-                </div>
-            </div>
-
-            <div class="category-stat-item">
-                <div class="category-stat-icon"><i data-lucide="tv"></i></div>
-                <div class="category-stat-info">
-                    <div class="category-stat-name">บันเทิง</div>
-                    <div class="category-stat-bar">
-                        <div class="category-stat-progress" style="width: 0%;"></div>
-                    </div>
-                </div>
-                <div class="category-stat-amount">
-                    ฿0
-                </div>
-            </div>
+        <div id="top-categories-list" class="category-stats">
+            <!-- Populated by analytics.js -->
         </div>
     </div>
 
@@ -135,13 +94,10 @@
                 <i data-lucide="activity"></i>
                 แนวโน้มรายเดือน
             </h2>
+            <p class="section-subtitle">เปรียบเทียบรายรับรายจ่าย 6 เดือนย้อนหลัง</p>
         </div>
-        <div class="chart-container">
-            <div class="chart-placeholder">
-                <i data-lucide="activity"></i>
-                <p>กราฟแนวโน้มแสดงที่นี่</p>
-                <p class="chart-note">เปรียบเทียบรายรับ-รายจ่าย 6 เดือนย้อนหลัง</p>
-            </div>
+        <div class="chart-container" style="height: 300px;">
+            <canvas id="trendsChart"></canvas>
         </div>
     </div>
 
@@ -155,42 +111,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-// Period navigation
-let currentMonth = new Date().getMonth();
-let currentYear = new Date().getFullYear();
-
-const monthNames = [
-    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
-];
-
-function updatePeriodDisplay() {
-    document.getElementById('current-period').textContent =
-        `${monthNames[currentMonth]} ${currentYear}`;
-}
-
-document.getElementById('prev-period').addEventListener('click', () => {
-    currentMonth--;
-    if (currentMonth < 0) {
-        currentMonth = 11;
-        currentYear--;
-    }
-    updatePeriodDisplay();
-    // TODO: Load data for new period
-});
-
-document.getElementById('next-period').addEventListener('click', () => {
-    currentMonth++;
-    if (currentMonth > 11) {
-        currentMonth = 0;
-        currentYear++;
-    }
-    updatePeriodDisplay();
-    // TODO: Load data for new period
-});
-
-// Initialize
-updatePeriodDisplay();
-</script>
+<!-- Analytics JavaScript -->
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
 {% endblock %}

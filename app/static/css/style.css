@@ -1949,3 +1949,63 @@ input:checked + .slider:before {
         max-width: 420px;
     }
 }
+
+
+/* Chart Container Styles */
+.chart-container {
+    position: relative;
+    width: 100%;
+    padding: 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.chart-container canvas {
+    max-height: 300px;
+}
+
+/* Category Budget Styles */
+.category-stat-budget {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.category-stat-budget .over-budget {
+    color: var(--error);
+    font-weight: 600;
+}
+
+/* Section Subtitle */
+.section-subtitle {
+    margin: 4px 0 0 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: normal;
+}
+
+/* Initials Avatar */
+.initials-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.member-avatar img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}

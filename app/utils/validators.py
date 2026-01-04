@@ -58,7 +58,7 @@ def validate_frequency(freq):
 
 def validate_role(role):
     """Validate user role"""
-    valid_roles = ['owner', 'admin', 'member']
+    valid_roles = ['owner', 'admin', 'member', 'viewer']
     if role not in valid_roles:
         raise ValueError(f"Invalid role. Must be one of: {', '.join(valid_roles)}")
     return role

@@ -1,8 +1,11 @@
 """
 Core API routes - CRUD operations for web and bot
 """
+import re
+from datetime import datetime
 from flask import Blueprint, request, jsonify, session
 from app.services.transaction_service import TransactionService
+from app.services.analytics_service import AnalyticsService
 from app.models.user import User
 from app.models.project import Project, ProjectMember, ProjectInvite, ProjectSettings
 from app.models.category import Category
@@ -917,3 +920,92 @@ def accept_invite(token):
                 'message': str(e)
             }
         }), 400
+
+
+# ============================================================================
+# ANALYTICS ENDPOINTS
+# ============================================================================
+
+@bp.route('/projects/<project_id>/analytics/summary', methods=['GET'])
+def get_analytics_summary(project_id):
+    """Get monthly summary (income, expense, balance)"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        # Get month parameter (default: current month)
+        default_month = datetime.now().strftime('%Y-%m')
+        month = request.args.get('month', default_month)
+
+        # Validate month format
+        if not re.match(r'^\d{4}-\d{2}$', month):
+            return jsonify({
+                "error": {"message": "Invalid month format. Use YYYY-MM"}
+            }), 400
+
+        # Get summary
+        data = AnalyticsService.get_monthly_summary(project_id, month)
+
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/analytics/by-category', methods=['GET'])
+def get_analytics_by_category(project_id):
+    """Get category breakdown with budget comparison"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        default_month = datetime.now().strftime('%Y-%m')
+        month = request.args.get('month', default_month)
+        type = request.args.get('type', 'expense')  # expense or income
+
+        # Validate
+        if type not in ['expense', 'income']:
+            return jsonify({
+                "error": {"message": "Type must be 'expense' or 'income'"}
+            }), 400
+
+        # Get breakdown
+        data = AnalyticsService.get_category_breakdown(project_id, month, type)
+
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/analytics/trends', methods=['GET'])
+def get_analytics_trends(project_id):
+    """Get income/expense trends for last N months"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        months = int(request.args.get('months', 6))
+
+        # Validate
+        if months < 1 or months > 12:
+            return jsonify({
+                "error": {"message": "Months must be between 1 and 12"}
+            }), 400
+
+        # Get trends
+        data = AnalyticsService.get_trends(project_id, months)
+
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500

@@ -105,13 +105,23 @@ class ProjectInvite(db.Model):
     used_by = db.Column(db.String(50), db.ForeignKey('user.id'), nullable=True)
     used_at = db.Column(db.DateTime, nullable=True)
 
-    def __init__(self, project_id, created_by, role='member', expires_days=7):
+    # New fields for enhanced invitation system
+    email = db.Column(db.String(200), nullable=True, index=True)  # Email of invitee
+    token = db.Column(db.String(64), unique=True, nullable=True, index=True)  # Acceptance token
+    status = db.Column(db.String(20), default='pending')  # pending, accepted, cancelled
+
+    def __init__(self, project_id, created_by, role='member', expires_days=7, email=None):
         self.id = generate_id('inv')
         self.project_id = project_id
         self.invite_code = generate_short_code(12)
         self.role = role
         self.expires_at = datetime.utcnow() + timedelta(days=expires_days)
         self.created_by = created_by
+
+        # New fields
+        self.email = email
+        self.token = generate_short_code(32)  # Generate 32-char token for invitation link
+        self.status = 'pending'
 
     def is_valid(self):
         """Check if invite is still valid"""
@@ -127,7 +137,11 @@ class ProjectInvite(db.Model):
             'expires_at': self.expires_at.isoformat() if self.expires_at else None,
             'created_by': self.created_by,
             'created_at': self.created_at.isoformat() if self.created_at else None,
-            'is_valid': self.is_valid()
+            'is_valid': self.is_valid(),
+            # New fields
+            'email': self.email,
+            'token': self.token,
+            'status': self.status
         }
 
     def __repr__(self):

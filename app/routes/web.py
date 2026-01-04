@@ -145,3 +145,12 @@ def profile():
     user_id = session.get('user_id')
     user = User.query.get(user_id)
     return render_template('profile.html', user=user)
+
+
+@bp.route('/invites/<token>/accept')
+@require_login
+def invite_accept_page(token):
+    """Page to accept invitation"""
+    user_id = session.get('user_id')
+    user = User.query.get(user_id)
+    return render_template('invite_accept.html', token=token, user=user)
