@@ -157,20 +157,6 @@
         <div class="settings-list">
             <div class="setting-item disabled">
                 <div class="setting-icon">
-                    <i data-lucide="download"></i>
-                </div>
-                <div class="setting-info">
-                    <div class="setting-title">สำรองข้อมูล</div>
-                    <div class="setting-desc">ดาวน์โหลดข้อมูลเป็นไฟล์</div>
-                </div>
-                <span class="feature-badge in-development">
-                    <i data-lucide="code"></i>
-                    กำลังพัฒนา
-                </span>
-            </div>
-
-            <div class="setting-item disabled">
-                <div class="setting-icon">
                     <i data-lucide="help-circle"></i>
                 </div>
                 <div class="setting-info">
@@ -182,6 +168,44 @@
                     เร็วๆ นี้
                 </span>
             </div>
+        </div>
+    </div>
+
+    <!-- Available Features (Export) -->
+    <div class="section">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="download"></i>
+                สำรองข้อมูล
+            </h2>
+        </div>
+
+        <div class="settings-list">
+            <a href="/api/v1/export/csv" class="setting-item" id="export-csv">
+                <div class="setting-icon">
+                    <i data-lucide="file-spreadsheet"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">ส่งออก CSV</div>
+                    <div class="setting-desc">ดาวน์โหลดรายการทั้งหมดเป็นไฟล์ CSV</div>
+                </div>
+                <span class="feature-badge available">
+                    <span class="badge-dot"></span>
+                </span>
+            </a>
+
+            <a href="/api/v1/export/json" class="setting-item" id="export-json">
+                <div class="setting-icon">
+                    <i data-lucide="file-json"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">ส่งออก JSON</div>
+                    <div class="setting-desc">ดาวน์โหลดข้อมูลทั้งหมดเป็นไฟล์ JSON</div>
+                </div>
+                <span class="feature-badge available">
+                    <span class="badge-dot"></span>
+                </span>
+            </a>
         </div>
     </div>
 

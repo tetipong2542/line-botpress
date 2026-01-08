@@ -1733,3 +1733,107 @@ def check_budget_alerts():
         'count': len(alerts),
         'message': f'Created {len(alerts)} budget alerts'
     })
+
+
+# ===== EXPORT ROUTES =====
+
+@bp.route('/export/summary', methods=['GET'])
+def get_export_summary():
+    """Get summary of data available for export"""
+    from app.services.export_service import ExportService
+    
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    
+    # Get user's default project
+    project = Project.query.filter_by(owner_user_id=user.id).first()
+    if not project:
+        return jsonify({
+            'error': {
+                'code': 'NO_PROJECT',
+                'message': 'No project found'
+            }
+        }), 404
+
+    summary = ExportService.get_export_summary(project.id)
+
+    return jsonify({
+        'project': {
+            'id': project.id,
+            'name': project.name
+        },
+        'summary': summary
+    })
+
+
+@bp.route('/export/csv', methods=['GET'])
+def export_csv():
+    """Export transactions to CSV"""
+    from app.services.export_service import ExportService
+    
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    
+    # Get user's default project
+    project = Project.query.filter_by(owner_user_id=user.id).first()
+    if not project:
+        return jsonify({
+            'error': {
+                'code': 'NO_PROJECT',
+                'message': 'No project found'
+            }
+        }), 404
+
+    # Get month filter
+    month_yyyymm = request.args.get('month')
+    
+    # Export to CSV
+    csv_data = ExportService.export_to_csv(project.id, month_yyyymm)
+    filename = ExportService.generate_filename(project.name, 'csv', month_yyyymm)
+
+    return ExportService.create_csv_response(csv_data, filename)
+
+
+@bp.route('/export/json', methods=['GET'])
+def export_json():
+    """Export all project data to JSON"""
+    from app.services.export_service import ExportService
+    
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    
+    # Get user's default project
+    project = Project.query.filter_by(owner_user_id=user.id).first()
+    if not project:
+        return jsonify({
+            'error': {
+                'code': 'NO_PROJECT',
+                'message': 'No project found'
+            }
+        }), 404
+
+    # Get month filter
+    month_yyyymm = request.args.get('month')
+    
+    # Export to JSON
+    json_data = ExportService.export_to_json(project.id, month_yyyymm)
+    if not json_data:
+        return jsonify({
+            'error': {
+                'code': 'EXPORT_FAILED',
+                'message': 'Failed to export data'
+            }
+        }), 500
+    
+    filename = ExportService.generate_filename(project.name, 'json', month_yyyymm)
+
+    return ExportService.create_json_response(json_data, filename)
