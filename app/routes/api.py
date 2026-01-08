@@ -1576,3 +1576,160 @@ def get_all_insights(project_id):
         return jsonify({
             'error': {'message': str(e)}
         }), 500
+
+
+# ===== NOTIFICATION ROUTES =====
+
+@bp.route('/notifications', methods=['GET'])
+def get_notifications():
+    """Get notifications for current user"""
+    from app.services.notification_service import NotificationService
+    
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    unread_only = request.args.get('unread_only', 'false').lower() == 'true'
+    limit = int(request.args.get('limit', 50))
+
+    notifications = NotificationService.get_user_notifications(user.id, unread_only, limit)
+
+    return jsonify({
+        'notifications': notifications,
+        'count': len(notifications)
+    })
+
+
+@bp.route('/notifications/unread-count', methods=['GET'])
+def get_unread_count():
+    """Get count of unread notifications"""
+    from app.services.notification_service import NotificationService
+    from app.models.notification import Notification
+    
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    count = Notification.query.filter_by(user_id=user.id, is_read=False).count()
+
+    return jsonify({
+        'unread_count': count
+    })
+
+
+@bp.route('/notifications/<notification_id>/read', methods=['POST'])
+def mark_notification_read(notification_id):
+    """Mark notification as read"""
+    from app.services.notification_service import NotificationService
+    
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    success = NotificationService.mark_as_read(notification_id, user.id)
+
+    if not success:
+        return jsonify({
+            'error': {
+                'code': 'NOT_FOUND',
+                'message': 'Notification not found'
+            }
+        }), 404
+
+    return jsonify({
+        'success': True,
+        'message': 'Notification marked as read'
+    })
+
+
+@bp.route('/notifications/read-all', methods=['POST'])
+def mark_all_notifications_read():
+    """Mark all notifications as read"""
+    from app.services.notification_service import NotificationService
+    
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    count = NotificationService.mark_all_as_read(user.id)
+
+    return jsonify({
+        'success': True,
+        'message': f'Marked {count} notifications as read',
+        'count': count
+    })
+
+
+@bp.route('/notifications/preferences', methods=['GET'])
+def get_notification_preferences():
+    """Get user notification preferences"""
+    from app.services.notification_service import NotificationService
+    
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    preference = NotificationService.get_or_create_preference(user.id)
+
+    return jsonify({
+        'preferences': preference.to_dict()
+    })
+
+
+@bp.route('/notifications/preferences', methods=['PUT'])
+def update_notification_preferences():
+    """Update user notification preferences"""
+    from app.services.notification_service import NotificationService
+    
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    data = request.json
+
+    updated_preference = NotificationService.update_preference(user.id, data)
+
+    return jsonify({
+        'preferences': updated_preference,
+        'message': 'Preferences updated successfully'
+    })
+
+
+@bp.route('/notifications/check-alerts', methods=['POST'])
+def check_budget_alerts():
+    """Check budget alerts manually (for testing)"""
+    from app.services.notification_service import NotificationService
+    
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    project_id = request.json.get('project_id')
+    month_yyyymm = request.json.get('month_yyyymm')
+
+    if not project_id:
+        # Get user's default project
+        project = Project.query.filter_by(owner_user_id=user.id).first()
+        if not project:
+            return jsonify({
+                'error': {
+                    'code': 'NO_PROJECT',
+                    'message': 'No project found'
+                }
+            }), 404
+        project_id = project.id
+
+    alerts = NotificationService.check_budget_alerts(project_id, month_yyyymm)
+
+    return jsonify({
+        'alerts_created': alerts,
+        'count': len(alerts),
+        'message': f'Created {len(alerts)} budget alerts'
+    })

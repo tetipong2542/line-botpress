@@ -9,6 +9,7 @@ from app.models.budget import Budget
 from app.models.recurring import RecurringRule
 from app.models.security import BotNonce, IdempotencyKey
 from app.models.insight import Insight
+from app.models.notification import Notification, NotificationPreference
 
 __all__ = [
     'User',
@@ -23,5 +24,7 @@ __all__ = [
     'RecurringRule',
     'BotNonce',
     'IdempotencyKey',
-    'Insight'
+    'Insight',
+    'Notification',
+    'NotificationPreference'
 ]

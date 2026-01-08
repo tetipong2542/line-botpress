@@ -253,7 +253,7 @@ h2 i[data-lucide] {
     background: var(--bg);
     padding: 24px 20px;
     border-bottom: 2px solid var(--border);
-    margin: 0 -7px 20px -7px;
+    margin: 0 -7px 20px -7px !important;
     position: relative;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
@@ -4674,4 +4674,79 @@ input:checked + .slider:before {
     .feature-badge.in-development span {
         display: none;
     }
+}
+
+/* ===== NOTIFICATION SETTINGS MODAL ===== */
+
+.notification-section {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.notification-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.notification-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.notification-section h3 i {
+    width: 20px;
+    height: 20px;
+    color: var(--primary);
+}
+
+.notification-toggle-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.notification-toggle-info {
+    flex: 1;
+}
+
+.notification-toggle-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.notification-toggle-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.notification-settings-detail {
+    display: block;
+    margin-top: 12px;
+    padding-left: 0;
+}
+
+.notification-settings-detail .form-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 6px;
+}
+
+.notification-settings-detail .form-select {
+    font-size: 14px;
+    padding: 10px 12px;
+}
+
+/* Hide detail settings initially */
+.notification-settings-detail[style*="display: none"] {
+    display: none !important;
 }

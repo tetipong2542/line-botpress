@@ -101,6 +101,19 @@
         </div>
 
         <div class="settings-list">
+            <a href="#" class="setting-item" id="notifications-settings">
+                <div class="setting-icon">
+                    <i data-lucide="bell"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">การแจ้งเตือน</div>
+                    <div class="setting-desc">แจ้งเตือนงบประมาณและรายการประจำ</div>
+                </div>
+                <span class="feature-badge available">
+                    <span class="badge-dot"></span>
+                </span>
+            </a>
+
             <a href="#" class="setting-item" id="about-app">
                 <div class="setting-icon">
                     <i data-lucide="info"></i>
@@ -128,17 +141,12 @@
         <div class="settings-list">
             <div class="setting-item disabled">
                 <div class="setting-icon">
-                    <i data-lucide="bell"></i>
+                    <i data-lucide="moon"></i>
                 </div>
                 <div class="setting-info">
-                    <div class="setting-title">การแจ้งเตือน</div>
-                    <div class="setting-desc">แจ้งเตือนผ่าน LINE</div>
+                    <div class="setting-title">โหมดมืด</div>
+                    <div class="setting-desc">ปรับหน้าตาแอปเป็นโทนมืด</div>
                 </div>
-                <span class="feature-badge coming-soon">
-                    <i data-lucide="clock"></i>
-                    เร็วๆ นี้
-                </span>
-            </div>
 
             <div class="setting-item disabled">
                 <div class="setting-icon">
@@ -203,6 +211,110 @@
     <div class="footer-spacing"></div>
 </div>
 
+<!-- Modal: Notification Settings -->
+<div class="modal" id="notification-settings-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content modal-large">
+        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <h2>
+                <i data-lucide="bell"></i>
+                ตั้งค่าการแจ้งเตือน
+            </h2>
+            <button class="modal-close" style="color: white;">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <!-- Budget Alerts -->
+            <div class="notification-section">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text);">
+                    <i data-lucide="target"></i>
+                    การแจ้งเตือนงบประมาณ
+                </h3>
+                
+                <div class="notification-toggle-item">
+                    <div class="notification-toggle-info">
+                        <div class="notification-toggle-title">เปิดการแจ้งเตือนงบประมาณ</div>
+                        <div class="notification-toggle-desc">แจ้งเตือนเมื่อใกล้หรือเกินงบที่ตั้งไว้</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="budget-alerts-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="notification-settings-detail" id="budget-threshold-setting">
+                    <label class="form-label">แจ้งเตือนเมื่อใช้ถึง</label>
+                    <select class="form-select" id="budget-threshold">
+                        <option value="50">50% ของงบประมาณ</option>
+                        <option value="70">70% ของงบประมาณ</option>
+                        <option value="80" selected>80% ของงบประมาณ</option>
+                        <option value="90">90% ของงบประมาณ</option>
+                        <option value="100">100% ของงบประมาณ</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Recurring Reminders -->
+            <div class="notification-section">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text);">
+                    <i data-lucide="refresh-cw"></i>
+                    การแจ้งเตือนรายการประจำ
+                </h3>
+                
+                <div class="notification-toggle-item">
+                    <div class="notification-toggle-info">
+                        <div class="notification-toggle-title">เปิดการแจ้งเตือนรายการประจำ</div>
+                        <div class="notification-toggle-desc">แจ้งเตือนก่อนครบกำหนดรายการประจำ</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="recurring-reminders-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="notification-settings-detail" id="reminder-days-setting">
+                    <label class="form-label">แจ้งล่วงหน้า</label>
+                    <select class="form-select" id="reminder-days">
+                        <option value="0">วันที่ครบกำหนด</option>
+                        <option value="1" selected>1 วัน</option>
+                        <option value="2">2 วัน</option>
+                        <option value="3">3 วัน</option>
+                        <option value="7">7 วัน</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- LINE Notifications -->
+            <div class="notification-section">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text);">
+                    <i data-lucide="message-circle"></i>
+                    การแจ้งเตือนผ่าน LINE
+                </h3>
+                
+                <div class="notification-toggle-item">
+                    <div class="notification-toggle-info">
+                        <div class="notification-toggle-title">ส่งการแจ้งเตือนผ่าน LINE</div>
+                        <div class="notification-toggle-desc">รับการแจ้งเตือนในแอป LINE</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="line-notifications-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div style="margin-top: 24px;">
+                <button class="btn-primary" id="save-notification-settings">
+                    <i data-lucide="check"></i>
+                    <span>บันทึกการตั้งค่า</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Sticky Footer Menu -->
 {% set current_page = 'profile' %}
 {% include 'components/footer_menu.html' %}
@@ -210,6 +322,105 @@
 
 {% block extra_js %}
 <script>
+// Notification Settings Modal
+const notificationModal = document.getElementById('notification-settings-modal');
+const notificationCloseBtn = notificationModal.querySelector('.modal-close');
+const notificationOverlay = notificationModal.querySelector('.modal-overlay');
+
+function openNotificationSettings() {
+    notificationModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    loadNotificationPreferences();
+}
+
+function closeNotificationSettings() {
+    notificationModal.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// Open modal
+document.getElementById('notifications-settings').addEventListener('click', (e) => {
+    e.preventDefault();
+    openNotificationSettings();
+});
+
+// Close modal
+notificationCloseBtn.addEventListener('click', closeNotificationSettings);
+notificationOverlay.addEventListener('click', closeNotificationSettings);
+
+// Load notification preferences
+async function loadNotificationPreferences() {
+    try {
+        const response = await fetch('/api/v1/notifications/preferences');
+        if (response.ok) {
+            const result = await response.json();
+            const prefs = result.preferences;
+
+            // Update UI
+            document.getElementById('budget-alerts-toggle').checked = prefs.budget_alerts;
+            document.getElementById('budget-threshold').value = prefs.budget_threshold;
+            document.getElementById('recurring-reminders-toggle').checked = prefs.recurring_reminders;
+            document.getElementById('reminder-days').value = prefs.reminder_days_before;
+            document.getElementById('line-notifications-toggle').checked = prefs.line_notifications;
+
+            // Show/hide detail settings
+            toggleBudgetThresholdSetting();
+            toggleReminderDaysSetting();
+        }
+    } catch (error) {
+        console.error('Error loading preferences:', error);
+    }
+}
+
+// Toggle budget threshold setting
+document.getElementById('budget-alerts-toggle').addEventListener('change', toggleBudgetThresholdSetting);
+
+function toggleBudgetThresholdSetting() {
+    const isEnabled = document.getElementById('budget-alerts-toggle').checked;
+    const setting = document.getElementById('budget-threshold-setting');
+    setting.style.display = isEnabled ? 'block' : 'none';
+}
+
+// Toggle reminder days setting
+document.getElementById('recurring-reminders-toggle').addEventListener('change', toggleReminderDaysSetting);
+
+function toggleReminderDaysSetting() {
+    const isEnabled = document.getElementById('recurring-reminders-toggle').checked;
+    const setting = document.getElementById('reminder-days-setting');
+    setting.style.display = isEnabled ? 'block' : 'none';
+}
+
+// Save notification settings
+document.getElementById('save-notification-settings').addEventListener('click', async () => {
+    const preferences = {
+        budget_alerts: document.getElementById('budget-alerts-toggle').checked,
+        budget_threshold: parseInt(document.getElementById('budget-threshold').value),
+        recurring_reminders: document.getElementById('recurring-reminders-toggle').checked,
+        reminder_days_before: parseInt(document.getElementById('reminder-days').value),
+        line_notifications: document.getElementById('line-notifications-toggle').checked
+    };
+
+    try {
+        const response = await fetch('/api/v1/notifications/preferences', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(preferences)
+        });
+
+        if (response.ok) {
+            showToast('บันทึกการตั้งค่าแล้ว ✅', 'success');
+            closeNotificationSettings();
+        } else {
+            showToast('ไม่สามารถบันทึกได้ กรุณาลองอีกครั้ง', 'error');
+        }
+    } catch (error) {
+        console.error('Error saving preferences:', error);
+        showToast('เกิดข้อผิดพลาด กรุณาลองอีกครั้ง', 'error');
+    }
+});
+
 // Logout
 document.getElementById('logout-btn').addEventListener('click', async () => {
     if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
