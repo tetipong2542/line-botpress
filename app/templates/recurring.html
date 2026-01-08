@@ -401,30 +401,41 @@ function renderRecurringRules(rules) {
     };
 
     recurringList.innerHTML = rules.map(rule => `
-        <div class="recurring-card" data-id="${rule.id}">
-            <div class="recurring-icon ${rule.type}">
-                ${renderIcon(rule.category?.icon)}
-            </div>
-            <div class="recurring-info">
-                <div class="recurring-title">${rule.category?.name_th || 'ไม่ระบุ'}</div>
-                <div class="recurring-meta">
-                    <span class="recurring-category">${rule.type === 'expense' ? 'รายจ่าย' : 'รายรับ'}</span>
-                    <span class="recurring-freq">${formatFrequency(rule.freq, rule.day_of_week, rule.day_of_month)}</span>
-                </div>
-                ${rule.next_run_date ? `
-                    <div class="recurring-alert">
-                        <i data-lucide="bell"></i>
-                        ${rule.remind_days > 0 ? `เตือนล่วงหน้า ${rule.remind_days} วัน • ` : ''}ครบกำหนด ${formatDate(rule.next_run_date)}
+        <div class="recurring-card ${rule.type}" data-id="${rule.id}">
+            <div class="recurring-main">
+                <div class="recurring-icon-wrapper">
+                    <div class="recurring-icon ${rule.type}">
+                        ${renderIcon(rule.category?.icon)}
                     </div>
-                ` : ''}
-            </div>
-            <div class="recurring-amount ${rule.type}">
-                ฿${formatAmount(rule.amount)}
+                </div>
+                <div class="recurring-content">
+                    <div class="recurring-header">
+                        <div class="recurring-title">${rule.category?.name_th || 'ไม่ระบุ'}</div>
+                        <div class="recurring-amount ${rule.type}">
+                            ${rule.type === 'expense' ? '-' : '+'}฿${formatAmount(rule.amount)}
+                        </div>
+                    </div>
+                    <div class="recurring-details">
+                        <div class="recurring-frequency">
+                            <i data-lucide="repeat"></i>
+                            ${formatFrequency(rule.freq, rule.day_of_week, rule.day_of_month)}
+                        </div>
+                        ${rule.next_run_date ? `
+                            <div class="recurring-next-date">
+                                <i data-lucide="calendar"></i>
+                                ${formatDate(rule.next_run_date)}
+                            </div>
+                        ` : ''}
+                    </div>
+                    ${rule.note ? `
+                        <div class="recurring-note">
+                            <i data-lucide="file-text"></i>
+                            ${rule.note}
+                        </div>
+                    ` : ''}
+                </div>
             </div>
             <div class="recurring-actions">
-                <button class="btn-icon btn-execute" onclick="executeRecurring('${rule.id}')" title="บันทึกเลย">
-                    <i data-lucide="play"></i>
-                </button>
                 <button class="btn-icon btn-edit" onclick="editRecurring('${rule.id}')" title="แก้ไข">
                     <i data-lucide="edit-2"></i>
                 </button>
@@ -438,21 +449,6 @@ function renderRecurringRules(rules) {
     // Initialize Lucide icons
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
-    }
-}
-
-// Execute recurring rule now
-async function executeRecurring(recurringId) {
-    if (!confirm('ต้องการบันทึกรายการนี้เลยหรือไม่?')) {
-        return;
-    }
-
-    try {
-        await API.post(buildApiUrl('recurring') + `/${recurringId}/execute`, {});
-        showToast('บันทึกรายการสำเร็จ!', 'success');
-        await loadRecurringRules();
-    } catch (error) {
-        showToast(error.message || 'เกิดข้อผิดพลาด', 'error');
     }
 }
 

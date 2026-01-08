@@ -398,11 +398,6 @@ async function loadCategories() {
                         </div>
                     </div>
                 `).join('');
-
-                // Initialize Lucide icons
-                if (typeof lucide !== 'undefined') {
-                    lucide.createIcons();
-                }
             }
 
             // Update income categories
@@ -422,11 +417,11 @@ async function loadCategories() {
                         </div>
                     </div>
                 `).join('');
-
-                // Initialize Lucide icons
-                if (typeof lucide !== 'undefined') {
-                    lucide.createIcons();
-                }
+            }
+            
+            // Initialize Lucide icons ONCE for all buttons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
             }
         }
     } catch (error) {
@@ -493,7 +488,13 @@ function openCategoryModal(categoryId = null) {
 
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
-    lucide.createIcons();
+    
+    // Initialize icons only in modal
+    setTimeout(() => {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }, 50);
 }
 
 function closeCategoryModal() {
@@ -514,7 +515,13 @@ function openIconPicker() {
     `).join('');
 
     modal.classList.add('active');
-    lucide.createIcons();
+    
+    // Initialize icons only in icon picker
+    setTimeout(() => {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }, 50);
 }
 
 function closeIconPicker() {
@@ -525,7 +532,15 @@ function selectIcon(iconName) {
     document.getElementById('category-icon').value = iconName;
     document.getElementById('selected-icon-preview').setAttribute('data-lucide', iconName);
     document.getElementById('selected-icon-name').textContent = iconName;
-    lucide.createIcons();
+    
+    // Initialize only the preview icon
+    setTimeout(() => {
+        const preview = document.getElementById('selected-icon-preview');
+        if (preview && typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }, 10);
+    
     closeIconPicker();
 }
 
@@ -549,7 +564,13 @@ document.getElementById('category-form').addEventListener('submit', async (e) =>
 
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังบันทึก...</span>';
-    lucide.createIcons();
+    
+    // Initialize loader icon
+    setTimeout(() => {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }, 10);
 
     try {
         const payload = {
@@ -575,7 +596,6 @@ document.getElementById('category-form').addEventListener('submit', async (e) =>
     } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalHTML;
-        lucide.createIcons();
     }
 });
 
