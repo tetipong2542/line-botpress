@@ -28,16 +28,34 @@ class Config:
     else:
         DATA_DIR = os.path.join(BASE_DIR, 'instance')
 
+    print(f"🔍 Diagnostic: Current User: {os.getuid()}:{os.getgid()}")
+    
     # Ensure data directory exists
     try:
         os.makedirs(DATA_DIR, exist_ok=True)
         print(f"✅ Using data directory: {DATA_DIR}")
+        
+        # PROBE: Check directory permissions
+        stat = os.stat(DATA_DIR)
+        print(f"📂 Dir Permissions: Mode={oct(stat.st_mode)}, UID={stat.st_uid}, GID={stat.st_gid}")
+        
+        # PROBE: Test write permissions
+        test_file = os.path.join(DATA_DIR, 'write_test.tmp')
+        with open(test_file, 'w') as f:
+            f.write('write_check')
+        os.remove(test_file)
+        print(f"✅ Write permission confirmed for {DATA_DIR}")
+        
     except Exception as e:
-        print(f"❌ Error creating data directory {DATA_DIR}: {e}")
+        print(f"❌ CRITICAL ERROR with data directory {DATA_DIR}: {e}")
+        # Fallback to temp directory if completely broken, to allow app to at least boot (and show log)
+        # But this implies data loss, so we just log heavily.
 
+    # Fix for SQLite URL on Unix: needs 4 slashes for absolute paths
+    db_path = os.path.join(DATA_DIR, "finance.db")
     SQLALCHEMY_DATABASE_URI = os.getenv(
         'DATABASE_URL',
-        f'sqlite:///{os.path.join(DATA_DIR, "finance.db")}'
+        f'sqlite:///{db_path}'
     )
     print(f"🔌 Database URI: {SQLALCHEMY_DATABASE_URI}")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
