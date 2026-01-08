@@ -509,7 +509,7 @@ document.getElementById('expense-form').addEventListener('submit', async (e) => 
         closeAllModals();
 
         // Reload dashboard
-        await loadDashboard();
+        await loadDashboard(true);
 
     } catch (error) {
         console.error('Transaction error:', error);
@@ -583,7 +583,7 @@ document.getElementById('income-form').addEventListener('submit', async (e) => {
         closeAllModals();
 
         // Reload dashboard
-        await loadDashboard();
+        await loadDashboard(true);
 
     } catch (error) {
         console.error('Transaction error:', error);
@@ -698,9 +698,49 @@ function attachCategoryHandlers(modalSelector) {
     });
 }
 
+// ===== RESET SKELETONS (Show skeletons before reload) =====
+function resetSkeletons() {
+    // Reset summary cards
+    const summaryCards = document.getElementById('summary-cards');
+    const summarySkeleton = document.getElementById('summary-skeleton');
+    if (summaryCards && summarySkeleton) {
+        summaryCards.classList.add('hidden');
+        summaryCards.classList.remove('fade-in');
+        summarySkeleton.classList.remove('hidden');
+    }
+    
+    // Reset transactions
+    const transactionsList = document.getElementById('transactions-list');
+    const transactionsSkeleton = document.getElementById('transactions-skeleton');
+    if (transactionsList && transactionsSkeleton) {
+        transactionsList.classList.add('hidden');
+        transactionsList.classList.remove('fade-in');
+        transactionsSkeleton.classList.remove('hidden');
+    }
+    
+    // Reset widgets (hide them for clean reload)
+    const widgetSections = [
+        'month-comparison-section',
+        'budget-progress-section', 
+        'alerts-section'
+    ];
+    widgetSections.forEach(id => {
+        const section = document.getElementById(id);
+        if (section) {
+            section.style.display = 'none';
+            section.classList.remove('fade-in');
+        }
+    });
+}
+
 // ===== DASHBOARD DATA =====
-async function loadDashboard() {
+async function loadDashboard(showSkeleton = false) {
     try {
+        // Show skeletons if this is a reload
+        if (showSkeleton) {
+            resetSkeletons();
+        }
+        
         // Load summary, widgets, and transactions in parallel
         const [summaryPromise, widgetsPromise, transactionsPromise] = await Promise.allSettled([
             loadMonthlySummary(),
@@ -735,10 +775,26 @@ async function loadDashboard() {
                     lucide.createIcons();
                 }
             }
+        } else {
+            // Handle transaction fetch error
+            const skeleton = document.getElementById('transactions-skeleton');
+            const transactionsList = document.getElementById('transactions-list');
+            if (skeleton) skeleton.classList.add('hidden');
+            if (transactionsList) {
+                transactionsList.classList.remove('hidden');
+                transactionsList.innerHTML = `
+                    <div class="empty-state">
+                        <i data-lucide="alert-circle"></i>
+                        <p>ไม่สามารถโหลดข้อมูลได้</p>
+                        <p class="empty-subtitle">กรุณาลองใหม่อีกครั้ง</p>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
         }
     } catch (error) {
         console.error('Error loading dashboard:', error);
-        // Don't show error toast on load - user might not have project yet
+        showToast('เกิดข้อผิดพลาดในการโหลดข้อมูล', 'error');
     }
 }
 
@@ -939,7 +995,7 @@ async function deleteTransaction(transactionId) {
         showToast('ลบรายการเรียบร้อยแล้ว', 'success');
 
         // Reload dashboard
-        await loadDashboard();
+        await loadDashboard(true);
 
     } catch (error) {
         showToast(error.message || 'ไม่สามารถลบได้', 'error');
@@ -961,7 +1017,7 @@ function handleDeepLink() {
 // Load on page ready
 document.addEventListener('DOMContentLoaded', async () => {
     await loadCategories(); // Load categories first
-    await loadDashboard();
+    await loadDashboard(); // First load - no skeleton reset needed
     handleDeepLink();
 });
 </script>
