@@ -107,13 +107,17 @@ class RecurringService:
             active_only: Only return active rules (default: True)
 
         Returns:
-            List of RecurringRule objects
+            List of RecurringRule objects with category data
         """
+        from sqlalchemy.orm import joinedload
+        
         # Check access
         if not RecurringService._check_project_access(project_id, user_id):
             raise PermissionError("User doesn't have access to this project")
 
-        query = RecurringRule.query.filter_by(project_id=project_id)
+        query = RecurringRule.query.filter_by(project_id=project_id).options(
+            joinedload('category')  # Eager load category data
+        )
 
         if active_only:
             query = query.filter_by(is_active=True)

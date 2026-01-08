@@ -30,6 +30,7 @@ class RecurringRule(db.Model):
 
     # Relationships
     project = db.relationship('Project', back_populates='recurring_rules')
+    category = db.relationship('Category', foreign_keys=[category_id], lazy='joined')
 
     # Indexes
     __table_args__ = (
@@ -91,7 +92,7 @@ class RecurringRule(db.Model):
 
     def to_dict(self):
         """Convert to dictionary"""
-        return {
+        result = {
             'id': self.id,
             'project_id': self.project_id,
             'member_id': self.member_id,
@@ -109,6 +110,20 @@ class RecurringRule(db.Model):
             'is_active': self.is_active,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
+        
+        # Include category data if available
+        if self.category:
+            result['category'] = {
+                'id': self.category.id,
+                'name_th': self.category.name_th,
+                'name_en': self.category.name_en,
+                'icon': self.category.icon,
+                'type': self.category.type
+            }
+        else:
+            result['category'] = None
+            
+        return result
 
     def __repr__(self):
         return f'<RecurringRule {self.freq} {self.amount/100}>'

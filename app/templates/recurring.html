@@ -41,6 +41,131 @@
         </div>
     </div>
 
+    <!-- Filter & Sort Section -->
+    <div class="section">
+        <!-- Quick Filters -->
+        <div class="quick-filters">
+            <button class="qf-btn active" data-filter="all" onclick="setQuickFilter('all')">
+                ทั้งหมด <span class="qf-badge" id="badge-all">0</span>
+            </button>
+            <button class="qf-btn" data-filter="expense" onclick="setQuickFilter('expense')">
+                💸 รายจ่าย <span class="qf-badge" id="badge-expense">0</span>
+            </button>
+            <button class="qf-btn" data-filter="income" onclick="setQuickFilter('income')">
+                💰 รายรับ <span class="qf-badge" id="badge-income">0</span>
+            </button>
+        </div>
+
+        <!-- Advanced Filter Toggle -->
+        <button class="filter-toggle-btn" onclick="toggleAdvancedFilters()">
+            <i data-lucide="sliders"></i>
+            <span>ตัวกรองเพิ่มเติม</span>
+            <i data-lucide="chevron-down" class="toggle-icon"></i>
+        </button>
+
+        <!-- Advanced Filters (Collapsible) -->
+        <div class="advanced-filters" id="advanced-filters" style="display: none;">
+            <!-- Search -->
+            <div class="filter-group">
+                <label>ค้นหา</label>
+                <input type="text" class="filter-input" id="search-input" placeholder="🔍 ค้นหารายการ...">
+            </div>
+
+            <!-- Category Filter -->
+            <div class="filter-group">
+                <label>หมวดหมู่</label>
+                <select class="filter-select" id="category-filter">
+                    <option value="all">ทั้งหมด</option>
+                    <!-- Dynamic options from categories -->
+                </select>
+            </div>
+
+            <!-- Frequency Filter -->
+            <div class="filter-group">
+                <label>ความถี่</label>
+                <div class="chip-group">
+                    <label class="chip-label">
+                        <input type="checkbox" value="daily" onchange="applyFilters()"> รายวัน
+                    </label>
+                    <label class="chip-label">
+                        <input type="checkbox" value="weekly" onchange="applyFilters()"> รายสัปดาห์
+                    </label>
+                    <label class="chip-label">
+                        <input type="checkbox" value="monthly" onchange="applyFilters()"> รายเดือน
+                    </label>
+                </div>
+            </div>
+
+            <!-- Amount Range -->
+            <div class="filter-group">
+                <label>จำนวนเงิน</label>
+                <div class="range-inputs">
+                    <input type="number" class="filter-input" id="amount-min" placeholder="ต่ำสุด" min="0">
+                    <span>-</span>
+                    <input type="number" class="filter-input" id="amount-max" placeholder="สูงสุด" min="0">
+                </div>
+            </div>
+
+            <!-- Status Toggle -->
+            <div class="filter-group">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="filter-active" checked onchange="applyFilters()">
+                    <span>แสดงเฉพาะที่ใช้งาน</span>
+                </label>
+            </div>
+
+            <!-- Filter Actions -->
+            <div class="filter-actions">
+                <button class="btn-secondary btn-sm" onclick="resetFilters()">
+                    <i data-lucide="rotate-ccw"></i> รีเซ็ต
+                </button>
+                <button class="btn-primary btn-sm" onclick="applyFilters()">
+                    <i data-lucide="check"></i> ใช้ตัวกรอง
+                </button>
+            </div>
+        </div>
+
+        <!-- Sort & Bulk Actions Bar -->
+        <div class="toolbar">
+            <!-- Sort Options -->
+            <div class="sort-bar">
+                <label class="toolbar-label">เรียง:</label>
+                <button class="sort-btn active" data-sort="date" onclick="setSortBy('date')">
+                    <i data-lucide="calendar"></i> วันที่
+                </button>
+                <button class="sort-btn" data-sort="amount" onclick="setSortBy('amount')">
+                    <i data-lucide="dollar-sign"></i> จำนวน
+                </button>
+                <button class="sort-btn" data-sort="name" onclick="setSortBy('name')">
+                    <i data-lucide="type"></i> ชื่อ
+                </button>
+            </div>
+
+            <!-- Bulk Actions Toggle -->
+            <button class="bulk-toggle-btn" onclick="toggleBulkMode()">
+                <i data-lucide="check-square"></i>
+                <span id="bulk-toggle-text">เลือก</span>
+            </button>
+        </div>
+
+        <!-- Bulk Action Bar (Hidden by default) -->
+        <div class="bulk-action-bar" id="bulk-action-bar" style="display: none;">
+            <div class="bulk-info">
+                <input type="checkbox" id="select-all" onchange="toggleSelectAll()">
+                <label for="select-all">เลือกทั้งหมด</label>
+                <span class="selected-count" id="selected-count">0 รายการ</span>
+            </div>
+            <div class="bulk-buttons">
+                <button class="btn-danger btn-sm" onclick="bulkDelete()">
+                    <i data-lucide="trash-2"></i> ลบ
+                </button>
+                <button class="btn-secondary btn-sm" onclick="bulkDeactivate()">
+                    <i data-lucide="pause"></i> ปิดใช้งาน
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Recurring List -->
     <div class="section">
         <div class="recurring-list">
@@ -368,91 +493,501 @@ async function loadRecurringRules() {
     }
 }
 
-// Render recurring rules
+// ===== GLOBAL STATE =====
+let allRecurringRules = [];
+let filteredRules = [];
+let currentFilter = {
+    type: 'all',
+    activeOnly: true,
+    search: '',
+    category: 'all',
+    frequencies: [],
+    amountMin: null,
+    amountMax: null
+};
+let currentSort = 'date';
+let isBulkMode = false;
+let selectedIds = new Set();
+
+// ===== RENDER FUNCTIONS =====
 function renderRecurringRules(rules) {
+    allRecurringRules = rules;
+    
+    // Update count badges
+    updateCountBadges(rules);
+    
+    // Populate category filter
+    populateCategoryFilter(rules);
+    
+    // Apply filters and sort
+    applyFilters();
+}
+
+function updateCountBadges(rules) {
+    const counts = {
+        all: rules.length,
+        expense: rules.filter(r => r.type === 'expense').length,
+        income: rules.filter(r => r.type === 'income').length
+    };
+    
+    document.getElementById('badge-all').textContent = counts.all;
+    document.getElementById('badge-expense').textContent = counts.expense;
+    document.getElementById('badge-income').textContent = counts.income;
+}
+
+function populateCategoryFilter(rules) {
+    const categories = new Map();
+    rules.forEach(rule => {
+        if (rule.category) {
+            categories.set(rule.category.id, rule.category);
+        }
+    });
+    
+    const select = document.getElementById('category-filter');
+    const currentValue = select.value;
+    
+    select.innerHTML = '<option value="all">ทั้งหมด</option>';
+    categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat.id;
+        option.textContent = `${cat.icon || ''} ${cat.name_th}`;
+        select.appendChild(option);
+    });
+    
+    select.value = currentValue;
+}
+
+function applyFilters() {
+    // Start with all rules
+    let filtered = [...allRecurringRules];
+    
+    // Filter by type
+    if (currentFilter.type !== 'all') {
+        filtered = filtered.filter(r => r.type === currentFilter.type);
+    }
+    
+    // Filter by active status
+    if (currentFilter.activeOnly) {
+        filtered = filtered.filter(r => r.is_active);
+    }
+    
+    // Filter by search
+    if (currentFilter.search) {
+        const searchLower = currentFilter.search.toLowerCase();
+        filtered = filtered.filter(r => 
+            (r.category?.name_th || '').toLowerCase().includes(searchLower) ||
+            (r.category?.name_en || '').toLowerCase().includes(searchLower) ||
+            (r.note || '').toLowerCase().includes(searchLower)
+        );
+    }
+    
+    // Filter by category
+    if (currentFilter.category !== 'all') {
+        filtered = filtered.filter(r => r.category_id === currentFilter.category);
+    }
+    
+    // Filter by frequencies
+    if (currentFilter.frequencies.length > 0) {
+        filtered = filtered.filter(r => currentFilter.frequencies.includes(r.freq));
+    }
+    
+    // Filter by amount range
+    if (currentFilter.amountMin !== null) {
+        filtered = filtered.filter(r => r.amount >= currentFilter.amountMin * 100);
+    }
+    if (currentFilter.amountMax !== null) {
+        filtered = filtered.filter(r => r.amount <= currentFilter.amountMax * 100);
+    }
+    
+    // Apply sort
+    filtered = sortRules(filtered, currentSort);
+    
+    filteredRules = filtered;
+    renderCards(filtered);
+}
+
+function sortRules(rules, sortBy) {
+    const sorted = [...rules];
+    
+    switch(sortBy) {
+        case 'date':
+            sorted.sort((a, b) => {
+                const dateA = new Date(a.next_run_date);
+                const dateB = new Date(b.next_run_date);
+                return dateB - dateA;
+            });
+            break;
+        case 'amount':
+            sorted.sort((a, b) => b.amount - a.amount);
+            break;
+        case 'name':
+            sorted.sort((a, b) => {
+                const nameA = (a.category?.name_th || '').toLowerCase();
+                const nameB = (b.category?.name_th || '').toLowerCase();
+                return nameA.localeCompare(nameB, 'th');
+            });
+            break;
+    }
+    
+    return sorted;
+}
+
+function renderCards(rules) {
     const recurringList = document.querySelector('.recurring-list');
-
-    const formatDate = (dateStr) => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
-    };
-
-    const formatAmount = (amount) => {
-        return (amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    };
-
-    const formatFrequency = (freq, dayOfWeek, dayOfMonth) => {
-        if (freq === 'daily') return 'ทุกวัน';
-        if (freq === 'weekly') {
-            const days = ['จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'];
-            return `ทุกสัปดาห์ (${days[dayOfWeek]})`;
-        }
-        if (freq === 'monthly') return `ทุกเดือน (วันที่ ${dayOfMonth})`;
-        return freq;
-    };
-
-    const renderIcon = (iconName) => {
-        const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(iconName || '');
-        if (isEmoji || !iconName) {
-            return iconName || '📁';
-        } else {
-            return `<i data-lucide="${iconName}"></i>`;
-        }
-    };
-
-    recurringList.innerHTML = rules.map(rule => `
-        <div class="recurring-card ${rule.type}" data-id="${rule.id}">
-            <div class="recurring-main">
-                <div class="recurring-icon-wrapper">
-                    <div class="recurring-icon ${rule.type}">
-                        ${renderIcon(rule.category?.icon)}
-                    </div>
-                </div>
-                <div class="recurring-content">
-                    <div class="recurring-header">
-                        <div class="recurring-title">${rule.category?.name_th || 'ไม่ระบุ'}</div>
-                        <div class="recurring-amount ${rule.type}">
-                            ${rule.type === 'expense' ? '-' : '+'}฿${formatAmount(rule.amount)}
-                        </div>
-                    </div>
-                    <div class="recurring-details">
-                        <div class="recurring-frequency">
-                            <i data-lucide="repeat"></i>
-                            ${formatFrequency(rule.freq, rule.day_of_week, rule.day_of_month)}
-                        </div>
-                        ${rule.next_run_date ? `
-                            <div class="recurring-next-date">
-                                <i data-lucide="calendar"></i>
-                                ${formatDate(rule.next_run_date)}
-                            </div>
-                        ` : ''}
-                    </div>
-                    ${rule.note ? `
-                        <div class="recurring-note">
-                            <i data-lucide="file-text"></i>
-                            ${rule.note}
-                        </div>
-                    ` : ''}
-                </div>
-            </div>
-            <div class="recurring-actions">
-                <button class="btn-icon btn-edit" onclick="editRecurring('${rule.id}')" title="แก้ไข">
-                    <i data-lucide="edit-2"></i>
-                </button>
-                <button class="btn-icon btn-delete" onclick="deleteRecurring('${rule.id}')" title="ลบ">
-                    <i data-lucide="trash-2"></i>
-                </button>
-            </div>
-        </div>
-    `).join('');
-
+    
+    if (rules.length === 0) {
+        renderEmptyState();
+        return;
+    }
+    
+    recurringList.innerHTML = rules.map(rule => renderCard(rule)).join('');
+    
     // Initialize Lucide icons
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
 }
 
-// Edit recurring rule
+function renderCard(rule) {
+    const formatDate = (dateStr) => {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+    };
+    
+    const formatAmount = (amount) => {
+        return (amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 0 });
+    };
+    
+    const formatFrequency = (freq, dayOfWeek, dayOfMonth) => {
+        if (freq === 'daily') return '🔁 รายวัน';
+        if (freq === 'weekly') {
+            const days = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'];
+            return `🔁 ${days[dayOfWeek]}`;
+        }
+        if (freq === 'monthly') return `🔁 ${dayOfMonth}`;
+        return freq;
+    };
+    
+    const renderIcon = (iconName) => {
+        if (!iconName) return '🔄';
+        const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(iconName);
+        if (isEmoji) return iconName;
+        return `<i data-lucide="${iconName}"></i>`;
+    };
+    
+    const isSelected = selectedIds.has(rule.id);
+    
+    return `
+        <div class="recurring-card-v2 ${rule.type}" 
+             data-id="${rule.id}" 
+             data-type="${rule.type}"
+             data-freq="${rule.freq}"
+             data-amount="${rule.amount}"
+             data-category="${rule.category_id || ''}"
+             data-active="${rule.is_active}"
+             onclick="${isBulkMode ? `toggleCardSelection('${rule.id}')` : ''}">
+            
+            ${isBulkMode ? `
+                <div class="card-checkbox-wrapper">
+                    <input type="checkbox" 
+                           class="card-checkbox" 
+                           ${isSelected ? 'checked' : ''}
+                           onchange="toggleCardSelection('${rule.id}')"
+                           onclick="event.stopPropagation()">
+                </div>
+            ` : ''}
+            
+            <div class="card-header">
+                <div class="card-icon ${rule.type}">
+                    ${renderIcon(rule.category?.icon)}
+                </div>
+                <div class="card-title-amount">
+                    <div class="card-title">${rule.category?.name_th || 'ไม่ระบุ'}</div>
+                    <div class="card-amount ${rule.type}">
+                        ${rule.type === 'expense' ? '-' : '+'}฿${formatAmount(rule.amount)}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-details">
+                <span class="card-detail-item">
+                    ${formatFrequency(rule.freq, rule.day_of_week, rule.day_of_month)}
+                </span>
+                ${rule.next_run_date ? `
+                    <span class="card-detail-item">
+                        📅 ${formatDate(rule.next_run_date)}
+                    </span>
+                ` : ''}
+            </div>
+            
+            ${!isBulkMode ? `
+                <div class="card-actions">
+                    <button class="card-action-btn" 
+                            onclick="event.stopPropagation(); editRecurring('${rule.id}')" 
+                            title="แก้ไข">
+                        <i data-lucide="edit-2"></i>
+                    </button>
+                    <button class="card-action-btn delete" 
+                            onclick="event.stopPropagation(); deleteRecurring('${rule.id}')" 
+                            title="ลบ">
+                        <i data-lucide="trash-2"></i>
+                    </button>
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+function renderEmptyState() {
+    const recurringList = document.querySelector('.recurring-list');
+    const isFiltered = currentFilter.type !== 'all' || currentFilter.search || 
+                      currentFilter.category !== 'all' || currentFilter.frequencies.length > 0;
+    
+    if (isFiltered) {
+        recurringList.innerHTML = `
+            <div class="empty-state">
+                <i data-lucide="search-x"></i>
+                <h3>ไม่พบรายการที่ค้นหา</h3>
+                <p>ลองปรับเปลี่ยนตัวกรอง</p>
+                <button class="btn-secondary" onclick="resetFilters()">
+                    รีเซ็ตตัวกรอง
+                </button>
+            </div>
+        `;
+    } else {
+        recurringList.innerHTML = `
+            <div class="empty-state">
+                <i data-lucide="calendar-plus"></i>
+                <h3>ยังไม่มีรายการประจำ</h3>
+                <p>เพิ่มรายการที่เกิดซ้ำ เช่น Netflix, ค่าเช่า, เงินเดือน</p>
+                <button class="btn-primary" onclick="openAddModal()">
+                    <i data-lucide="plus"></i> เพิ่มรายการแรก
+                </button>
+            </div>
+        `;
+    }
+    
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
+// ===== FILTER & SORT HANDLERS =====
+function setQuickFilter(type) {
+    currentFilter.type = type;
+    
+    // Update active button
+    document.querySelectorAll('.qf-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.filter === type);
+    });
+    
+    applyFilters();
+}
+
+function toggleAdvancedFilters() {
+    const advancedFilters = document.getElementById('advanced-filters');
+    const toggleIcon = document.querySelector('.filter-toggle-btn .toggle-icon');
+    const isVisible = advancedFilters.style.display !== 'none';
+    
+    advancedFilters.style.display = isVisible ? 'none' : 'block';
+    toggleIcon.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+function setSortBy(sortBy) {
+    currentSort = sortBy;
+    
+    // Update active button
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.sort === sortBy);
+    });
+    
+    applyFilters();
+}
+
+function resetFilters() {
+    currentFilter = {
+        type: 'all',
+        activeOnly: true,
+        search: '',
+        category: 'all',
+        frequencies: [],
+        amountMin: null,
+        amountMax: null
+    };
+    
+    // Reset UI
+    document.getElementById('search-input').value = '';
+    document.getElementById('category-filter').value = 'all';
+    document.getElementById('amount-min').value = '';
+    document.getElementById('amount-max').value = '';
+    document.getElementById('filter-active').checked = true;
+    
+    // Reset frequency checkboxes
+    document.querySelectorAll('.chip-group input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+    });
+    
+    // Reset quick filter
+    setQuickFilter('all');
+}
+
+// Real-time filter updates
+document.addEventListener('DOMContentLoaded', () => {
+    // Search input
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            currentFilter.search = e.target.value;
+            applyFilters();
+        });
+    }
+    
+    // Category filter
+    const categoryFilter = document.getElementById('category-filter');
+    if (categoryFilter) {
+        categoryFilter.addEventListener('change', (e) => {
+            currentFilter.category = e.target.value;
+            applyFilters();
+        });
+    }
+    
+    // Amount range
+    const amountMin = document.getElementById('amount-min');
+    const amountMax = document.getElementById('amount-max');
+    if (amountMin) {
+        amountMin.addEventListener('change', (e) => {
+            currentFilter.amountMin = e.target.value ? parseFloat(e.target.value) : null;
+            applyFilters();
+        });
+    }
+    if (amountMax) {
+        amountMax.addEventListener('change', (e) => {
+            currentFilter.amountMax = e.target.value ? parseFloat(e.target.value) : null;
+            applyFilters();
+        });
+    }
+    
+    // Frequency checkboxes
+    document.querySelectorAll('.chip-group input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            currentFilter.frequencies = Array.from(
+                document.querySelectorAll('.chip-group input[type="checkbox"]:checked')
+            ).map(cb => cb.value);
+            applyFilters();
+        });
+    });
+});
+
+// ===== BULK ACTIONS =====
+function toggleBulkMode() {
+    isBulkMode = !isBulkMode;
+    selectedIds.clear();
+    
+    const bulkActionBar = document.getElementById('bulk-action-bar');
+    const bulkToggleText = document.getElementById('bulk-toggle-text');
+    
+    bulkActionBar.style.display = isBulkMode ? 'flex' : 'none';
+    bulkToggleText.textContent = isBulkMode ? 'ยกเลิก' : 'เลือก';
+    
+    // Re-render cards with/without checkboxes
+    renderCards(filteredRules);
+    updateSelectedCount();
+}
+
+function toggleCardSelection(ruleId) {
+    if (selectedIds.has(ruleId)) {
+        selectedIds.delete(ruleId);
+    } else {
+        selectedIds.add(ruleId);
+    }
+    
+    updateSelectedCount();
+    
+    // Update checkbox state
+    const card = document.querySelector(`.recurring-card-v2[data-id="${ruleId}"]`);
+    if (card) {
+        const checkbox = card.querySelector('.card-checkbox');
+        if (checkbox) {
+            checkbox.checked = selectedIds.has(ruleId);
+        }
+    }
+    
+    // Update select-all checkbox
+    const selectAllCheckbox = document.getElementById('select-all');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.checked = selectedIds.size === filteredRules.length && filteredRules.length > 0;
+    }
+}
+
+function toggleSelectAll() {
+    const selectAllCheckbox = document.getElementById('select-all');
+    
+    if (selectAllCheckbox.checked) {
+        // Select all visible cards
+        filteredRules.forEach(rule => selectedIds.add(rule.id));
+    } else {
+        // Deselect all
+        selectedIds.clear();
+    }
+    
+    updateSelectedCount();
+    renderCards(filteredRules);
+}
+
+function updateSelectedCount() {
+    const selectedCount = document.getElementById('selected-count');
+    if (selectedCount) {
+        selectedCount.textContent = `${selectedIds.size} รายการ`;
+    }
+}
+
+async function bulkDelete() {
+    if (selectedIds.size === 0) {
+        showToast('กรุณาเลือกรายการที่ต้องการลบ', 'error');
+        return;
+    }
+    
+    if (!confirm(`ต้องการลบ ${selectedIds.size} รายการ?`)) {
+        return;
+    }
+    
+    const deletePromises = Array.from(selectedIds).map(id => 
+        API.delete(buildApiUrl('recurring', id))
+    );
+    
+    try {
+        await Promise.all(deletePromises);
+        showToast(`ลบ ${selectedIds.size} รายการสำเร็จ!`, 'success');
+        
+        selectedIds.clear();
+        toggleBulkMode();
+        await loadRecurringRules();
+    } catch (error) {
+        showToast('เกิดข้อผิดพลาดในการลบ', 'error');
+    }
+}
+
+async function bulkDeactivate() {
+    if (selectedIds.size === 0) {
+        showToast('กรุณาเลือกรายการที่ต้องการปิดใช้งาน', 'error');
+        return;
+    }
+    
+    if (!confirm(`ต้องการปิดใช้งาน ${selectedIds.size} รายการ?`)) {
+        return;
+    }
+    
+    // Note: This requires an API endpoint for bulk update
+    // For now, just show a message
+    showToast('ฟีเจอร์นี้จะเปิดใช้งานเร็วๆ นี้', 'info');
+    
+    // TODO: Implement bulk deactivate API endpoint
+    // const updatePromises = Array.from(selectedIds).map(id => 
+    //     API.put(buildApiUrl('recurring', id), { is_active: false })
+    // );
+}
+
+// ===== EDIT & DELETE =====
 let editingRecurringId = null;
 
 async function editRecurring(recurringId) {
