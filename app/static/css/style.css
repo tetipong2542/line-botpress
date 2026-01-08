@@ -4458,40 +4458,6 @@ input:checked+.slider:before {
     background: var(--bg);
 }
 
-/* ===== DARK MODE SPECIFIC OVERRIDES ===== */
-/* Using high specificity to ensure dark mode colors apply correctly */
-
-[data-theme="dark"] .setting-item.disabled {
-    background: var(--bg);
-}
-
-[data-theme="dark"] .setting-item.disabled .setting-title {
-    color: #6b7280 !important;
-    /* Explicit gray for dark mode */
-}
-
-[data-theme="dark"] .setting-item.disabled .setting-desc {
-    color: #6b7280 !important;
-}
-
-[data-theme="dark"] .setting-item.disabled .setting-icon {
-    opacity: 0.4;
-}
-
-[data-theme="dark"] .setting-item.disabled .setting-icon i {
-    color: #6b7280 !important;
-}
-
-/* Dark Mode Hover States for Active Items */
-[data-theme="dark"] .setting-item:not(.disabled):hover {
-    background: var(--bg-secondary);
-}
-
-[data-theme="dark"] .setting-item:not(.disabled):hover .setting-title {
-    color: #10b981 !important;
-    /* Green highlight on hover in dark mode */
-}
-
 /* Feature badge positioning in setting items */
 .setting-item .feature-badge {
     position: absolute;
@@ -4499,6 +4465,12 @@ input:checked+.slider:before {
     top: 50%;
     transform: translateY(-50%);
     z-index: 2;
+}
+
+/* Ensure badge purity - always visible */
+.setting-item.disabled .feature-badge {
+    pointer-events: auto;
+    opacity: 1 !important;
 }
 
 /* Explicit Hover Enhancement for Light Mode */
@@ -4521,36 +4493,212 @@ a:focus-visible {
     border-radius: 8px;
 }
 
-/* Dark Mode Focus State */
+/* Using high specificity to ensure dark mode colors apply correctly */
+
+/* ===== PROFILE PAGE DARK MODE - COMPLETE STYLING ===== */
+
+/* Page Header in Dark Mode */
+[data-theme="dark"] .page-header {
+    background: #1f2937 !important;
+    border-bottom-color: #374151 !important;
+}
+
+[data-theme="dark"] .page-header h1 {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .page-header .subtitle {
+    color: #9ca3af !important;
+}
+
+/* Section Headers in Dark Mode */
+[data-theme="dark"] .section-header h2 {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .section-header h2 i {
+    color: #10b981 !important;
+}
+
+/* Profile Card in Dark Mode */
+[data-theme="dark"] .profile-card {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .profile-card .profile-avatar {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+}
+
+[data-theme="dark"] .profile-card .profile-avatar i {
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .profile-info h2 {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .profile-email {
+    color: #9ca3af !important;
+}
+
+/* Settings List Container in Dark Mode */
+[data-theme="dark"] .settings-list {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+/* Setting Item in Dark Mode - Normal State */
+[data-theme="dark"] .setting-item {
+    color: #f9fafb !important;
+    border-bottom-color: #374151 !important;
+}
+
+[data-theme="dark"] .setting-item .setting-icon {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+}
+
+[data-theme="dark"] .setting-item .setting-icon i {
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .setting-item .setting-title {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .setting-item .setting-desc {
+    color: #9ca3af !important;
+}
+
+/* Setting Item Hover in Dark Mode */
+[data-theme="dark"] .setting-item:not(.disabled):hover {
+    background: #374151 !important;
+}
+
+[data-theme="dark"] .setting-item:not(.disabled):hover .setting-title {
+    color: #10b981 !important;
+}
+
+/* Disabled Setting Item in Dark Mode */
+[data-theme="dark"] .setting-item.disabled {
+    background: #1f2937 !important;
+}
+
+[data-theme="dark"] .setting-item.disabled .setting-title {
+    color: #6b7280 !important;
+}
+
+[data-theme="dark"] .setting-item.disabled .setting-desc {
+    color: #6b7280 !important;
+}
+
+[data-theme="dark"] .setting-item.disabled .setting-icon {
+    opacity: 0.4;
+}
+
+[data-theme="dark"] .setting-item.disabled .setting-icon i {
+    color: #6b7280 !important;
+}
+
+/* Feature Badges in Dark Mode */
+[data-theme="dark"] .feature-badge.available {
+    background: rgba(16, 185, 129, 0.2) !important;
+}
+
+[data-theme="dark"] .feature-badge.available .badge-dot {
+    background: #10b981 !important;
+}
+
+[data-theme="dark"] .feature-badge.coming-soon {
+    background: rgba(245, 158, 11, 0.25) !important;
+    color: #fbbf24 !important;
+    border-color: rgba(245, 158, 11, 0.5) !important;
+}
+
+[data-theme="dark"] .feature-badge.in-development {
+    background: rgba(59, 130, 246, 0.25) !important;
+    color: #60a5fa !important;
+    border-color: rgba(59, 130, 246, 0.5) !important;
+}
+
+/* Logout Button in Dark Mode */
+[data-theme="dark"] .btn-logout {
+    background: #ef4444 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .btn-logout:hover {
+    background: #dc2626 !important;
+}
+
+/* Modal in Dark Mode */
+[data-theme="dark"] .modal-content {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .modal-header {
+    background: #374151 !important;
+    border-bottom-color: #4b5563 !important;
+}
+
+[data-theme="dark"] .modal-header h2 {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .modal-body {
+    background: #1f2937 !important;
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .modal-close i {
+    color: #9ca3af !important;
+}
+
+/* Form Elements in Dark Mode (Notification Settings) */
+[data-theme="dark"] .notification-section h3 {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .notification-toggle-title {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .notification-toggle-desc {
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .form-select {
+    background: #374151 !important;
+    color: #f9fafb !important;
+    border-color: #4b5563 !important;
+}
+
+[data-theme="dark"] .form-label {
+    color: #f9fafb !important;
+}
+
+/* Toggle Switch in Dark Mode */
+[data-theme="dark"] .slider {
+    background-color: #4b5563 !important;
+}
+
+[data-theme="dark"] input:checked+.slider {
+    background-color: #10b981 !important;
+}
+
+/* Footer text in Dark Mode */
+[data-theme="dark"] .section p {
+    color: #9ca3af !important;
+}
+
+/* Focus States in Dark Mode */
 [data-theme="dark"] .setting-item:focus-visible,
 [data-theme="dark"] .btn:focus-visible,
 [data-theme="dark"] a:focus-visible {
-    outline-color: #10b981;
-    /* Green outline in dark mode */
-}
-
-/* Ensure badge purity - always visible */
-.setting-item.disabled .feature-badge {
-    pointer-events: auto;
-    opacity: 1 !important;
-}
-
-[data-theme="dark"] .setting-item.disabled .feature-badge {
-    opacity: 1 !important;
-}
-
-/* Coming Soon Badge - Ensure visibility in Dark Mode */
-[data-theme="dark"] .feature-badge.coming-soon {
-    background: rgba(245, 158, 11, 0.25);
-    color: #fbbf24;
-    border-color: rgba(245, 158, 11, 0.5);
-}
-
-/* In Development Badge - Ensure visibility in Dark Mode */
-[data-theme="dark"] .feature-badge.in-development {
-    background: rgba(59, 130, 246, 0.25);
-    color: #60a5fa;
-    border-color: rgba(59, 130, 246, 0.5);
+    outline-color: #10b981 !important;
 }
 
 /* ===== INSIGHT CARDS (Unified for Modal) ===== */
