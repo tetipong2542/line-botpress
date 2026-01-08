@@ -904,7 +904,9 @@ function renderTransactions(transactions) {
     transactionsList.classList.add('fade-in');
 
     transactionsList.innerHTML = transactions.map(tx => `
-        <div class="transaction-item ${tx.type}" data-transaction-id="${tx.id}">
+        <div class="transaction-item ${tx.type}" 
+             data-transaction-id="${tx.id}"
+             data-transaction='${JSON.stringify(tx).replace(/'/g, "&apos;")}'>
             <div class="transaction-icon ${tx.type}">
                 ${renderIcon(tx.category?.icon)}
             </div>
@@ -938,12 +940,16 @@ function renderTransactions(transactions) {
 // ===== EDIT TRANSACTION =====
 let editingTransactionId = null;
 
-async function editTransaction(transactionId) {
+function editTransaction(transactionId) {
     try {
-        // Fetch transaction details
-        const result = await API.get(buildApiUrl('transactions', transactionId));
-        const tx = result.transaction;
+        // Get transaction data from DOM (no API call needed!)
+        const txElement = document.querySelector(`[data-transaction-id="${transactionId}"]`);
+        if (!txElement) {
+            showToast('ไม่พบรายการที่ต้องการแก้ไข', 'error');
+            return;
+        }
 
+        const tx = JSON.parse(txElement.dataset.transaction);
         editingTransactionId = transactionId;
 
         // Pre-fill form based on type
@@ -979,7 +985,8 @@ async function editTransaction(transactionId) {
             openModal(modals.incomeForm);
         }
     } catch (error) {
-        showToast(error.message || 'ไม่สามารถโหลดข้อมูลได้', 'error');
+        console.error('Edit transaction error:', error);
+        showToast('ไม่สามารถโหลดข้อมูลได้', 'error');
     }
 }
 
