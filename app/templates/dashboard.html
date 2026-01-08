@@ -15,8 +15,33 @@
         </div>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="summary-section">
+    <!-- Summary Cards Skeleton -->
+    <div class="summary-section" id="summary-skeleton">
+        <div class="summary-card">
+            <div class="skeleton skeleton-circle"></div>
+            <div class="summary-content">
+                <div class="skeleton skeleton-text" style="width: 70%;"></div>
+                <div class="skeleton skeleton-text" style="width: 90%; height: 1.5rem;"></div>
+            </div>
+        </div>
+        <div class="summary-card">
+            <div class="skeleton skeleton-circle"></div>
+            <div class="summary-content">
+                <div class="skeleton skeleton-text" style="width: 70%;"></div>
+                <div class="skeleton skeleton-text" style="width: 90%; height: 1.5rem;"></div>
+            </div>
+        </div>
+        <div class="summary-card">
+            <div class="skeleton skeleton-circle"></div>
+            <div class="summary-content">
+                <div class="skeleton skeleton-text" style="width: 70%;"></div>
+                <div class="skeleton skeleton-text" style="width: 90%; height: 1.5rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards (Real Data) -->
+    <div class="summary-section hidden" id="summary-cards">
         <div class="summary-card income">
             <div class="summary-icon">
                 <i data-lucide="trending-up"></i>
@@ -122,12 +147,43 @@
             </h2>
         </div>
 
-        <div class="transactions-list" id="transactions-list">
-            <div class="empty-state">
-                <i data-lucide="inbox"></i>
-                <p>ยังไม่มีรายการ</p>
-                <p class="empty-subtitle">เริ่มบันทึกรายรับรายจ่ายของคุณ</p>
+        <!-- Transactions Skeleton -->
+        <div class="transactions-list" id="transactions-skeleton">
+            <div class="skeleton-card">
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <div class="skeleton skeleton-circle"></div>
+                    <div style="flex: 1;">
+                        <div class="skeleton skeleton-text" style="width: 60%;"></div>
+                        <div class="skeleton skeleton-text" style="width: 40%; height: 0.75rem;"></div>
+                    </div>
+                    <div class="skeleton skeleton-text" style="width: 80px; height: 1.25rem;"></div>
+                </div>
             </div>
+            <div class="skeleton-card">
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <div class="skeleton skeleton-circle"></div>
+                    <div style="flex: 1;">
+                        <div class="skeleton skeleton-text" style="width: 70%;"></div>
+                        <div class="skeleton skeleton-text" style="width: 50%; height: 0.75rem;"></div>
+                    </div>
+                    <div class="skeleton skeleton-text" style="width: 80px; height: 1.25rem;"></div>
+                </div>
+            </div>
+            <div class="skeleton-card">
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <div class="skeleton skeleton-circle"></div>
+                    <div style="flex: 1;">
+                        <div class="skeleton skeleton-text" style="width: 65%;"></div>
+                        <div class="skeleton skeleton-text" style="width: 45%; height: 0.75rem;"></div>
+                    </div>
+                    <div class="skeleton skeleton-text" style="width: 80px; height: 1.25rem;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions List (Real Data) -->
+        <div class="transactions-list hidden" id="transactions-list">
+            <!-- Populated by JavaScript -->
         </div>
     </div>
 
@@ -658,8 +714,16 @@ async function loadDashboard() {
             if (result.transactions && result.transactions.length > 0) {
                 renderTransactions(result.transactions);
             } else {
+                // Hide skeleton
+                const skeleton = document.getElementById('transactions-skeleton');
+                if (skeleton) {
+                    skeleton.classList.add('hidden');
+                }
+                
                 // Show empty state
                 const transactionsList = document.getElementById('transactions-list');
+                transactionsList.classList.remove('hidden');
+                transactionsList.classList.add('fade-in');
                 transactionsList.innerHTML = `
                     <div class="empty-state">
                         <i data-lucide="inbox"></i>
@@ -724,6 +788,20 @@ function updateSummaryCards(summary) {
         balanceEl.style.color = isPositive ? 'var(--success, #10b981)' : 'var(--error, #ef4444)';
     }
 
+    // Hide skeleton, show real cards with fade-in
+    const skeleton = document.getElementById('summary-skeleton');
+    const cards = document.getElementById('summary-cards');
+    if (skeleton && cards) {
+        skeleton.classList.add('hidden');
+        cards.classList.remove('hidden');
+        cards.classList.add('fade-in');
+    }
+
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+
     console.log('Summary loaded:', summary);
 }
 
@@ -758,6 +836,16 @@ function renderTransactions(transactions) {
             return `<i data-lucide="${iconName}"></i>`;
         }
     };
+
+    // Hide skeleton first
+    const skeleton = document.getElementById('transactions-skeleton');
+    if (skeleton) {
+        skeleton.classList.add('hidden');
+    }
+
+    // Show transactions list
+    transactionsList.classList.remove('hidden');
+    transactionsList.classList.add('fade-in');
 
     transactionsList.innerHTML = transactions.map(tx => `
         <div class="transaction-item ${tx.type}" data-transaction-id="${tx.id}">
@@ -929,8 +1017,14 @@ function renderMonthComparison(comparison, summary) {
     document.getElementById('compare-balance-amount').textContent = `฿${formatMoney(summary.balance.total)}`;
     document.getElementById('compare-balance-change').innerHTML = formatChange(comparison.balance);
     
-    // Show section
+    // Show section with fade-in
     section.style.display = 'block';
+    section.classList.add('fade-in');
+    
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
 }
 
 // ===== RENDER BUDGET PROGRESS =====
@@ -970,6 +1064,7 @@ function renderBudgetProgress(budgets) {
     
     lucide.createIcons();
     section.style.display = 'block';
+    section.classList.add('fade-in');
 }
 
 // ===== RENDER BUDGET ALERTS =====
@@ -992,4 +1087,5 @@ function renderBudgetAlerts(alerts) {
     `).join('');
     
     section.style.display = 'block';
+    section.classList.add('fade-in');
 }
