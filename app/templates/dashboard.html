@@ -60,6 +60,59 @@
         </button>
     </div>
 
+    <!-- Month Comparison -->
+    <div class="section" id="month-comparison-section" style="display: none;">
+        <div class="comparison-card">
+            <div class="comparison-header">
+                <h3><i data-lucide="trending-up"></i> เดือนนี้ vs เดือนก่อน</h3>
+            </div>
+            <div class="comparison-grid">
+                <div class="comparison-item income">
+                    <span class="label">รายรับ</span>
+                    <div class="value-row">
+                        <span class="amount" id="compare-income-amount">฿0</span>
+                        <span class="change" id="compare-income-change"></span>
+                    </div>
+                </div>
+                <div class="comparison-item expense">
+                    <span class="label">รายจ่าย</span>
+                    <div class="value-row">
+                        <span class="amount" id="compare-expense-amount">฿0</span>
+                        <span class="change" id="compare-expense-change"></span>
+                    </div>
+                </div>
+                <div class="comparison-item balance">
+                    <span class="label">คงเหลือ</span>
+                    <div class="value-row">
+                        <span class="amount" id="compare-balance-amount">฿0</span>
+                        <span class="change" id="compare-balance-change"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Progress -->
+    <div class="section" id="budget-progress-section" style="display: none;">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="target"></i>
+                งบประมาณเดือนนี้
+            </h2>
+            <a href="/budgets" class="section-link">ดูทั้งหมด →</a>
+        </div>
+        <div id="budget-progress-list" class="budget-quick-list">
+            <!-- Populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Budget Alerts -->
+    <div class="section" id="alerts-section" style="display: none;">
+        <div id="alerts-list" class="alerts-list">
+            <!-- Populated by JavaScript -->
+        </div>
+    </div>
+
     <!-- Recent Transactions -->
     <div class="section">
         <div class="section-header">
@@ -592,9 +645,10 @@ function attachCategoryHandlers(modalSelector) {
 // ===== DASHBOARD DATA =====
 async function loadDashboard() {
     try {
-        // Load summary and transactions in parallel
-        const [summaryPromise, transactionsPromise] = await Promise.allSettled([
+        // Load summary, widgets, and transactions in parallel
+        const [summaryPromise, widgetsPromise, transactionsPromise] = await Promise.allSettled([
             loadMonthlySummary(),
+            loadDashboardWidgets(),
             API.get(buildApiUrl('transactions') + '?per_page=10&page=1')
         ]);
 
@@ -824,3 +878,118 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 </script>
 {% endblock %}
+
+// ===== LOAD DASHBOARD WIDGETS =====
+async function loadDashboardWidgets() {
+    try {
+        const result = await API.get(buildApiUrl('dashboard/widgets'));
+        
+        if (result) {
+            // Render widgets
+            renderMonthComparison(result.comparison, result.summary);
+            renderBudgetProgress(result.top_budgets);
+            renderBudgetAlerts(result.alerts);
+            
+            console.log('Dashboard widgets loaded:', result);
+        }
+    } catch (error) {
+        console.error('Error loading widgets:', error);
+        // Silently fail - widgets are optional
+    }
+}
+
+// ===== RENDER MONTH COMPARISON =====
+function renderMonthComparison(comparison, summary) {
+    if (!comparison) return;
+    
+    const section = document.getElementById('month-comparison-section');
+    if (!section) return;
+    
+    const formatMoney = (amount) => {
+        return (amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    };
+    
+    const formatChange = (change) => {
+        if (change.direction === 'same') return '';
+        
+        const arrow = change.direction === 'up' ? '↑' : '↓';
+        const className = change.direction === 'up' ? 'up' : 'down';
+        return `<span class="change-badge ${className}">${arrow} ${change.percentage}%</span>`;
+    };
+    
+    // Update income
+    document.getElementById('compare-income-amount').textContent = `฿${formatMoney(summary.income.total)}`;
+    document.getElementById('compare-income-change').innerHTML = formatChange(comparison.income);
+    
+    // Update expense
+    document.getElementById('compare-expense-amount').textContent = `฿${formatMoney(summary.expense.total)}`;
+    document.getElementById('compare-expense-change').innerHTML = formatChange(comparison.expense);
+    
+    // Update balance
+    document.getElementById('compare-balance-amount').textContent = `฿${formatMoney(summary.balance.total)}`;
+    document.getElementById('compare-balance-change').innerHTML = formatChange(comparison.balance);
+    
+    // Show section
+    section.style.display = 'block';
+}
+
+// ===== RENDER BUDGET PROGRESS =====
+function renderBudgetProgress(budgets) {
+    if (!budgets || budgets.length === 0) return;
+    
+    const section = document.getElementById('budget-progress-section');
+    const container = document.getElementById('budget-progress-list');
+    
+    if (!section || !container) return;
+    
+    container.innerHTML = budgets.map(budget => {
+        const cat = budget.category || {};
+        const usage = budget.usage_percentage || 0;
+        const statusClass = budget.is_over_budget ? 'over' : (budget.is_near_limit ? 'warning' : 'normal');
+        
+        return `
+            <div class="budget-quick-card ${statusClass}">
+                <div class="budget-quick-header">
+                    <span class="budget-icon" style="color: ${cat.color || '#666'}">
+                        ${cat.icon || '📁'}
+                    </span>
+                    <span class="budget-name">${cat.name_th || 'หมวดหมู่'}</span>
+                </div>
+                <div class="budget-quick-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill ${statusClass}" style="width: ${Math.min(usage, 100)}%"></div>
+                    </div>
+                    <div class="progress-stats">
+                        <span>${usage}%</span>
+                        <span>฿${(budget.spent_formatted || 0).toLocaleString('th-TH')} / ฿${(budget.limit_amount_formatted || 0).toLocaleString('th-TH')}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    lucide.createIcons();
+    section.style.display = 'block';
+}
+
+// ===== RENDER BUDGET ALERTS =====
+function renderBudgetAlerts(alerts) {
+    if (!alerts || alerts.length === 0) return;
+    
+    const section = document.getElementById('alerts-section');
+    const container = document.getElementById('alerts-list');
+    
+    if (!section || !container) return;
+    
+    container.innerHTML = alerts.map(alert => `
+        <div class="alert alert-${alert.type}">
+            <span class="alert-icon">${alert.icon}</span>
+            <div class="alert-content">
+                <strong>${alert.category}</strong>
+                <span>${alert.message}</span>
+            </div>
+        </div>
+    `).join('');
+    
+    section.style.display = 'block';
+}

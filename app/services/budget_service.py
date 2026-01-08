@@ -266,3 +266,43 @@ class BudgetService:
             'budgets_count': len(budgets),
             'over_budget_count': sum(1 for b in budgets if b['is_over_budget'])
         }
+
+    @staticmethod
+    def get_dashboard_budgets(project_id, month_yyyymm, limit=3):
+        """
+        Get top budgets for dashboard display
+        
+        Returns top N budgets sorted by:
+        1. Over budget (>100%)
+        2. Near limit (>80%)
+        3. Highest usage
+        
+        Args:
+            project_id: Project ID
+            month_yyyymm: Month in "YYYY-MM"
+            limit: Number of budgets to return (default 3)
+            
+        Returns:
+            List of budget dicts sorted by priority
+        """
+        budgets = BudgetService.get_budgets(project_id, month_yyyymm)
+        
+        if not budgets:
+            return []
+        
+        # Sort by priority:
+        # 1. Over budget first (>100%)
+        # 2. Near limit next (>80%)
+        # 3. Then by usage percentage
+        def sort_key(budget):
+            usage = budget['usage_percentage']
+            if usage > 100:
+                return (0, -usage)  # Over budget - highest priority
+            elif usage > 80:
+                return (1, -usage)  # Near limit - medium priority
+            else:
+                return (2, -usage)  # Normal - sorted by usage
+        
+        sorted_budgets = sorted(budgets, key=sort_key)
+        
+        return sorted_budgets[:limit]

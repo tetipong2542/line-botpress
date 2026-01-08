@@ -1333,3 +1333,131 @@ def export_transactions_csv(project_id):
         return jsonify({
             "error": {"message": str(e)}
         }), 500
+
+
+# ============================================================
+# DASHBOARD WIDGETS
+# ============================================================
+
+@bp.route('/projects/<project_id>/dashboard/widgets', methods=['GET'])
+def get_dashboard_widgets(project_id):
+    """Get all dashboard widgets data in one call"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from datetime import datetime
+        now = datetime.now()
+        current_month = f"{now.year}-{str(now.month).zfill(2)}"
+        
+        # Calculate previous month
+        prev_month_num = now.month - 1 if now.month > 1 else 12
+        prev_year = now.year if now.month > 1 else now.year - 1
+        prev_month = f"{prev_year}-{str(prev_month_num).zfill(2)}"
+        
+        # Get data in parallel
+        current_summary = AnalyticsService.get_monthly_summary(project_id, current_month)
+        prev_summary = AnalyticsService.get_monthly_summary(project_id, prev_month)
+        top_budgets = BudgetService.get_dashboard_budgets(project_id, current_month, limit=3)
+        
+        # Calculate comparison
+        comparison = calculate_month_comparison(
+            current_summary['summary'],
+            prev_summary['summary']
+        )
+        
+        # Get budget alerts
+        alerts = generate_budget_alerts(top_budgets)
+        
+        return jsonify({
+            'current_month': current_month,
+            'previous_month': prev_month,
+            'summary': current_summary['summary'],
+            'comparison': comparison,
+            'top_budgets': top_budgets,
+            'alerts': alerts
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+def calculate_month_comparison(current, previous):
+    """Calculate comparison between current and previous month"""
+    
+    def calc_change(current_val, prev_val):
+        if prev_val == 0:
+            if current_val == 0:
+                return {'amount': 0, 'percentage': 0, 'direction': 'same'}
+            else:
+                return {'amount': current_val, 'percentage': 100, 'direction': 'up'}
+        
+        diff = current_val - prev_val
+        pct = (diff / prev_val) * 100
+        direction = 'up' if diff > 0 else ('down' if diff < 0 else 'same')
+        
+        return {
+            'amount': diff,
+            'percentage': abs(round(pct, 1)),
+            'direction': direction
+        }
+    
+    return {
+        'income': calc_change(
+            current['income']['total'],
+            previous['income']['total']
+        ),
+        'expense': calc_change(
+            current['expense']['total'],
+            previous['expense']['total']
+        ),
+        'balance': calc_change(
+            current['balance']['total'],
+            previous['balance']['total']
+        )
+    }
+
+
+def generate_budget_alerts(budgets):
+    """Generate alert messages from budget data"""
+    alerts = []
+    
+    for budget in budgets:
+        usage = budget['usage_percentage']
+        cat_name = budget.get('category', {}).get('name_th', 'หมวดหมู่')
+        cat_icon = budget.get('category', {}).get('icon', '📁')
+        
+        if usage > 100:
+            # Over budget
+            over_amount = budget['spent'] - budget['limit_amount']
+            alerts.append({
+                'type': 'error',
+                'icon': '🚨',
+                'category': f"{cat_icon} {cat_name}",
+                'message': f"เกินงบแล้ว {usage}% (เกิน ฿{abs(over_amount/100):.2f})",
+                'budget_id': budget['id']
+            })
+        elif usage > 80:
+            # Near limit
+            remaining = budget['remaining']
+            alerts.append({
+                'type': 'warning',
+                'icon': '⚠️',
+                'category': f"{cat_icon} {cat_name}",
+                'message': f"ใช้ไป {usage}% แล้ว (เหลือ ฿{remaining/100:.2f})",
+                'budget_id': budget['id']
+            })
+        elif usage > 0:
+            # Good progress
+            alerts.append({
+                'type': 'info',
+                'icon': '✅',
+                'category': f"{cat_icon} {cat_name}",
+                'message': f"ใช้ไป {usage}% (ควบคุมได้ดี)",
+                'budget_id': budget['id']
+            })
+    
+    return alerts
