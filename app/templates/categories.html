@@ -3,7 +3,7 @@
 {% block title %}หมวดบัญชี - จดรายรับรายจ่าย{% endblock %}
 
 {% block content %}
-<div class="mobile-container">
+<div class="mobile-container page-loading">
     <!-- Header -->
     <div class="page-header">
         <div class="header-content">
@@ -582,6 +582,18 @@ document.getElementById('category-form').addEventListener('submit', async (e) =>
 // Load on page ready
 document.addEventListener('DOMContentLoaded', () => {
     loadCategories();
+    
+    // Remove loading class and fade in
+    const container = document.querySelector('.mobile-container');
+    if (container) {
+        container.classList.remove('page-loading');
+        container.classList.add('fade-in');
+    }
+    
+    // Initialize icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
 });
 </script>
 {% endblock %}

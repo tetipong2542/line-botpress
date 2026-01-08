@@ -3,7 +3,7 @@
 {% block title %}รายการประจำ - จดรายรับรายจ่าย{% endblock %}
 
 {% block content %}
-<div class="mobile-container">
+<div class="mobile-container page-loading">
     <!-- App-Title Bar -->
     <div class="page-header">
         <div class="header-content">
@@ -551,6 +551,18 @@ async function loadCategories() {
 document.addEventListener('DOMContentLoaded', async () => {
     await loadCategories();
     await loadRecurringRules();
+    
+    // Remove loading class and fade in
+    const container = document.querySelector('.mobile-container');
+    if (container) {
+        container.classList.remove('page-loading');
+        container.classList.add('fade-in');
+    }
+    
+    // Initialize icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
 });
 </script>
 {% endblock %}
