@@ -6,6 +6,7 @@ from datetime import datetime
 from flask import Blueprint, request, jsonify, session
 from app.services.transaction_service import TransactionService
 from app.services.analytics_service import AnalyticsService
+from app.services.budget_service import BudgetService
 from app.models.user import User
 from app.models.project import Project, ProjectMember, ProjectInvite, ProjectSettings
 from app.models.category import Category
@@ -1070,6 +1071,183 @@ def get_analytics_trends(project_id):
         data = AnalyticsService.get_trends(project_id, months)
 
         return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+# ============================================================
+# BUDGETS
+# ============================================================
+
+@bp.route('/projects/<project_id>/budgets', methods=['POST'])
+def create_budget(project_id):
+    """Create a budget for a category"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        data = request.get_json()
+
+        # Required fields
+        category_id = data.get('category_id')
+        month_yyyymm = data.get('month')
+        limit_amount = data.get('limit_amount')
+
+        if not all([category_id, month_yyyymm, limit_amount]):
+            return jsonify({
+                "error": {"message": "category_id, month, and limit_amount are required"}
+            }), 400
+
+        # Optional
+        rollover_policy = data.get('rollover_policy', 'none')
+
+        # Create budget
+        budget = BudgetService.create_budget(
+            project_id=project_id,
+            category_id=category_id,
+            month_yyyymm=month_yyyymm,
+            limit_amount=int(limit_amount),
+            rollover_policy=rollover_policy
+        )
+
+        # Get enriched data
+        budget_dict = BudgetService.get_budget(budget.id, project_id)
+
+        return jsonify({"budget": budget_dict}), 201
+
+    except ValueError as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 400
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/budgets', methods=['GET'])
+def get_budgets_list(project_id):
+    """Get all budgets for a project, optionally filtered by month"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        month = request.args.get('month')  # Optional: "YYYY-MM"
+
+        budgets = BudgetService.get_budgets(project_id, month)
+
+        return jsonify({"budgets": budgets}), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/budgets/<budget_id>', methods=['GET'])
+def get_single_budget(project_id, budget_id):
+    """Get a single budget"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        budget = BudgetService.get_budget(budget_id, project_id)
+
+        return jsonify({"budget": budget}), 200
+
+    except ValueError as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 404
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/budgets/<budget_id>', methods=['PUT'])
+def update_single_budget(project_id, budget_id):
+    """Update a budget"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        data = request.get_json()
+
+        # Optional fields
+        limit_amount = data.get('limit_amount')
+        rollover_policy = data.get('rollover_policy')
+
+        # Convert limit_amount to int if provided
+        if limit_amount is not None:
+            limit_amount = int(limit_amount)
+
+        budget = BudgetService.update_budget(
+            budget_id=budget_id,
+            project_id=project_id,
+            limit_amount=limit_amount,
+            rollover_policy=rollover_policy
+        )
+
+        return jsonify({"budget": budget}), 200
+
+    except ValueError as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 400
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/budgets/<budget_id>', methods=['DELETE'])
+def delete_single_budget(project_id, budget_id):
+    """Delete a budget"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        BudgetService.delete_budget(budget_id, project_id)
+
+        return jsonify({"message": "Budget deleted successfully"}), 200
+
+    except ValueError as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 404
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/budgets/summary', methods=['GET'])
+def get_budget_summary_data(project_id):
+    """Get budget summary for a month"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        # Get month from query params (default to current month)
+        month = request.args.get('month')
+        if not month:
+            from datetime import datetime
+            now = datetime.now()
+            month = f"{now.year}-{str(now.month).zfill(2)}"
+
+        summary = BudgetService.get_budget_summary(project_id, month)
+
+        return jsonify({"summary": summary}), 200
 
     except Exception as e:
         return jsonify({

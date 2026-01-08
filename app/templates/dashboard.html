@@ -592,29 +592,85 @@ function attachCategoryHandlers(modalSelector) {
 // ===== DASHBOARD DATA =====
 async function loadDashboard() {
     try {
-        // Fetch recent transactions
-        const result = await API.get(buildApiUrl('transactions') + '?per_page=10&page=1');
+        // Load summary and transactions in parallel
+        const [summaryPromise, transactionsPromise] = await Promise.allSettled([
+            loadMonthlySummary(),
+            API.get(buildApiUrl('transactions') + '?per_page=10&page=1')
+        ]);
 
-        if (result.transactions && result.transactions.length > 0) {
-            renderTransactions(result.transactions);
-        } else {
-            // Show empty state
-            const transactionsList = document.getElementById('transactions-list');
-            transactionsList.innerHTML = `
-                <div class="empty-state">
-                    <i data-lucide="inbox"></i>
-                    <p>ยังไม่มีรายการ</p>
-                    <p class="empty-subtitle">เริ่มบันทึกรายรับรายจ่ายของคุณ</p>
-                </div>
-            `;
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
+        // Handle transactions
+        if (transactionsPromise.status === 'fulfilled') {
+            const result = transactionsPromise.value;
+            if (result.transactions && result.transactions.length > 0) {
+                renderTransactions(result.transactions);
+            } else {
+                // Show empty state
+                const transactionsList = document.getElementById('transactions-list');
+                transactionsList.innerHTML = `
+                    <div class="empty-state">
+                        <i data-lucide="inbox"></i>
+                        <p>ยังไม่มีรายการ</p>
+                        <p class="empty-subtitle">เริ่มบันทึกรายรับรายจ่ายของคุณ</p>
+                    </div>
+                `;
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
             }
         }
     } catch (error) {
         console.error('Error loading dashboard:', error);
         // Don't show error toast on load - user might not have project yet
     }
+}
+
+// ===== LOAD MONTHLY SUMMARY =====
+async function loadMonthlySummary() {
+    try {
+        // Get current month in YYYY-MM format
+        const now = new Date();
+        const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        
+        const result = await API.get(buildApiUrl(`analytics/summary?month=${month}`));
+        
+        if (result.summary) {
+            updateSummaryCards(result.summary);
+        }
+    } catch (error) {
+        console.error('Error loading summary:', error);
+        // Silently fail - cards will show ฿0
+    }
+}
+
+// ===== UPDATE SUMMARY CARDS =====
+function updateSummaryCards(summary) {
+    // Format number with Thai locale
+    const formatMoney = (amount) => {
+        return amount.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    // Update Income
+    const incomeEl = document.getElementById('income-summary');
+    if (incomeEl && summary.income) {
+        incomeEl.textContent = `฿${formatMoney(summary.income.formatted)}`;
+    }
+
+    // Update Expense
+    const expenseEl = document.getElementById('expense-summary');
+    if (expenseEl && summary.expense) {
+        expenseEl.textContent = `฿${formatMoney(summary.expense.formatted)}`;
+    }
+
+    // Update Balance
+    const balanceEl = document.getElementById('balance-amount');
+    if (balanceEl && summary.balance) {
+        balanceEl.textContent = `฿${formatMoney(summary.balance.formatted)}`;
+        // Update color based on positive/negative
+        const isPositive = summary.balance.total >= 0;
+        balanceEl.style.color = isPositive ? 'var(--success, #10b981)' : 'var(--error, #ef4444)';
+    }
+
+    console.log('Summary loaded:', summary);
 }
 
 // ===== RENDER TRANSACTIONS =====

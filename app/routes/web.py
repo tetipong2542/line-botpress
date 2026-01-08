@@ -141,6 +141,16 @@ def analytics():
     return render_template('analytics.html', user=user, project=project)
 
 
+@bp.route('/budgets')
+@require_login
+def budgets():
+    """Budget management page"""
+    user_id = session.get('user_id')
+    user = User.query.get(user_id)
+    project = get_user_project(user_id)
+    return render_template('budgets.html', user=user, project=project)
+
+
 @bp.route('/members')
 @require_login
 def members():

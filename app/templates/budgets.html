@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+
+{% block title %}งบประมาณ - จดรายรับรายจ่าย{% endblock %}
+
+{% block content %}
+<div class="mobile-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>
+                <i data-lucide="wallet"></i>
+                งบประมาณ
+            </h1>
+            <p class="subtitle">จัดการงบประมาณรายหมวดหมู่</p>
+        </div>
+    </div>
+
+    <!-- Period Selector -->
+    <div class="period-selector">
+        <button class="period-nav" id="prev-period">
+            <i data-lucide="chevron-left"></i>
+        </button>
+        <div class="period-display">
+            <span id="current-period">มกราคม 2026</span>
+        </div>
+        <button class="period-nav" id="next-period">
+            <i data-lucide="chevron-right"></i>
+        </button>
+    </div>
+
+    <!-- Budget Summary -->
+    <div class="summary-section">
+        <div class="summary-card">
+            <div class="summary-icon">
+                <i data-lucide="target"></i>
+            </div>
+            <div class="summary-content">
+                <div class="summary-label">งบประมาณทั้งหมด</div>
+                <div class="summary-amount" id="total-budgeted">฿0.00</div>
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-icon">
+                <i data-lucide="trending-down"></i>
+            </div>
+            <div class="summary-content">
+                <div class="summary-label">ใช้ไปแล้ว</div>
+                <div class="summary-amount" id="total-spent">฿0.00</div>
+            </div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-icon">
+                <i data-lucide="piggy-bank"></i>
+            </div>
+            <div class="summary-content">
+                <div class="summary-label">คงเหลือ</div>
+                <div class="summary-amount" id="total-remaining">฿0.00</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget List -->
+    <div class="section">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="list"></i>
+                งบประมาณรายหมวดหมู่
+            </h2>
+        </div>
+        
+        <div id="budgets-list" class="budgets-list">
+            <!-- Populated by JavaScript -->
+            <div class="empty-state">
+                <i data-lucide="wallet"></i>
+                <p>ยังไม่มีงบประมาณ</p>
+                <p class="empty-subtitle">เริ่มตั้งงบประมาณสำหรับหมวดหมู่ต่างๆ</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <button class="fab" id="btn-add-budget">
+        <i data-lucide="plus"></i>
+    </button>
+
+    <!-- Bottom spacing -->
+    <div class="footer-spacing"></div>
+</div>
+
+<!-- Modal: Add/Edit Budget -->
+<div class="modal" id="budget-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h2 id="modal-title">เพิ่มงบประมาณ</h2>
+            <button class="modal-close">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <form class="modal-body" id="budget-form">
+            <div class="form-group">
+                <label class="form-label">หมวดหมู่</label>
+                <select class="form-select" id="budget-category" required>
+                    <option value="">เลือกหมวดหมู่...</option>
+                    <!-- Populated by JavaScript -->
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">เดือน</label>
+                <input type="month" class="form-input" id="budget-month" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">งบประมาณ (บาท)</label>
+                <div class="amount-input-wrapper">
+                    <span class="currency">฿</span>
+                    <input type="number" class="form-input amount-input" id="budget-amount" 
+                           placeholder="0.00" step="0.01" min="0" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">นโยบายยอดเหลือ</label>
+                <select class="form-select" id="budget-rollover">
+                    <option value="none">ไม่ยกยอด</option>
+                    <option value="add">บวกเพิ่มเดือนถัดไป</option>
+                    <option value="reset">รีเซ็ตเริ่มใหม่</option>
+                </select>
+                <small class="form-hint">เมื่อมียอดเงินเหลือในเดือนนี้</small>
+            </div>
+
+            <button type="submit" class="btn-primary">
+                <i data-lucide="check"></i>
+                <span>บันทึก</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Sticky Footer Menu -->
+{% set current_page = 'budgets' %}
+{% include 'components/footer_menu.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ===== STATE =====
+let currentMonth = new Date().getMonth();
+let currentYear = new Date().getFullYear();
+let editingBudgetId = null;
+let allCategories = [];
+
+// Thai month names
+const thaiMonths = [
+    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+];
+
+// ===== INITIALIZATION =====
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadCategories();
+    updatePeriodDisplay();
+    await loadBudgets();
+    setupEventListeners();
+});
+
+// ===== LOAD CATEGORIES =====
+async function loadCategories() {
+    try {
+        const result = await API.get(buildApiUrl('categories'));
+        
+        if (result.categories) {
+            // Filter only expense categories (budgets are typically for expenses)
+            allCategories = result.categories.filter(c => c.type === 'expense' && c.is_active);
+            
+            // Populate category dropdown
+            const select = document.getElementById('budget-category');
+            select.innerHTML = '<option value="">เลือกหมวดหมู่...</option>' +
+                allCategories.map(cat => `
+                    <option value="${cat.id}">${cat.icon || '📁'} ${cat.name_th}</option>
+                `).join('');
+        }
+    } catch (error) {
+        console.error('Error loading categories:', error);
+    }
+}
+
+// ===== LOAD BUDGETS =====
+async function loadBudgets() {
+    try {
+        const month = formatMonthParam();
+        
+        const [budgetsResult, summaryResult] = await Promise.all([
+            API.get(buildApiUrl(`budgets?month=${month}`)),
+            API.get(buildApiUrl(`budgets/summary?month=${month}`))
+        ]);
+
+        // Update summary cards
+        if (summaryResult.summary) {
+            updateSummaryCards(summaryResult.summary);
+        }
+
+        // Render budget list
+        if (budgetsResult.budgets && budgetsResult.budgets.length > 0) {
+            renderBudgets(budgetsResult.budgets);
+        } else {
+            showEmptyState();
+        }
+
+    } catch (error) {
+        console.error('Error loading budgets:', error);
+        showEmptyState();
+    }
+}
+
+// ===== UPDATE SUMMARY CARDS =====
+function updateSummaryCards(summary) {
+    const formatMoney = (amount) => {
+        return amount.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    document.getElementById('total-budgeted').textContent = `฿${formatMoney(summary.total_budgeted_formatted)}`;
+    document.getElementById('total-spent').textContent = `฿${formatMoney(summary.total_spent_formatted)}`;
+    
+    const remainingEl = document.getElementById('total-remaining');
+    remainingEl.textContent = `฿${formatMoney(summary.total_remaining_formatted)}`;
+    remainingEl.style.color = summary.total_remaining >= 0 ? 'var(--success, #10b981)' : 'var(--error, #ef4444)';
+}
+
+// ===== RENDER BUDGETS =====
+function renderBudgets(budgets) {
+    const container = document.getElementById('budgets-list');
+    
+    container.innerHTML = budgets.map(budget => `
+        <div class="budget-item ${budget.is_over_budget ? 'over-budget' : ''}">
+            <div class="budget-header">
+                <div class="budget-info">
+                    <span class="budget-icon" style="color: ${budget.category.color}">
+                        ${budget.category.icon || '📁'}
+                    </span>
+                    <span class="budget-name">${budget.category.name_th}</span>
+                </div>
+                <div class="budget-actions">
+                    <button class="btn-icon" onclick="editBudget('${budget.id}')" title="แก้ไข">
+                        <i data-lucide="edit-2"></i>
+                    </button>
+                    <button class="btn-icon" onclick="deleteBudget('${budget.id}')" title="ลบ">
+                        <i data-lucide="trash-2"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="budget-amounts">
+                <div class="budget-amount-row">
+                    <span>งบ: ฿${budget.limit_amount_formatted.toLocaleString('th-TH')}</span>
+                    <span>ใช้: ฿${budget.spent_formatted.toLocaleString('th-TH')}</span>
+                    <span class="${budget.remaining < 0 ? 'negative' : ''}">
+                        เหลือ: ฿${budget.remaining_formatted.toLocaleString('th-TH')}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="budget-progress">
+                <div class="budget-progress-bar">
+                    <div class="budget-progress-fill ${budget.is_over_budget ? 'over' : budget.is_near_limit ? 'warning' : ''}" 
+                         style="width: ${Math.min(budget.usage_percentage, 100)}%"></div>
+                </div>
+                <div class="budget-progress-label">
+                    <span>${budget.usage_percentage}%</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    lucide.createIcons();
+}
+
+// ===== SHOW EMPTY STATE =====
+function showEmptyState() {
+    const container = document.getElementById('budgets-list');
+    container.innerHTML = `
+        <div class="empty-state">
+            <i data-lucide="wallet"></i>
+            <p>ยังไม่มีงบประมาณ</p>
+            <p class="empty-subtitle">เริ่มตั้งงบประมาณสำหรับหมวดหมู่ต่างๆ</p>
+        </div>
+    `;
+    lucide.createIcons();
+}
+
+// ===== MODAL MANAGEMENT =====
+const modal = document.getElementById('budget-modal');
+
+function openModal() {
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+    editingBudgetId = null;
+    document.getElementById('budget-form').reset();
+    document.getElementById('modal-title').textContent = 'เพิ่มงบประมาณ';
+}
+
+// ===== EVENT LISTENERS =====
+function setupEventListeners() {
+    // Add budget button
+    document.getElementById('btn-add-budget').addEventListener('click', () => {
+        editingBudgetId = null;
+        document.getElementById('modal-title').textContent = 'เพิ่มงบประมาณ';
+        
+        // Set default month to current period
+        const defaultMonth = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+        document.getElementById('budget-month').value = defaultMonth;
+        
+        openModal();
+    });
+
+    // Close modal
+    modal.querySelector('.modal-close').addEventListener('click', closeModal);
+    modal.querySelector('.modal-overlay').addEventListener('click', closeModal);
+
+    // Form submit
+    document.getElementById('budget-form').addEventListener('submit', handleSubmit);
+
+    // Period navigation
+    document.getElementById('prev-period').addEventListener('click', () => {
+        currentMonth--;
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        }
+        updatePeriodDisplay();
+        loadBudgets();
+    });
+
+    document.getElementById('next-period').addEventListener('click', () => {
+        currentMonth++;
+        if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        }
+        updatePeriodDisplay();
+        loadBudgets();
+    });
+
+    // ESC key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+}
+
+// ===== FORM SUBMIT =====
+async function handleSubmit(e) {
+    e.preventDefault();
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalContent = submitBtn.innerHTML;
+
+    try {
+        // Get form data
+        const categoryId = document.getElementById('budget-category').value;
+        const month = document.getElementById('budget-month').value;
+        const amount = parseFloat(document.getElementById('budget-amount').value);
+        const rolloverPolicy = document.getElementById('budget-rollover').value;
+
+        // Validation
+        if (!categoryId || !month || !amount || amount <= 0) {
+            showToast('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+            return;
+        }
+
+        // Loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังบันทึก...</span>';
+        lucide.createIcons();
+
+        // Prepare payload
+        const payload = {
+            category_id: categoryId,
+            month: month,
+            limit_amount: Math.round(amount * 100), // Convert to satang
+            rollover_policy: rolloverPolicy
+        };
+
+        if (editingBudgetId) {
+            // Update existing budget
+            await API.put(buildApiUrl('budgets', editingBudgetId), payload);
+            showToast('อัพเดทงบประมาณสำเร็จ!', 'success');
+        } else {
+            // Create new budget
+            await API.post(buildApiUrl('budgets'), payload);
+            showToast('เพิ่มงบประมาณสำเร็จ!', 'success');
+        }
+
+        closeModal();
+        await loadBudgets();
+
+    } catch (error) {
+        console.error('Budget save error:', error);
+        showToast(error.message || 'ไม่สามารถบันทึกได้', 'error');
+
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalContent;
+        lucide.createIcons();
+    }
+}
+
+// ===== EDIT BUDGET =====
+async function editBudget(budgetId) {
+    try {
+        const result = await API.get(buildApiUrl('budgets', budgetId));
+        const budget = result.budget;
+
+        editingBudgetId = budgetId;
+        document.getElementById('modal-title').textContent = 'แก้ไขงบประมาณ';
+
+        // Fill form
+        document.getElementById('budget-category').value = budget.category_id;
+        document.getElementById('budget-month').value = budget.month_yyyymm;
+        document.getElementById('budget-amount').value = budget.limit_amount_formatted;
+        document.getElementById('budget-rollover').value = budget.rollover_policy;
+
+        openModal();
+
+    } catch (error) {
+        showToast(error.message || 'ไม่สามารถโหลดข้อมูลได้', 'error');
+    }
+}
+
+// ===== DELETE BUDGET =====
+async function deleteBudget(budgetId) {
+    if (!confirm('ต้องการลบงบประมาณนี้หรือไม่?')) {
+        return;
+    }
+
+    try {
+        await API.delete(buildApiUrl('budgets', budgetId));
+        showToast('ลบงบประมาณเรียบร้อยแล้ว', 'success');
+        await loadBudgets();
+
+    } catch (error) {
+        showToast(error.message || 'ไม่สามารถลบได้', 'error');
+    }
+}
+
+// ===== UTILITY FUNCTIONS =====
+function formatMonthParam() {
+    const month = String(currentMonth + 1).padStart(2, '0');
+    return `${currentYear}-${month}`;
+}
+
+function updatePeriodDisplay() {
+    const periodEl = document.getElementById('current-period');
+    if (periodEl) {
+        periodEl.textContent = `${thaiMonths[currentMonth]} ${currentYear + 543}`;
+    }
+}
+</script>
+{% endblock %}

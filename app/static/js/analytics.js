@@ -280,8 +280,8 @@ function updateTopCategories(categories) {
 
 // Period navigation
 function setupPeriodNavigation() {
-    const prevBtn = document.getElementById('prev-month');
-    const nextBtn = document.getElementById('next-month');
+    const prevBtn = document.getElementById('prev-period');
+    const nextBtn = document.getElementById('next-period');
 
     if (prevBtn) {
         prevBtn.addEventListener('click', () => {
