@@ -4415,6 +4415,248 @@ input:checked + .slider:before {
     pointer-events: none;
 }
 
+/* ===== INSIGHT CARDS (Unified for Modal) ===== */
+
+.insights-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.insight-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.2s ease;
+}
+
+.insight-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+}
+
+.insight-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.insight-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: var(--bg-secondary);
+}
+
+.insight-icon.income {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    color: #059669;
+}
+
+.insight-icon.expense {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #dc2626;
+}
+
+.insight-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.insight-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.insight-message {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 8px;
+}
+
+.insight-action {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--primary);
+    background: rgba(99, 102, 241, 0.08);
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+.insight-action i {
+    width: 16px;
+    height: 16px;
+}
+
+.insight-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.insight-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.insight-stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.insight-stat-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.insight-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.insight-badge.trend-up {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.insight-badge.trend-down {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.insight-badge.trend-same {
+    background: #e5e7eb;
+    color: #6b7280;
+}
+
+.insight-badge i {
+    width: 14px;
+    height: 14px;
+}
+
+.insight-categories {
+    margin-top: 12px;
+}
+
+.insight-subtitle {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text);
+}
+
+.insight-category-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.insight-category-item:last-child {
+    border-bottom: none;
+}
+
+.insight-category-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text);
+}
+
+.insight-category-change {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.insight-category-change.positive {
+    color: #16a34a;
+}
+
+.insight-category-change.negative {
+    color: #dc2626;
+}
+
+.insight-category-change i {
+    width: 14px;
+    height: 14px;
+}
+
+/* Reminder/Info Cards */
+.insight-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.insight-category {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.insight-date {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.insight-date i {
+    width: 14px;
+    height: 14px;
+}
+
+.insight-days-badge {
+    background: var(--primary);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 4px;
+}
+
+.insight-amount {
+    font-size: 14px;
+    font-weight: 700;
+    text-align: right;
+}
+
+.insight-amount.income {
+    color: #16a34a;
+}
+
+.insight-amount.expense {
+    color: #dc2626;
+}
+
 /* Responsive adjustments */
 @media (max-width: 360px) {
     .feature-badge {

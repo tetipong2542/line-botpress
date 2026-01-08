@@ -85,6 +85,14 @@
         </button>
     </div>
 
+    <!-- Quick Add Button -->
+    <div class="section">
+        <button class="btn-primary btn-block quick-add-btn" id="btn-quick-add">
+            <i data-lucide="zap"></i>
+            <span>จดรวดเร็ว</span>
+        </button>
+    </div>
+
     <!-- Insights Button -->
     <div class="section">
         <button class="btn-secondary btn-block" onclick="openInsightsModal()" id="btn-insights">
@@ -340,6 +348,34 @@
 const modal = document.getElementById('transaction-form-modal');
 const addExpenseBtn = document.getElementById('btn-add-expense');
 const addIncomeBtn = document.getElementById('btn-add-income');
+const quickAddBtn = document.getElementById('btn-quick-add');
+
+let lastUsedCategories = {
+    expense: null,
+    income: null
+};
+
+// Load last used categories from localStorage
+function loadLastUsedCategories() {
+    try {
+        const saved = localStorage.getItem('lastUsedCategories');
+        if (saved) {
+            lastUsedCategories = JSON.parse(saved);
+        }
+    } catch (e) {
+        console.error('Failed to load last used categories:', e);
+    }
+}
+
+// Save last used categories to localStorage
+function saveLastUsedCategories(type, categoryId) {
+    lastUsedCategories[type] = categoryId;
+    try {
+        localStorage.setItem('lastUsedCategories', JSON.stringify(lastUsedCategories));
+    } catch (e) {
+        console.error('Failed to save last used categories:', e);
+    }
+}
 const closeBtn = modal.querySelector('.modal-close');
 const overlay = modal.querySelector('.modal-overlay');
 
@@ -376,6 +412,39 @@ function closeModal() {
 addExpenseBtn.addEventListener('click', () => openModal('expense'));
 addIncomeBtn.addEventListener('click', () => openModal('income'));
 
+quickAddBtn.addEventListener('click', () => {
+    const type = 'expense'; // Default to expense
+    const categoryId = lastUsedCategories.expense;
+
+    if (!categoryId) {
+        showToast('ยังไม่มประวัติการบันทึกกรายจ่าย กรุณบันทึกกรายรายจ่ายก่อน', 'info');
+        return;
+    }
+
+    // Pre-fill form with last used category
+    document.getElementById('transaction-type').value = type;
+    document.getElementById('transaction-category').value = categoryId;
+    
+    // Set default date/time
+    const now = new Date();
+    document.getElementById('transaction-date').value = now.totoISOString().split('T')[0];
+    document.getElementById('transaction-time').value = now.toTimeString().slice(0, 5);
+    
+    // Clear amount and note
+    document.getElementById('transaction-amount').value = '';
+    document.getElementById('transaction-note').value = '';
+
+    // Update modal header
+    const modalHeader = document.getElementById('transaction-modal-header');
+    const modalTitle = document.getElementById('transaction-modal-title');
+    
+    modalHeader.classList.remove('expense', 'income');
+    modalHeader.classList.add(type);
+    modalTitle.textContent = 'บันทึกเร็ว';
+
+    openModal();
+});
+
 closeBtn.addEventListener('click', closeModal);
 overlay.addEventListener('click', closeModal);
 
@@ -392,6 +461,9 @@ document.getElementById('transaction-type').addEventListener('change', (e) => {
     modalHeader.classList.remove('expense', 'income');
     modalHeader.classList.add(e.target.value);
 });
+
+// Load last used categories on page ready
+document.addEventListener('DOMContentLoaded', loadLastUsedCategories);
 
 // ===== SET DEFAULT DATE/TIME =====
 function setDefaultDateTime(type) {
@@ -1123,19 +1195,19 @@ function renderRecurringReminders(reminders) {
     const containerWrapper = document.getElementById('insights-reminders-container');
     
     container.innerHTML = reminders.map(reminder => `
-        <div class="reminder-card fade-in">
-            <div class="reminder-icon ${reminder.type}">
+        <div class="insight-card fade-in">
+            <div class="insight-icon ${reminder.type}">
                 ${reminder.icon}
             </div>
-            <div class="reminder-info">
-                <div class="reminder-category">${reminder.category}</div>
-                <div class="reminder-date">
+            <div class="insight-info">
+                <div class="insight-category">${reminder.category}</div>
+                <div class="insight-date">
                     <i data-lucide="calendar"></i>
                     ${reminder.next_run_date}
-                    <span class="reminder-days-badge">${reminder.days_until} วัน</span>
+                    <span class="insight-days-badge">${reminder.days_until} วัน</span>
                 </div>
             </div>
-            <div class="reminder-amount ${reminder.type}">
+            <div class="insight-amount ${reminder.type}">
                 ${reminder.type === 'expense' ? '-' : '+'}฿${(reminder.amount / 100).toLocaleString('th-TH', {minimumFractionDigits: 0})}
             </div>
         </div>
