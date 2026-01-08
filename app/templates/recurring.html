@@ -15,9 +15,9 @@
         </div>
     </div>
 
-    <!-- Recurring Stats Cards - Interactive Dashboard -->
+    <!-- Recurring Stats Cards (Simplified - 3 cards) -->
     <div class="recurring-stats">
-        <div class="stat-card active-filter" data-type="all" onclick="filterByStatCard('all')">
+        <div class="stat-card">
             <div class="stat-icon">
                 <i data-lucide="list-checks"></i>
             </div>
@@ -27,7 +27,7 @@
             </div>
         </div>
         
-        <div class="stat-card income" data-type="income" onclick="filterByStatCard('income')">
+        <div class="stat-card income">
             <div class="stat-icon">
                 <i data-lucide="trending-up"></i>
             </div>
@@ -37,7 +37,7 @@
             </div>
         </div>
         
-        <div class="stat-card expense" data-type="expense" onclick="filterByStatCard('expense')">
+        <div class="stat-card expense">
             <div class="stat-icon">
                 <i data-lucide="trending-down"></i>
             </div>
@@ -46,116 +46,26 @@
                 <div class="stat-label">รายจ่าย/เดือน</div>
             </div>
         </div>
-        
-        <div class="stat-card net" data-type="net" onclick="filterByStatCard('net')">
-            <div class="stat-icon">
-                <i data-lucide="calculator"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-value" id="net-total">฿0</div>
-                <div class="stat-label">สุทธิ/เดือน</div>
-            </div>
-        </div>
     </div>
 
-    <!-- Unified Filter Panel -->
+    <!-- Simple Filter Bar -->
     <div class="section">
-        <div class="filter-panel">
-            <div class="filter-panel-header">
-                <h3 class="filter-panel-title">
-                    <i data-lucide="sliders"></i>
-                    ตัวกรอง & เรียงลำดับ
-                </h3>
-                <button class="panel-collapse-btn" onclick="toggleFilterPanel()">
-                    <i data-lucide="chevron-down" class="collapse-icon"></i>
+        <div class="simple-filter-bar">
+            <!-- Search -->
+            <div class="filter-search">
+                <i data-lucide="search"></i>
+                <input type="text" id="search-input" placeholder="ค้นหารายการ...">
+            </div>
+
+            <!-- Sort Options -->
+            <div class="filter-sort">
+                <button class="sort-btn active" data-sort="next_run_date" onclick="setSortBy('next_run_date')">
+                    <i data-lucide="calendar"></i>
+                    <span>วันที่</span>
                 </button>
-            </div>
-            
-            <div class="filter-panel-content" id="filter-panel-content">
-                <!-- Search -->
-                <div class="filter-group">
-                    <label class="filter-label">
-                        <i data-lucide="search"></i>
-                        ค้นหา
-                    </label>
-                    <input type="text" class="filter-input" id="search-input" placeholder="ค้นหารายการ...">
-                </div>
-
-                <!-- Category Filter -->
-                <div class="filter-group">
-                    <label class="filter-label">
-                        <i data-lucide="folder"></i>
-                        หมวดหมู่
-                    </label>
-                    <select class="filter-select" id="category-filter">
-                        <option value="all">ทั้งหมด</option>
-                        <!-- Dynamic options -->
-                    </select>
-                </div>
-
-                <!-- Sort Options -->
-                <div class="filter-group">
-                    <label class="filter-label">
-                        <i data-lucide="arrow-up-down"></i>
-                        เรียงตาม
-                    </label>
-                    <div class="sort-buttons">
-                        <button class="sort-btn-v2 active" data-sort="date" onclick="setSortBy('date')">
-                            <i data-lucide="calendar"></i>
-                            <span>วันที่</span>
-                        </button>
-                        <button class="sort-btn-v2" data-sort="amount" onclick="setSortBy('amount')">
-                            <i data-lucide="dollar-sign"></i>
-                            <span>จำนวนเงิน</span>
-                        </button>
-                        <button class="sort-btn-v2" data-sort="name" onclick="setSortBy('name')">
-                            <i data-lucide="type"></i>
-                            <span>ชื่อ</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Status & Bulk Actions -->
-                <div class="filter-group">
-                    <label class="filter-label">
-                        <i data-lucide="settings"></i>
-                        ตัวเลือก
-                    </label>
-                    <div class="options-row">
-                        <button class="option-btn" id="status-toggle-btn" onclick="toggleStatusFilter()">
-                            <i data-lucide="eye"></i>
-                            <span id="status-toggle-text">ใช้งานอยู่</span>
-                        </button>
-                        <button class="option-btn" onclick="toggleBulkMode()">
-                            <i data-lucide="check-square"></i>
-                            <span id="bulk-toggle-text">เลือกหลายรายการ</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Reset Button -->
-                <div class="filter-actions">
-                    <button class="btn-secondary btn-block" onclick="resetFilters()">
-                        <i data-lucide="rotate-ccw"></i>
-                        รีเซ็ตตัวกรอง
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Bulk Action Bar (Hidden by default) -->
-        <div class="bulk-action-bar" id="bulk-action-bar" style="display: none;">
-            <div class="bulk-info">
-                <input type="checkbox" id="select-all" onchange="toggleSelectAll()">
-                <label for="select-all">เลือกทั้งหมด</label>
-                <span class="selected-count" id="selected-count">0 รายการ</span>
-            </div>
-            <div class="bulk-buttons">
-                <button class="btn-danger btn-sm" onclick="bulkDelete()">
-                    <i data-lucide="trash-2"></i> ลบ
-                </button>
-                <button class="btn-secondary btn-sm" onclick="bulkDeactivate()">
-                    <i data-lucide="pause"></i> ปิดใช้งาน
+                <button class="sort-btn" data-sort="amount" onclick="setSortBy('amount')">
+                    <i data-lucide="dollar-sign"></i>
+                    <span>จำนวนเงิน</span>
                 </button>
             </div>
         </div>
@@ -467,21 +377,13 @@ async function loadRecurringRules() {
     }
 }
 
-// ===== GLOBAL STATE =====
+// ===== GLOBAL STATE (SIMPLIFIED) =====
 let allRecurringRules = [];
 let filteredRules = [];
 let currentFilter = {
-    type: 'all',
-    activeOnly: true,
-    search: '',
-    category: 'all',
-    frequencies: [],
-    amountMin: null,
-    amountMax: null
+    search: ''
 };
-let currentSort = 'date';
-let isBulkMode = false;
-let selectedIds = new Set();
+let currentSort = 'next_run_date';
 
 // ===== RENDER FUNCTIONS =====
 function renderRecurringRules(rules) {
@@ -490,19 +392,12 @@ function renderRecurringRules(rules) {
     // Update stats cards
     updateRecurringStats(rules);
     
-    // Update count badges
-    updateCountBadges(rules);
-    
-    // Populate category filter
-    populateCategoryFilter(rules);
-    
     // Apply filters and sort
     applyFilters();
 }
 
 // ===== STATS CARDS UPDATE =====
 function updateRecurringStats(rules) {
-    // Calculate totals
     const activeRules = rules.filter(r => r.is_active);
     
     const incomeTotal = activeRules
@@ -513,81 +408,17 @@ function updateRecurringStats(rules) {
         .filter(r => r.type === 'expense')
         .reduce((sum, r) => sum + r.amount, 0);
     
-    const netTotal = incomeTotal - expenseTotal;
-    
-    // Format amounts
     const formatAmount = (amount) => {
         return '฿' + (amount / 100).toLocaleString('th-TH', {minimumFractionDigits: 0});
     };
     
-    // Update UI
     document.getElementById('active-count').textContent = activeRules.length;
     document.getElementById('income-total').textContent = formatAmount(incomeTotal);
     document.getElementById('expense-total').textContent = formatAmount(expenseTotal);
-    
-    const netElement = document.getElementById('net-total');
-    netElement.textContent = formatAmount(Math.abs(netTotal));
-    
-    // Update net card styling based on positive/negative
-    const netCard = netElement.closest('.stat-card');
-    netCard.classList.remove('income', 'expense');
-    if (netTotal > 0) {
-        netCard.classList.add('income');
-    } else if (netTotal < 0) {
-        netCard.classList.add('expense');
-        netElement.textContent = '-' + formatAmount(Math.abs(netTotal));
-    }
-}
-
-function updateCountBadges(rules) {
-    const counts = {
-        all: rules.length,
-        expense: rules.filter(r => r.type === 'expense').length,
-        income: rules.filter(r => r.type === 'income').length
-    };
-    
-    // Update tab badges
-    document.getElementById('tab-badge-all').textContent = counts.all;
-    document.getElementById('tab-badge-expense').textContent = counts.expense;
-    document.getElementById('tab-badge-income').textContent = counts.income;
-}
-
-function populateCategoryFilter(rules) {
-    const categories = new Map();
-    rules.forEach(rule => {
-        if (rule.category) {
-            categories.set(rule.category.id, rule.category);
-        }
-    });
-    
-    const select = document.getElementById('category-filter');
-    const currentValue = select.value;
-    
-    select.innerHTML = '<option value="all">ทั้งหมด</option>';
-    categories.forEach(cat => {
-        const option = document.createElement('option');
-        option.value = cat.id;
-        // Text only, no emoji/icon in dropdown
-        option.textContent = cat.name_th;
-        select.appendChild(option);
-    });
-    
-    select.value = currentValue;
 }
 
 function applyFilters() {
-    // Start with all rules
     let filtered = [...allRecurringRules];
-    
-    // Filter by type
-    if (currentFilter.type !== 'all') {
-        filtered = filtered.filter(r => r.type === currentFilter.type);
-    }
-    
-    // Filter by active status
-    if (currentFilter.activeOnly) {
-        filtered = filtered.filter(r => r.is_active);
-    }
     
     // Filter by search
     if (currentFilter.search) {
@@ -597,24 +428,6 @@ function applyFilters() {
             (r.category?.name_en || '').toLowerCase().includes(searchLower) ||
             (r.note || '').toLowerCase().includes(searchLower)
         );
-    }
-    
-    // Filter by category
-    if (currentFilter.category !== 'all') {
-        filtered = filtered.filter(r => r.category_id === currentFilter.category);
-    }
-    
-    // Filter by frequencies
-    if (currentFilter.frequencies.length > 0) {
-        filtered = filtered.filter(r => currentFilter.frequencies.includes(r.freq));
-    }
-    
-    // Filter by amount range
-    if (currentFilter.amountMin !== null) {
-        filtered = filtered.filter(r => r.amount >= currentFilter.amountMin * 100);
-    }
-    if (currentFilter.amountMax !== null) {
-        filtered = filtered.filter(r => r.amount <= currentFilter.amountMax * 100);
     }
     
     // Apply sort
@@ -628,22 +441,15 @@ function sortRules(rules, sortBy) {
     const sorted = [...rules];
     
     switch(sortBy) {
-        case 'date':
+        case 'next_run_date':
             sorted.sort((a, b) => {
                 const dateA = new Date(a.next_run_date);
                 const dateB = new Date(b.next_run_date);
-                return dateB - dateA;
+                return dateA - dateB;
             });
             break;
         case 'amount':
             sorted.sort((a, b) => b.amount - a.amount);
-            break;
-        case 'name':
-            sorted.sort((a, b) => {
-                const nameA = (a.category?.name_th || '').toLowerCase();
-                const nameB = (b.category?.name_th || '').toLowerCase();
-                return nameA.localeCompare(nameB, 'th');
-            });
             break;
     }
     
@@ -660,7 +466,6 @@ function renderCards(rules) {
     
     recurringList.innerHTML = rules.map(rule => renderCard(rule)).join('');
     
-    // Initialize Lucide icons
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
@@ -677,13 +482,9 @@ function renderCard(rule) {
     };
     
     const formatFrequency = (freq, dayOfWeek, dayOfMonth) => {
-        const iconHtml = '<i data-lucide="repeat"></i>';
-        if (freq === 'daily') return `${iconHtml} รายวัน`;
-        if (freq === 'weekly') {
-            const days = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'];
-            return `${iconHtml} ${days[dayOfWeek]}`;
-        }
-        if (freq === 'monthly') return `${iconHtml} ${dayOfMonth}`;
+        if (freq === 'daily') return 'รายวัน';
+        if (freq === 'weekly') return 'รายสัปดาห์';
+        if (freq === 'monthly') return `รายเดือน (${dayOfMonth} ทุกเดือน)`;
         return freq;
     };
     
@@ -694,28 +495,8 @@ function renderCard(rule) {
         return `<i data-lucide="${iconName}"></i>`;
     };
     
-    const isSelected = selectedIds.has(rule.id);
-    
     return `
-        <div class="recurring-card-v2 ${rule.type}" 
-             data-id="${rule.id}" 
-             data-type="${rule.type}"
-             data-freq="${rule.freq}"
-             data-amount="${rule.amount}"
-             data-category="${rule.category_id || ''}"
-             data-active="${rule.is_active}"
-             onclick="${isBulkMode ? `toggleCardSelection('${rule.id}')` : ''}">
-            
-            ${isBulkMode ? `
-                <div class="card-checkbox-wrapper">
-                    <input type="checkbox" 
-                           class="card-checkbox" 
-                           ${isSelected ? 'checked' : ''}
-                           onchange="toggleCardSelection('${rule.id}')"
-                           onclick="event.stopPropagation()">
-                </div>
-            ` : ''}
-            
+        <div class="recurring-card-v2 ${rule.type}" data-id="${rule.id}">
             <div class="card-header">
                 <div class="card-icon ${rule.type}">
                     ${renderIcon(rule.category?.icon)}
@@ -739,37 +520,30 @@ function renderCard(rule) {
                 ` : ''}
             </div>
             
-            ${!isBulkMode ? `
-                <div class="card-actions">
-                    <button class="card-action-btn" 
-                            onclick="event.stopPropagation(); editRecurring('${rule.id}')" 
-                            title="แก้ไข">
-                        <i data-lucide="edit-2"></i>
-                    </button>
-                    <button class="card-action-btn delete" 
-                            onclick="event.stopPropagation(); deleteRecurring('${rule.id}')" 
-                            title="ลบ">
-                        <i data-lucide="trash-2"></i>
-                    </button>
-                </div>
-            ` : ''}
+            <div class="card-actions">
+                <button class="card-action-btn" onclick="editRecurring('${rule.id}')" title="แก้ไข">
+                    <i data-lucide="edit-2"></i>
+                </button>
+                <button class="card-action-btn delete" onclick="deleteRecurring('${rule.id}')" title="ลบ">
+                    <i data-lucide="trash-2"></i>
+                </button>
+            </div>
         </div>
     `;
 }
 
 function renderEmptyState() {
     const recurringList = document.querySelector('.recurring-list');
-    const isFiltered = currentFilter.type !== 'all' || currentFilter.search || 
-                      currentFilter.category !== 'all' || currentFilter.frequencies.length > 0;
+    const isFiltered = currentFilter.search;
     
     if (isFiltered) {
         recurringList.innerHTML = `
             <div class="empty-state">
                 <i data-lucide="search-x"></i>
                 <h3>ไม่พบรายการที่ค้นหา</h3>
-                <p>ลองปรับเปลี่ยนตัวกรอง</p>
-                <button class="btn-secondary" onclick="resetFilters()">
-                    รีเซ็ตตัวกรอง
+                <p>ลองปรับคำค้นหา</p>
+                <button class="btn-secondary" onclick="clearSearch()">
+                    ล้างคำค้นหา
                 </button>
             </div>
         `;
@@ -791,141 +565,25 @@ function renderEmptyState() {
     }
 }
 
-// ===== NEW FILTER PANEL HANDLERS =====
-
-// Interactive Stat Cards - Filter by clicking dashboard cards
-function filterByStatCard(type) {
-    currentFilter.type = type;
-
-    // Update active state on stat cards
-    document.querySelectorAll('.stat-card').forEach(card => {
-        const cardType = card.dataset.type;
-        card.classList.toggle('active-filter', cardType === type);
-    });
-
-    applyFilters();
-    saveFilterPreferences();
-}
-
-function toggleFilterPanel() {
-    const panelContent = document.getElementById('filter-panel-content');
-    const collapseIcon = document.querySelector('.collapse-icon');
-    const isVisible = panelContent.style.display !== 'none';
-    
-    panelContent.style.display = isVisible ? 'none' : 'block';
-    collapseIcon.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(180deg)';
-}
-
-function toggleStatusFilter() {
-    currentFilter.activeOnly = !currentFilter.activeOnly;
-    
-    // Update button text
-    const statusText = document.getElementById('status-toggle-text');
-    const statusBtn = document.getElementById('status-toggle-btn');
-    
-    if (currentFilter.activeOnly) {
-        statusText.textContent = 'ใช้งานอยู่';
-        statusBtn.classList.remove('option-btn-inactive');
-    } else {
-        statusText.textContent = 'ทั้งหมด';
-        statusBtn.classList.add('option-btn-inactive');
-    }
-    
-    applyFilters();
-    saveFilterPreferences();
-}
-
+// ===== FILTER & SORT HANDLERS =====
 function setSortBy(sortBy) {
     currentSort = sortBy;
     
-    // Update active button
-    document.querySelectorAll('.sort-btn-v2').forEach(btn => {
+    document.querySelectorAll('.sort-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.sort === sortBy);
     });
     
     applyFilters();
-    saveFilterPreferences();
 }
 
-function resetFilters() {
-    currentFilter = {
-        type: 'all',
-        activeOnly: true,
-        search: '',
-        category: 'all',
-        frequencies: [],
-        amountMin: null,
-        amountMax: null
-    };
-
-    // Reset UI
+function clearSearch() {
     document.getElementById('search-input').value = '';
-    document.getElementById('category-filter').value = 'all';
-
-    // Reset stat card active state
-    filterByStatCard('all');
-
-    // Reset status button
-    document.getElementById('status-toggle-text').textContent = 'ใช้งานอยู่';
-    document.getElementById('status-toggle-btn').classList.remove('option-btn-inactive');
-
-    // Save and apply
-    saveFilterPreferences();
+    currentFilter.search = '';
+    applyFilters();
 }
 
-// ===== LOCALSTORAGE PERSISTENCE =====
-function saveFilterPreferences() {
-    try {
-        const prefs = {
-            type: currentFilter.type,
-            sort: currentSort,
-            activeOnly: currentFilter.activeOnly
-        };
-        localStorage.setItem('recurring_filters', JSON.stringify(prefs));
-    } catch (e) {
-        console.error('Failed to save filter preferences:', e);
-    }
-}
-
-function loadFilterPreferences() {
-    try {
-        const saved = localStorage.getItem('recurring_filters');
-        if (saved) {
-            const prefs = JSON.parse(saved);
-            currentFilter.type = prefs.type || 'all';
-            currentSort = prefs.sort || 'date';
-            currentFilter.activeOnly = prefs.activeOnly !== undefined ? prefs.activeOnly : true;
-
-            // Update stat cards to match loaded preferences
-            document.querySelectorAll('.stat-card').forEach(card => {
-                const cardType = card.dataset.type;
-                card.classList.toggle('active-filter', cardType === currentFilter.type);
-            });
-
-            document.querySelectorAll('.sort-btn-v2').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.sort === currentSort);
-            });
-
-            const statusText = document.getElementById('status-toggle-text');
-            const statusBtn = document.getElementById('status-toggle-btn');
-            if (statusText && statusBtn) {
-                if (currentFilter.activeOnly) {
-                    statusText.textContent = 'ใช้งานอยู่';
-                    statusBtn.classList.remove('option-btn-inactive');
-                } else {
-                    statusText.textContent = 'ทั้งหมด';
-                    statusBtn.classList.add('option-btn-inactive');
-                }
-            }
-        }
-    } catch (e) {
-        console.error('Failed to load filter preferences:', e);
-    }
-}
-
-// Real-time filter updates
+// Real-time search
 document.addEventListener('DOMContentLoaded', () => {
-    // Search input
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
@@ -933,125 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
             applyFilters();
         });
     }
-
-    // Category filter
-    const categoryFilter = document.getElementById('category-filter');
-    if (categoryFilter) {
-        categoryFilter.addEventListener('change', (e) => {
-            currentFilter.category = e.target.value;
-            applyFilters();
-        });
-    }
 });
-
-// ===== BULK ACTIONS =====
-function toggleBulkMode() {
-    isBulkMode = !isBulkMode;
-    selectedIds.clear();
-    
-    const bulkActionBar = document.getElementById('bulk-action-bar');
-    const bulkToggleText = document.getElementById('bulk-toggle-text');
-    
-    bulkActionBar.style.display = isBulkMode ? 'flex' : 'none';
-    bulkToggleText.textContent = isBulkMode ? 'ยกเลิก' : 'เลือกหลายรายการ';
-    
-    // Re-render cards with/without checkboxes
-    renderCards(filteredRules);
-    updateSelectedCount();
-}
-
-function toggleCardSelection(ruleId) {
-    if (selectedIds.has(ruleId)) {
-        selectedIds.delete(ruleId);
-    } else {
-        selectedIds.add(ruleId);
-    }
-    
-    updateSelectedCount();
-    
-    // Update checkbox state
-    const card = document.querySelector(`.recurring-card-v2[data-id="${ruleId}"]`);
-    if (card) {
-        const checkbox = card.querySelector('.card-checkbox');
-        if (checkbox) {
-            checkbox.checked = selectedIds.has(ruleId);
-        }
-    }
-    
-    // Update select-all checkbox
-    const selectAllCheckbox = document.getElementById('select-all');
-    if (selectAllCheckbox) {
-        selectAllCheckbox.checked = selectedIds.size === filteredRules.length && filteredRules.length > 0;
-    }
-}
-
-function toggleSelectAll() {
-    const selectAllCheckbox = document.getElementById('select-all');
-    
-    if (selectAllCheckbox.checked) {
-        // Select all visible cards
-        filteredRules.forEach(rule => selectedIds.add(rule.id));
-    } else {
-        // Deselect all
-        selectedIds.clear();
-    }
-    
-    updateSelectedCount();
-    renderCards(filteredRules);
-}
-
-function updateSelectedCount() {
-    const selectedCount = document.getElementById('selected-count');
-    if (selectedCount) {
-        selectedCount.textContent = `${selectedIds.size} รายการ`;
-    }
-}
-
-async function bulkDelete() {
-    if (selectedIds.size === 0) {
-        showToast('กรุณาเลือกรายการที่ต้องการลบ', 'error');
-        return;
-    }
-    
-    if (!confirm(`ต้องการลบ ${selectedIds.size} รายการ?`)) {
-        return;
-    }
-    
-    const deletePromises = Array.from(selectedIds).map(id => 
-        API.delete(buildApiUrl('recurring', id))
-    );
-    
-    try {
-        await Promise.all(deletePromises);
-        showToast(`ลบ ${selectedIds.size} รายการสำเร็จ!`, 'success');
-        
-        selectedIds.clear();
-        toggleBulkMode();
-        await loadRecurringRules();
-    } catch (error) {
-        showToast('เกิดข้อผิดพลาดในการลบ', 'error');
-    }
-}
-
-async function bulkDeactivate() {
-    if (selectedIds.size === 0) {
-        showToast('กรุณาเลือกรายการที่ต้องการปิดใช้งาน', 'error');
-        return;
-    }
-    
-    if (!confirm(`ต้องการปิดใช้งาน ${selectedIds.size} รายการ?`)) {
-        return;
-    }
-    
-    // Note: This requires an API endpoint for bulk update
-    // For now, just show a message
-    showToast('ฟีเจอร์นี้จะเปิดใช้งานเร็วๆ นี้', 'info');
-    
-    // TODO: Implement bulk deactivate API endpoint
-    // const updatePromises = Array.from(selectedIds).map(id => 
-    //     API.put(buildApiUrl('recurring', id), { is_active: false })
-    // );
-}
 
 // ===== EDIT & DELETE =====
 let editingRecurringId = null;

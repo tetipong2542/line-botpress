@@ -85,6 +85,14 @@
         </button>
     </div>
 
+    <!-- Insights Button -->
+    <div class="section">
+        <button class="btn-secondary btn-block" onclick="openInsightsModal()" id="btn-insights">
+            <i data-lucide="sparkles"></i>
+            <span>ดูข้อมูลเชิงลึก & การวิเคราะห์</span>
+        </button>
+    </div>
+
     <!-- Month Comparison -->
     <div class="section" id="month-comparison-section" style="display: none;">
         <div class="comparison-card">
@@ -135,48 +143,6 @@
     <div class="section" id="alerts-section" style="display: none;">
         <div id="alerts-list" class="alerts-list">
             <!-- Populated by JavaScript -->
-        </div>
-    </div>
-
-    <!-- Smart Insights Section -->
-    <div class="insights-section" id="insights-section" style="display: none;">
-        <div class="section-header">
-            <h2 class="section-title">
-                <i data-lucide="sparkles"></i>
-                ข้อมูลเชิงลึก
-            </h2>
-        </div>
-
-        <!-- Budget Alerts -->
-        <div id="insights-alerts-container" style="display: none;">
-            <div class="alert-cards" id="insights-alerts">
-                <!-- Populated by JavaScript -->
-            </div>
-        </div>
-
-        <!-- Spending Trends -->
-        <div id="insights-trends-container" style="display: none;">
-            <div id="insights-trends">
-                <!-- Populated by JavaScript -->
-            </div>
-        </div>
-
-        <!-- Smart Recommendations -->
-        <div id="insights-recommendations-container" style="display: none;">
-            <div class="recommendation-cards" id="insights-recommendations">
-                <!-- Populated by JavaScript -->
-            </div>
-        </div>
-
-        <!-- Recurring Reminders -->
-        <div id="insights-reminders-container" style="display: none;">
-            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text);">
-                <i data-lucide="bell"></i>
-                รายการประจำใกล้ครบกำหนด
-            </h3>
-            <div class="reminder-cards" id="insights-reminders">
-                <!-- Populated by JavaScript -->
-            </div>
         </div>
     </div>
 
@@ -233,183 +199,133 @@
     <div class="footer-spacing"></div>
 </div>
 
-<!-- Modal: Expense Category Selector (Bottom Sheet) -->
-<div class="modal bottom-sheet" id="expense-category-modal">
-    <div class="modal-overlay"></div>
-    <div class="modal-content">
-        <div class="bottom-sheet-handle"></div>
-        <div class="bottom-sheet-header">
-            <h2>เลือกหมวดรายจ่าย</h2>
-        </div>
-        <div class="bottom-sheet-body">
-            <div class="category-grid">
-                <div class="category-grid-item" data-category="food">
-                    <div class="category-grid-icon">🍔</div>
-                    <div class="category-grid-label">อาหาร</div>
-                </div>
-                <div class="category-grid-item" data-category="transport">
-                    <div class="category-grid-icon">🚗</div>
-                    <div class="category-grid-label">เดินทาง</div>
-                </div>
-                <div class="category-grid-item" data-category="housing">
-                    <div class="category-grid-icon">🏠</div>
-                    <div class="category-grid-label">ที่อยู่อาศัย</div>
-                </div>
-                <div class="category-grid-item" data-category="utilities">
-                    <div class="category-grid-icon">💡</div>
-                    <div class="category-grid-label">ค่าน้ำค่าไฟ</div>
-                </div>
-                <div class="category-grid-item" data-category="healthcare">
-                    <div class="category-grid-icon">🏥</div>
-                    <div class="category-grid-label">สุขภาพ</div>
-                </div>
-                <div class="category-grid-item" data-category="entertainment">
-                    <div class="category-grid-icon">🎬</div>
-                    <div class="category-grid-label">บันเทิง</div>
-                </div>
-                <div class="category-grid-item" data-category="education">
-                    <div class="category-grid-icon">📚</div>
-                    <div class="category-grid-label">การศึกษา</div>
-                </div>
-                <div class="category-grid-item" data-category="shopping">
-                    <div class="category-grid-icon">🛍️</div>
-                    <div class="category-grid-label">ช้อปปิ้ง</div>
-                </div>
-                <div class="category-grid-item" data-category="tax">
-                    <div class="category-grid-icon">💰</div>
-                    <div class="category-grid-label">ภาษี/ดอกเบี้ย</div>
-                </div>
-                <div class="category-grid-item" data-category="installment">
-                    <div class="category-grid-icon">💳</div>
-                    <div class="category-grid-label">ผ่อนชำระ</div>
-                </div>
-                <div class="category-grid-item" data-category="other">
-                    <div class="category-grid-icon">📦</div>
-                    <div class="category-grid-label">อื่นๆ</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal: Income Category Selector (Bottom Sheet) -->
-<div class="modal bottom-sheet" id="income-category-modal">
-    <div class="modal-overlay"></div>
-    <div class="modal-content">
-        <div class="bottom-sheet-handle"></div>
-        <div class="bottom-sheet-header">
-            <h2>เลือกหมวดรายรับ</h2>
-        </div>
-        <div class="bottom-sheet-body">
-            <div class="category-grid">
-                <div class="category-grid-item" data-category="salary">
-                    <div class="category-grid-icon">💰</div>
-                    <div class="category-grid-label">เงินเดือน</div>
-                </div>
-                <div class="category-grid-item" data-category="bonus">
-                    <div class="category-grid-icon">🎁</div>
-                    <div class="category-grid-label">โบนัส</div>
-                </div>
-                <div class="category-grid-item" data-category="other-income">
-                    <div class="category-grid-icon">📈</div>
-                    <div class="category-grid-label">รายได้อื่นๆ</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal: Add Expense Transaction -->
-<div class="modal" id="expense-form-modal">
+<!-- Modal: Add/Edit Transaction (Unified) -->
+<div class="modal" id="transaction-form-modal">
     <div class="modal-overlay"></div>
     <div class="modal-content modal-large">
-        <div class="modal-header expense">
-            <h2>เพิ่มรายจ่าย</h2>
+        <div class="modal-header" id="transaction-modal-header">
+            <h2 id="transaction-modal-title">เพิ่มรายการ</h2>
             <button class="modal-close">
                 <i data-lucide="x"></i>
             </button>
         </div>
-        <form class="modal-body" id="expense-form">
+        <form class="modal-body" id="transaction-form">
+            <!-- ประเภท -->
+            <div class="form-group">
+                <label class="form-label">ประเภท</label>
+                <select class="form-select" id="transaction-type">
+                    <option value="expense">รายจ่าย</option>
+                    <option value="income">รายรับ</option>
+                </select>
+            </div>
+
+            <!-- หมวดหมู่ -->
             <div class="form-group">
                 <label class="form-label">หมวดหมู่</label>
-                <input type="text" class="form-input" id="expense-category-display" readonly>
+                <select class="form-select" id="transaction-category" required>
+                    <option value="">เลือกหมวดหมู่</option>
+                    <optgroup label="รายจ่าย" id="expense-categories"></optgroup>
+                    <optgroup label="รายรับ" id="income-categories"></optgroup>
+                </select>
             </div>
 
+            <!-- วันที่และเวลา -->
             <div class="form-group">
-                <label class="form-label">วันที่</label>
-                <input type="date" class="form-input" id="expense-date" required>
+                <label class="form-label">วันที่และเวลา</label>
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px;">
+                    <input type="date" class="form-input" id="transaction-date" required>
+                    <input type="time" class="form-input" id="transaction-time" required>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">เวลา</label>
-                <input type="time" class="form-input" id="expense-time" required>
-            </div>
-
+            <!-- รายละเอียด -->
             <div class="form-group">
                 <label class="form-label">รายละเอียด (ไม่บังคับ)</label>
-                <textarea class="form-textarea" id="expense-note" placeholder="เช่น: ซื้อของที่ห้าง" rows="2"></textarea>
+                <textarea class="form-textarea" id="transaction-note" placeholder="เช่น: ซื้อของที่ห้าง" rows="2"></textarea>
             </div>
 
+            <!-- จำนวนเงิน -->
             <div class="form-group">
                 <label class="form-label">จำนวนเงิน (THB)</label>
                 <div class="amount-input-wrapper">
                     <span class="currency">฿</span>
-                    <input type="number" class="form-input amount-input" id="expense-amount" placeholder="0.00" step="0.01" required>
+                    <input type="number" class="form-input amount-input" id="transaction-amount" placeholder="0.00" step="0.01" required>
                 </div>
             </div>
 
             <button type="submit" class="btn-primary">
                 <i data-lucide="check"></i>
-                <span>บันทึก</span>
+                <span id="transaction-submit-text">บันทึก</span>
             </button>
         </form>
     </div>
 </div>
 
-<!-- Modal: Add Income Transaction -->
-<div class="modal" id="income-form-modal">
+<!-- Modal: Insights & Analytics -->
+<div class="modal" id="insights-modal">
     <div class="modal-overlay"></div>
     <div class="modal-content modal-large">
-        <div class="modal-header income">
-            <h2>เพิ่มรายรับ</h2>
-            <button class="modal-close">
+        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <h2>
+                <i data-lucide="sparkles"></i>
+                ข้อมูลเชิงลึก & การวิเคราะห์
+            </h2>
+            <button class="modal-close" style="color: white;">
                 <i data-lucide="x"></i>
             </button>
         </div>
-        <form class="modal-body" id="income-form">
-            <div class="form-group">
-                <label class="form-label">หมวดหมู่</label>
-                <input type="text" class="form-input" id="income-category-display" readonly>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">วันที่</label>
-                <input type="date" class="form-input" id="income-date" required>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">เวลา</label>
-                <input type="time" class="form-input" id="income-time" required>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">รายละเอียด (ไม่บังคับ)</label>
-                <textarea class="form-textarea" id="income-note" placeholder="เช่น: เงินเดือนประจำเดือน" rows="2"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">จำนวนเงิน (THB)</label>
-                <div class="amount-input-wrapper">
-                    <span class="currency">฿</span>
-                    <input type="number" class="form-input amount-input" id="income-amount" placeholder="0.00" step="0.01" required>
+        <div class="modal-body">
+            <!-- Budget Alerts -->
+            <div id="insights-alerts-container" style="display: none;">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text);">
+                    <i data-lucide="alert-triangle"></i>
+                    แจ้งเตือนงบประมาณ
+                </h3>
+                <div class="alert-cards" id="insights-alerts">
+                    <!-- Populated by JavaScript -->
                 </div>
             </div>
 
-            <button type="submit" class="btn-primary">
-                <i data-lucide="check"></i>
-                <span>บันทึก</span>
-            </button>
-        </form>
+            <!-- Spending Trends -->
+            <div id="insights-trends-container" style="display: none;">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text);">
+                    <i data-lucide="trending-up"></i>
+                    แนวโน้มการใช้จ่าย
+                </h3>
+                <div id="insights-trends">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Smart Recommendations -->
+            <div id="insights-recommendations-container" style="display: none;">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text);">
+                    <i data-lucide="lightbulb"></i>
+                    ข้อเสนอแนะ
+                </h3>
+                <div class="recommendation-cards" id="insights-recommendations">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Recurring Reminders -->
+            <div id="insights-reminders-container" style="display: none;">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text);">
+                    <i data-lucide="bell"></i>
+                    รายการประจำใกล้ครบกำหนด
+                </h3>
+                <div class="reminder-cards" id="insights-reminders">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="insights-empty" class="empty-state" style="display: none;">
+                <i data-lucide="search"></i>
+                <p>ยังไม่มีข้อมูลเพียงพอ</p>
+                <p class="empty-subtitle">เริ่มบันทึกรายการเพื่อดูข้อมูลเชิงลึก</p>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -421,43 +337,61 @@
 {% block extra_js %}
 <script>
 // ===== MODAL SYSTEM =====
-const modals = {
-    expenseCategory: document.getElementById('expense-category-modal'),
-    incomeCategory: document.getElementById('income-category-modal'),
-    expenseForm: document.getElementById('expense-form-modal'),
-    incomeForm: document.getElementById('income-form-modal')
-};
+const modal = document.getElementById('transaction-form-modal');
+const addExpenseBtn = document.getElementById('btn-add-expense');
+const addIncomeBtn = document.getElementById('btn-add-income');
+const closeBtn = modal.querySelector('.modal-close');
+const overlay = modal.querySelector('.modal-overlay');
 
-let selectedCategory = null;
-let selectedCategoryLabel = null;
-
-// Helper functions
-function openModal(modal) {
+function openModal(type = null) {
+    // Reset form
+    document.getElementById('transaction-form').reset();
+    
+    // Set default date/time
+    const now = new Date();
+    document.getElementById('transaction-date').value = now.toISOString().split('T')[0];
+    document.getElementById('transaction-time').value = now.toTimeString().slice(0, 5);
+    
+    // Set type if provided
+    if (type) {
+        document.getElementById('transaction-type').value = type;
+    }
+    
+    // Update modal header color
+    const modalHeader = document.getElementById('transaction-modal-header');
+    const typeValue = type || document.getElementById('transaction-type').value;
+    modalHeader.classList.remove('expense', 'income');
+    modalHeader.classList.add(typeValue);
+    
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
 }
 
-function closeModal(modal) {
+function closeModal() {
     modal.classList.remove('active');
     document.body.style.overflow = '';
 }
 
-function closeAllModals() {
-    Object.values(modals).forEach(modal => closeModal(modal));
-}
+// Quick action buttons
+addExpenseBtn.addEventListener('click', () => openModal('expense'));
+addIncomeBtn.addEventListener('click', () => openModal('income'));
 
-// ===== QUICK ACTIONS =====
-document.getElementById('btn-add-expense').addEventListener('click', () => {
-    openModal(modals.expenseCategory);
+closeBtn.addEventListener('click', closeModal);
+overlay.addEventListener('click', closeModal);
+
+// ESC key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeModal();
+    }
 });
 
-document.getElementById('btn-add-income').addEventListener('click', () => {
-    openModal(modals.incomeCategory);
+// Type change - update header color
+document.getElementById('transaction-type').addEventListener('change', (e) => {
+    const modalHeader = document.getElementById('transaction-modal-header');
+    modalHeader.classList.remove('expense', 'income');
+    modalHeader.classList.add(e.target.value);
 });
-
-// ===== CATEGORY SELECTION =====
-// Category click handlers are now dynamically attached in loadCategories() and attachCategoryHandlers()
-// This ensures categories are loaded from the database with proper IDs
 
 // ===== SET DEFAULT DATE/TIME =====
 function setDefaultDateTime(type) {
@@ -469,37 +403,20 @@ function setDefaultDateTime(type) {
     document.getElementById(`${type}-time`).value = time;
 }
 
-// ===== CLOSE BUTTONS =====
-document.querySelectorAll('.modal-close').forEach(btn => {
-    btn.addEventListener('click', () => {
-        closeAllModals();
-    });
-});
-
-// ===== OVERLAY CLICKS =====
-document.querySelectorAll('.modal-overlay').forEach(overlay => {
-    overlay.addEventListener('click', () => {
-        closeAllModals();
-    });
-});
-
-// ===== ESC KEY =====
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        closeAllModals();
-    }
-});
-
-// ===== EXPENSE FORM SUBMISSION =====
-document.getElementById('expense-form').addEventListener('submit', async (e) => {
+// ===== FORM SUBMISSION =====
+document.getElementById('transaction-form').addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const submitBtn = e.target.querySelector('button[type="submit"]');
     const originalBtnContent = submitBtn.innerHTML;
 
+    // Get form values
+    const type = document.getElementById('transaction-type').value;
+    const categoryId = document.getElementById('transaction-category').value;
+    const amount = parseFloat(document.getElementById('transaction-amount').value);
+
     // Validation
-    const amount = parseFloat(document.getElementById('expense-amount').value);
-    if (!selectedCategory) {
+    if (!categoryId) {
         showToast('กรุณาเลือกหมวดหมู่', 'error');
         return;
     }
@@ -514,16 +431,16 @@ document.getElementById('expense-form').addEventListener('submit', async (e) => 
     lucide.createIcons();
 
     // Prepare data
-    const date = document.getElementById('expense-date').value;
-    const time = document.getElementById('expense-time').value;
+    const date = document.getElementById('transaction-date').value;
+    const time = document.getElementById('transaction-time').value;
     const occurred_at = `${date}T${time}:00`;
 
     const payload = {
-        type: 'expense',
-        category_id: selectedCategory,
+        type: type,
+        category_id: categoryId,
         amount: Math.round(amount * 100), // Convert baht to satang
         occurred_at: occurred_at,
-        note: document.getElementById('expense-note').value || null
+        note: document.getElementById('transaction-note').value || null
     };
 
     try {
@@ -531,98 +448,24 @@ document.getElementById('expense-form').addEventListener('submit', async (e) => 
         if (editingTransactionId) {
             // Update existing transaction
             result = await API.put(buildApiUrl('transactions', editingTransactionId), payload);
-            showToast('อัพเดทรายจ่ายสำเร็จ!', 'success');
+            showToast(`อัพเดท${type === 'expense' ? 'รายจ่าย' : 'รายรับ'}สำเร็จ!`, 'success');
         } else {
             // Create new transaction
             result = await API.post(buildApiUrl('transactions'), payload);
-            showToast('บันทึกรายจ่ายสำเร็จ!', 'success');
+            showToast(`บันทึก${type === 'expense' ? 'รายจ่าย' : 'รายรับ'}สำเร็จ!`, 'success');
         }
 
         // Reset form and state
-        document.getElementById('expense-form').reset();
-        selectedCategory = null;
-        selectedCategoryLabel = null;
+        document.getElementById('transaction-form').reset();
         editingTransactionId = null;
 
-        // Reset button text
-        const submitBtn = document.querySelector('#expense-form button[type="submit"] span');
-        submitBtn.textContent = 'บันทึก';
+        // Reset modal title and button
+        const modalTitle = document.getElementById('transaction-modal-title');
+        const submitBtnText = document.getElementById('transaction-submit-text');
+        modalTitle.textContent = 'เพิ่มรายการ';
+        submitBtnText.textContent = 'บันทึก';
 
-        closeAllModals();
-
-        // Reload dashboard
-        await loadDashboard(true);
-
-    } catch (error) {
-        console.error('Transaction error:', error);
-        showToast(error.message || 'ไม่สามารถบันทึกได้ กรุณาลองใหม่', 'error');
-
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnContent;
-        lucide.createIcons();
-    }
-});
-
-// ===== INCOME FORM SUBMISSION =====
-document.getElementById('income-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    const originalBtnContent = submitBtn.innerHTML;
-
-    // Validation
-    const amount = parseFloat(document.getElementById('income-amount').value);
-    if (!selectedCategory) {
-        showToast('กรุณาเลือกหมวดหมู่', 'error');
-        return;
-    }
-    if (!amount || amount <= 0) {
-        showToast('กรุณากรอกจำนวนเงินที่ถูกต้อง', 'error');
-        return;
-    }
-
-    // Loading state
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังบันทึก...</span>';
-    lucide.createIcons();
-
-    // Prepare data
-    const date = document.getElementById('income-date').value;
-    const time = document.getElementById('income-time').value;
-    const occurred_at = `${date}T${time}:00`;
-
-    const payload = {
-        type: 'income',
-        category_id: selectedCategory,
-        amount: Math.round(amount * 100), // Convert baht to satang
-        occurred_at: occurred_at,
-        note: document.getElementById('income-note').value || null
-    };
-
-    try {
-        let result;
-        if (editingTransactionId) {
-            // Update existing transaction
-            result = await API.put(buildApiUrl('transactions', editingTransactionId), payload);
-            showToast('อัพเดทรายรับสำเร็จ!', 'success');
-        } else {
-            // Create new transaction
-            result = await API.post(buildApiUrl('transactions'), payload);
-            showToast('บันทึกรายรับสำเร็จ!', 'success');
-        }
-
-        // Reset form and state
-        document.getElementById('income-form').reset();
-        selectedCategory = null;
-        selectedCategoryLabel = null;
-        editingTransactionId = null;
-
-        // Reset button text
-        const submitBtn = document.querySelector('#income-form button[type="submit"] span');
-        submitBtn.textContent = 'บันทึก';
-
-        closeAllModals();
+        closeModal();
 
         // Reload dashboard
         await loadDashboard(true);
@@ -650,94 +493,31 @@ async function loadCategories() {
             const expenseCategories = categories.filter(cat => cat.type === 'expense' && cat.is_active);
             const incomeCategories = categories.filter(cat => cat.type === 'income' && cat.is_active);
 
-            // Helper function to render icon (Lucide or Emoji)
-            const renderIcon = (iconName, defaultIcon = 'folder') => {
-                // Check if it's emoji (unicode character) or Lucide icon name
-                const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(iconName || '');
-
-                if (isEmoji || !iconName) {
-                    // Return emoji or default emoji
-                    return iconName || '📁';
-                } else {
-                    // Return Lucide icon
-                    return `<i data-lucide="${iconName}"></i>`;
-                }
+            // Helper to get icon display (emoji stays as is, Lucide shows as text for dropdown)
+            const getIconDisplay = (icon) => {
+                // Check if it's emoji
+                const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(icon || '');
+                return isEmoji ? icon : '📁'; // Use folder emoji as fallback for Lucide icons in dropdown
             };
 
-            // Update expense category grid
-            const expenseCategoryGrid = document.querySelector('#expense-category-modal .category-grid');
-            if (expenseCategoryGrid) {
-                expenseCategoryGrid.innerHTML = expenseCategories.map(cat => `
-                    <div class="category-grid-item" data-category-id="${cat.id}">
-                        <div class="category-grid-icon">${renderIcon(cat.icon, 'folder')}</div>
-                        <div class="category-grid-label">${cat.name_th}</div>
-                    </div>
-                `).join('');
+            const expenseGroup = document.getElementById('expense-categories');
+            const incomeGroup = document.getElementById('income-categories');
 
-                // Initialize Lucide icons
-                if (typeof lucide !== 'undefined') {
-                    lucide.createIcons();
-                }
-
-                // Re-attach click handlers
-                attachCategoryHandlers('#expense-category-modal');
+            if (expenseGroup) {
+                expenseGroup.innerHTML = expenseCategories.map(cat =>
+                    `<option value="${cat.id}">${getIconDisplay(cat.icon)} ${cat.name_th}</option>`
+                ).join('');
             }
 
-            // Update income category grid
-            const incomeCategoryGrid = document.querySelector('#income-category-modal .category-grid');
-            if (incomeCategoryGrid) {
-                incomeCategoryGrid.innerHTML = incomeCategories.map(cat => `
-                    <div class="category-grid-item" data-category-id="${cat.id}">
-                        <div class="category-grid-icon">${renderIcon(cat.icon, 'dollar-sign')}</div>
-                        <div class="category-grid-label">${cat.name_th}</div>
-                    </div>
-                `).join('');
-
-                // Initialize Lucide icons
-                if (typeof lucide !== 'undefined') {
-                    lucide.createIcons();
-                }
-
-                // Re-attach click handlers
-                attachCategoryHandlers('#income-category-modal');
+            if (incomeGroup) {
+                incomeGroup.innerHTML = incomeCategories.map(cat =>
+                    `<option value="${cat.id}">${getIconDisplay(cat.icon)} ${cat.name_th}</option>`
+                ).join('');
             }
         }
     } catch (error) {
         console.error('Error loading categories:', error);
     }
-}
-
-// ===== ATTACH CATEGORY CLICK HANDLERS =====
-function attachCategoryHandlers(modalSelector) {
-    const modal = document.querySelector(modalSelector);
-    if (!modal) return;
-
-    const categoryItems = modal.querySelectorAll('.category-grid-item');
-    categoryItems.forEach(item => {
-        item.addEventListener('click', () => {
-            const categoryId = item.dataset.categoryId;
-            const label = item.querySelector('.category-grid-label').textContent;
-            const icon = item.querySelector('.category-grid-icon').textContent;
-
-            selectedCategory = categoryId;
-            selectedCategoryLabel = `${icon} ${label}`;
-
-            // Show in next modal
-            closeModal(modal);
-
-            setTimeout(() => {
-                if (modalSelector.includes('expense')) {
-                    document.getElementById('expense-category-display').value = selectedCategoryLabel;
-                    setDefaultDateTime('expense');
-                    openModal(modals.expenseForm);
-                } else {
-                    document.getElementById('income-category-display').value = selectedCategoryLabel;
-                    setDefaultDateTime('income');
-                    openModal(modals.incomeForm);
-                }
-            }, 300);
-        });
-    });
 }
 
 // ===== RESET SKELETONS (Show skeletons before reload) =====
@@ -994,38 +774,27 @@ function editTransaction(transactionId) {
         const tx = JSON.parse(txElement.dataset.transaction);
         editingTransactionId = transactionId;
 
-        // Pre-fill form based on type
-        if (tx.type === 'expense') {
-            document.getElementById('expense-category-display').value = `${tx.category?.icon || '📁'} ${tx.category?.name_th || ''}`;
-            selectedCategory = tx.category_id;
+        // Pre-fill form
+        document.getElementById('transaction-type').value = tx.type;
+        document.getElementById('transaction-category').value = tx.category_id;
+        
+        const occuredDate = new Date(tx.occurred_at);
+        document.getElementById('transaction-date').valueAsDate = occuredDate;
+        document.getElementById('transaction-time').value = occuredDate.toTimeString().substr(0, 5);
+        document.getElementById('transaction-note').value = tx.note || '';
+        document.getElementById('transaction-amount').value = (tx.amount / 100).toFixed(2);
 
-            const occuredDate = new Date(tx.occurred_at);
-            document.getElementById('expense-date').valueAsDate = occuredDate;
-            document.getElementById('expense-time').value = occuredDate.toTimeString().substr(0,5);
-            document.getElementById('expense-note').value = tx.note || '';
-            document.getElementById('expense-amount').value = (tx.amount / 100).toFixed(2);
+        // Update modal header
+        const modalHeader = document.getElementById('transaction-modal-header');
+        const modalTitle = document.getElementById('transaction-modal-title');
+        const submitBtnText = document.getElementById('transaction-submit-text');
+        
+        modalHeader.classList.remove('expense', 'income');
+        modalHeader.classList.add(tx.type);
+        modalTitle.textContent = `แก้ไข${tx.type === 'expense' ? 'รายจ่าย' : 'รายรับ'}`;
+        submitBtnText.textContent = 'อัพเดท';
 
-            // Change button text to indicate editing
-            const submitBtn = document.querySelector('#expense-form button[type="submit"] span');
-            submitBtn.textContent = 'อัพเดท';
-
-            openModal(modals.expenseForm);
-        } else {
-            document.getElementById('income-category-display').value = `${tx.category?.icon || '💰'} ${tx.category?.name_th || ''}`;
-            selectedCategory = tx.category_id;
-
-            const occuredDate = new Date(tx.occurred_at);
-            document.getElementById('income-date').valueAsDate = occuredDate;
-            document.getElementById('income-time').value = occuredDate.toTimeString().substr(0,5);
-            document.getElementById('income-note').value = tx.note || '';
-            document.getElementById('income-amount').value = (tx.amount / 100).toFixed(2);
-
-            // Change button text
-            const submitBtn = document.querySelector('#income-form button[type="submit"] span');
-            submitBtn.textContent = 'อัพเดท';
-
-            openModal(modals.incomeForm);
-        }
+        openModal();
     } catch (error) {
         console.error('Edit transaction error:', error);
         showToast('ไม่สามารถโหลดข้อมูลได้', 'error');
@@ -1187,48 +956,61 @@ function renderBudgetAlerts(alerts) {
 }
 
 // ===== SMART INSIGHTS =====
-async function loadSmartInsights() {
+const insightsModal = document.getElementById('insights-modal');
+const insightsCloseBtn = insightsModal.querySelector('.modal-close');
+const insightsOverlay = insightsModal.querySelector('.modal-overlay');
+
+function openInsightsModal() {
+    insightsModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    loadInsightsData();
+}
+
+function closeInsightsModal() {
+    insightsModal.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+insightsCloseBtn.addEventListener('click', closeInsightsModal);
+insightsOverlay.addEventListener('click', closeInsightsModal);
+
+async function loadInsightsData() {
     try {
         const result = await API.get(buildApiUrl('insights/all'));
         
-        if (result) {
-            // Render Budget Alerts
-            if (result.alerts && result.alerts.length > 0) {
-                renderInsightsAlerts(result.alerts);
-            }
-            
-            // Render Spending Trends
-            if (result.trends) {
-                renderSpendingTrends(result.trends);
-            }
-            
-            // Render Recommendations
-            if (result.recommendations && result.recommendations.length > 0) {
-                renderRecommendations(result.recommendations);
-            }
-            
-            // Render Recurring Reminders
-            if (result.reminders && result.reminders.length > 0) {
-                renderRecurringReminders(result.reminders);
-            }
-            
-            // Show insights section if any data
-            const insightsSection = document.getElementById('insights-section');
-            if (insightsSection && (result.alerts.length > 0 || result.recommendations.length > 0 || result.reminders.length > 0)) {
-                insightsSection.style.display = 'block';
-            }
-        }
+        // Show/hide sections based on data
+        const hasAlerts = result.alerts && result.alerts.length > 0;
+        const hasTrends = result.trends && Object.keys(result.trends).length > 0;
+        const hasRecommendations = result.recommendations && result.recommendations.length > 0;
+        const hasReminders = result.reminders && result.reminders.length > 0;
+        
+        const hasAnyInsights = hasAlerts || hasTrends || hasRecommendations || hasReminders;
+        
+        // Show/hide containers
+        document.getElementById('insights-alerts-container').style.display = hasAlerts ? 'block' : 'none';
+        document.getElementById('insights-trends-container').style.display = hasTrends ? 'block' : 'none';
+        document.getElementById('insights-recommendations-container').style.display = hasRecommendations ? 'block' : 'none';
+        document.getElementById('insights-reminders-container').style.display = hasReminders ? 'block' : 'none';
+        document.getElementById('insights-empty').style.display = hasAnyInsights ? 'none' : 'block';
+        
+        if (hasAlerts) renderInsightsAlerts(result.alerts);
+        if (hasTrends) renderSpendingTrends(result.trends);
+        if (hasRecommendations) renderRecommendations(result.recommendations);
+        if (hasReminders) renderRecurringReminders(result.reminders);
+        
     } catch (error) {
         console.error('Error loading insights:', error);
-        // Silently fail - insights are optional
+        // Show empty state on error
+        document.getElementById('insights-alerts-container').style.display = 'none';
+        document.getElementById('insights-trends-container').style.display = 'none';
+        document.getElementById('insights-recommendations-container').style.display = 'none';
+        document.getElementById('insights-reminders-container').style.display = 'none';
+        document.getElementById('insights-empty').style.display = 'block';
     }
 }
 
 function renderInsightsAlerts(alerts) {
     const container = document.getElementById('insights-alerts');
-    const containerWrapper = document.getElementById('insights-alerts-container');
-    
-    if (!container || !containerWrapper) return;
     
     container.innerHTML = alerts.map(alert => `
         <div class="alert-card alert-${alert.type} fade-in">
@@ -1243,8 +1025,6 @@ function renderInsightsAlerts(alerts) {
         </div>
     `).join('');
     
-    containerWrapper.style.display = 'block';
-    
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
@@ -1253,8 +1033,6 @@ function renderInsightsAlerts(alerts) {
 function renderSpendingTrends(trends) {
     const container = document.getElementById('insights-trends');
     const containerWrapper = document.getElementById('insights-trends-container');
-    
-    if (!container || !containerWrapper) return;
     
     const change = trends.change;
     const trendIcon = change.direction === 'up' ? '📈' : change.direction === 'down' ? '📉' : '➡️';
@@ -1308,8 +1086,6 @@ function renderRecommendations(recommendations) {
     const container = document.getElementById('insights-recommendations');
     const containerWrapper = document.getElementById('insights-recommendations-container');
     
-    if (!container || !containerWrapper) return;
-    
     container.innerHTML = recommendations.slice(0, 3).map(rec => `
         <div class="recommendation-card fade-in">
             <div class="recommendation-header">
@@ -1333,8 +1109,6 @@ function renderRecommendations(recommendations) {
 function renderRecurringReminders(reminders) {
     const container = document.getElementById('insights-reminders');
     const containerWrapper = document.getElementById('insights-reminders-container');
-    
-    if (!container || !containerWrapper) return;
     
     container.innerHTML = reminders.map(reminder => `
         <div class="reminder-card fade-in">
@@ -1366,7 +1140,6 @@ function renderRecurringReminders(reminders) {
 document.addEventListener('DOMContentLoaded', async () => {
     await loadCategories(); // Load categories first
     await loadDashboard(); // First load - no skeleton reset needed
-    await loadSmartInsights(); // Load insights
     handleDeepLink();
 });
 </script>
