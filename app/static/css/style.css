@@ -3716,6 +3716,10 @@ input:checked + .slider:before {
     border-radius: 14px;
     transition: all 0.2s;
     min-height: 80px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
 }
 
 .stat-card:active {
@@ -3725,6 +3729,36 @@ input:checked + .slider:before {
 .stat-card:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     transform: translateY(-2px);
+}
+
+/* Active filter state - shows which stat card is currently filtering */
+.stat-card.active-filter {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(99, 102, 241, 0.03) 100%);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.stat-card.active-filter::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    background: var(--primary);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.2);
+    }
 }
 
 .stat-icon {

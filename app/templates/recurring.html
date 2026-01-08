@@ -15,9 +15,9 @@
         </div>
     </div>
 
-    <!-- Recurring Stats Cards -->
+    <!-- Recurring Stats Cards - Interactive Dashboard -->
     <div class="recurring-stats">
-        <div class="stat-card">
+        <div class="stat-card active-filter" data-type="all" onclick="filterByStatCard('all')">
             <div class="stat-icon">
                 <i data-lucide="list-checks"></i>
             </div>
@@ -27,7 +27,7 @@
             </div>
         </div>
         
-        <div class="stat-card income">
+        <div class="stat-card income" data-type="income" onclick="filterByStatCard('income')">
             <div class="stat-icon">
                 <i data-lucide="trending-up"></i>
             </div>
@@ -37,7 +37,7 @@
             </div>
         </div>
         
-        <div class="stat-card expense">
+        <div class="stat-card expense" data-type="expense" onclick="filterByStatCard('expense')">
             <div class="stat-icon">
                 <i data-lucide="trending-down"></i>
             </div>
@@ -47,7 +47,7 @@
             </div>
         </div>
         
-        <div class="stat-card net">
+        <div class="stat-card net" data-type="net" onclick="filterByStatCard('net')">
             <div class="stat-icon">
                 <i data-lucide="calculator"></i>
             </div>
@@ -72,25 +72,6 @@
             </div>
             
             <div class="filter-panel-content" id="filter-panel-content">
-                <!-- Type Tabs -->
-                <div class="type-tabs">
-                    <button class="type-tab active" data-type="all" onclick="setTypeTab('all')">
-                        <i data-lucide="list"></i>
-                        <span>ทั้งหมด</span>
-                        <span class="tab-badge" id="tab-badge-all">0</span>
-                    </button>
-                    <button class="type-tab" data-type="expense" onclick="setTypeTab('expense')">
-                        <i data-lucide="trending-down"></i>
-                        <span>รายจ่าย</span>
-                        <span class="tab-badge" id="tab-badge-expense">0</span>
-                    </button>
-                    <button class="type-tab" data-type="income" onclick="setTypeTab('income')">
-                        <i data-lucide="trending-up"></i>
-                        <span>รายรับ</span>
-                        <span class="tab-badge" id="tab-badge-income">0</span>
-                    </button>
-                </div>
-
                 <!-- Search -->
                 <div class="filter-group">
                     <label class="filter-label">
@@ -110,41 +91,6 @@
                         <option value="all">ทั้งหมด</option>
                         <!-- Dynamic options -->
                     </select>
-                </div>
-
-                <!-- Frequency Filter -->
-                <div class="filter-group">
-                    <label class="filter-label">
-                        <i data-lucide="repeat"></i>
-                        ความถี่
-                    </label>
-                    <div class="chip-group">
-                        <label class="chip-label">
-                            <input type="checkbox" value="daily" onchange="applyFilters()">
-                            <span>รายวัน</span>
-                        </label>
-                        <label class="chip-label">
-                            <input type="checkbox" value="weekly" onchange="applyFilters()">
-                            <span>รายสัปดาห์</span>
-                        </label>
-                        <label class="chip-label">
-                            <input type="checkbox" value="monthly" onchange="applyFilters()">
-                            <span>รายเดือน</span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Amount Range -->
-                <div class="filter-group">
-                    <label class="filter-label">
-                        <i data-lucide="dollar-sign"></i>
-                        จำนวนเงิน
-                    </label>
-                    <div class="range-inputs">
-                        <input type="number" class="filter-input" id="amount-min" placeholder="ต่ำสุด" min="0">
-                        <span>-</span>
-                        <input type="number" class="filter-input" id="amount-max" placeholder="สูงสุด" min="0">
-                    </div>
                 </div>
 
                 <!-- Sort Options -->
@@ -846,14 +792,17 @@ function renderEmptyState() {
 }
 
 // ===== NEW FILTER PANEL HANDLERS =====
-function setTypeTab(type) {
+
+// Interactive Stat Cards - Filter by clicking dashboard cards
+function filterByStatCard(type) {
     currentFilter.type = type;
-    
-    // Update active tab
-    document.querySelectorAll('.type-tab').forEach(tab => {
-        tab.classList.toggle('active', tab.dataset.type === type);
+
+    // Update active state on stat cards
+    document.querySelectorAll('.stat-card').forEach(card => {
+        const cardType = card.dataset.type;
+        card.classList.toggle('active-filter', cardType === type);
     });
-    
+
     applyFilters();
     saveFilterPreferences();
 }
@@ -908,25 +857,18 @@ function resetFilters() {
         amountMin: null,
         amountMax: null
     };
-    
+
     // Reset UI
     document.getElementById('search-input').value = '';
     document.getElementById('category-filter').value = 'all';
-    document.getElementById('amount-min').value = '';
-    document.getElementById('amount-max').value = '';
-    
-    // Reset frequency checkboxes
-    document.querySelectorAll('.chip-group input[type="checkbox"]').forEach(cb => {
-        cb.checked = false;
-    });
-    
-    // Reset type tab
-    setTypeTab('all');
-    
+
+    // Reset stat card active state
+    filterByStatCard('all');
+
     // Reset status button
     document.getElementById('status-toggle-text').textContent = 'ใช้งานอยู่';
     document.getElementById('status-toggle-btn').classList.remove('option-btn-inactive');
-    
+
     // Save and apply
     saveFilterPreferences();
 }
@@ -953,16 +895,17 @@ function loadFilterPreferences() {
             currentFilter.type = prefs.type || 'all';
             currentSort = prefs.sort || 'date';
             currentFilter.activeOnly = prefs.activeOnly !== undefined ? prefs.activeOnly : true;
-            
-            // Update UI to match loaded preferences
-            document.querySelectorAll('.type-tab').forEach(tab => {
-                tab.classList.toggle('active', tab.dataset.type === currentFilter.type);
+
+            // Update stat cards to match loaded preferences
+            document.querySelectorAll('.stat-card').forEach(card => {
+                const cardType = card.dataset.type;
+                card.classList.toggle('active-filter', cardType === currentFilter.type);
             });
-            
+
             document.querySelectorAll('.sort-btn-v2').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.sort === currentSort);
             });
-            
+
             const statusText = document.getElementById('status-toggle-text');
             const statusBtn = document.getElementById('status-toggle-btn');
             if (statusText && statusBtn) {
@@ -990,7 +933,7 @@ document.addEventListener('DOMContentLoaded', () => {
             applyFilters();
         });
     }
-    
+
     // Category filter
     const categoryFilter = document.getElementById('category-filter');
     if (categoryFilter) {
@@ -999,32 +942,6 @@ document.addEventListener('DOMContentLoaded', () => {
             applyFilters();
         });
     }
-    
-    // Amount range
-    const amountMin = document.getElementById('amount-min');
-    const amountMax = document.getElementById('amount-max');
-    if (amountMin) {
-        amountMin.addEventListener('change', (e) => {
-            currentFilter.amountMin = e.target.value ? parseFloat(e.target.value) : null;
-            applyFilters();
-        });
-    }
-    if (amountMax) {
-        amountMax.addEventListener('change', (e) => {
-            currentFilter.amountMax = e.target.value ? parseFloat(e.target.value) : null;
-            applyFilters();
-        });
-    }
-    
-    // Frequency checkboxes
-    document.querySelectorAll('.chip-group input[type="checkbox"]').forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
-            currentFilter.frequencies = Array.from(
-                document.querySelectorAll('.chip-group input[type="checkbox"]:checked')
-            ).map(cb => cb.value);
-            applyFilters();
-        });
-    });
 });
 
 // ===== BULK ACTIONS =====
