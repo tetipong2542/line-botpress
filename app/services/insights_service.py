@@ -8,7 +8,7 @@ from app import db
 from app.models.budget import Budget
 from app.models.category import Category
 from app.models.transaction import Transaction
-from app.models.recurring_rule import RecurringRule
+from app.models.recurring import RecurringRule
 from app.utils.helpers import satang_to_baht, get_month_range
 
 
