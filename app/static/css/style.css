@@ -4094,30 +4094,61 @@ input:checked + .slider:before {
 /* Tablet and Desktop */
 @media (min-width: 768px) {
     .recurring-stats {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(2, 1fr);
         gap: 16px;
     }
-    
+
     .stat-card {
         padding: 20px;
         min-height: 90px;
     }
-    
+
     .stat-icon {
         width: 56px;
         height: 56px;
     }
-    
+
     .stat-icon i {
         width: 28px;
         height: 28px;
     }
-    
+
     .stat-value {
         font-size: 22px;
     }
-    
+
     .stat-label {
         font-size: 14px;
+    }
+}
+
+/* Large Desktop - 4 cards in one row */
+@media (min-width: 1200px) {
+    .recurring-stats {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+
+    .stat-card {
+        padding: 22px;
+        min-height: 100px;
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+    }
+
+    .stat-icon i {
+        width: 30px;
+        height: 30px;
+    }
+
+    .stat-value {
+        font-size: 24px;
+    }
+
+    .stat-label {
+        font-size: 15px;
     }
 }
