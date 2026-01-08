@@ -7,6 +7,7 @@ from flask import Blueprint, request, jsonify, session
 from app.services.transaction_service import TransactionService
 from app.services.analytics_service import AnalyticsService
 from app.services.budget_service import BudgetService
+from app.services.insights_service import InsightsService
 from app.models.user import User
 from app.models.project import Project, ProjectMember, ProjectInvite, ProjectSettings
 from app.models.category import Category
@@ -1461,3 +1462,117 @@ def generate_budget_alerts(budgets):
             })
     
     return alerts
+
+
+# ============================================================
+# SMART INSIGHTS & ALERTS
+# ============================================================
+
+@bp.route('/projects/<project_id>/insights/alerts', methods=['GET'])
+def get_insights_alerts(project_id):
+    """Get budget alerts and warnings"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+    
+    try:
+        month = request.args.get('month', None)
+        alerts = InsightsService.get_budget_alerts(project_id, month)
+        
+        return jsonify({
+            'alerts': alerts,
+            'count': len(alerts)
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'error': {'message': str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/insights/trends', methods=['GET'])
+def get_insights_trends(project_id):
+    """Get spending trends and patterns"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+    
+    try:
+        trends = InsightsService.get_spending_trends(project_id)
+        
+        return jsonify({
+            'trends': trends
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'error': {'message': str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/insights/reminders', methods=['GET'])
+def get_insights_reminders(project_id):
+    """Get recurring transaction reminders"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+    
+    try:
+        days_ahead = int(request.args.get('days_ahead', 7))
+        reminders = InsightsService.get_recurring_reminders(project_id, days_ahead)
+        
+        return jsonify({
+            'reminders': reminders,
+            'count': len(reminders)
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'error': {'message': str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/insights/recommendations', methods=['GET'])
+def get_insights_recommendations(project_id):
+    """Get smart financial recommendations"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+    
+    try:
+        month = request.args.get('month', None)
+        recommendations = InsightsService.get_smart_recommendations(project_id, month)
+        
+        return jsonify({
+            'recommendations': recommendations,
+            'count': len(recommendations)
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'error': {'message': str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/insights/all', methods=['GET'])
+def get_all_insights(project_id):
+    """Get all insights in one call (for performance)"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+    
+    try:
+        month = request.args.get('month', None)
+        days_ahead = int(request.args.get('days_ahead', 7))
+        
+        alerts = InsightsService.get_budget_alerts(project_id, month)
+        trends = InsightsService.get_spending_trends(project_id)
+        reminders = InsightsService.get_recurring_reminders(project_id, days_ahead)
+        recommendations = InsightsService.get_smart_recommendations(project_id, month)
+        
+        return jsonify({
+            'alerts': alerts,
+            'trends': trends,
+            'reminders': reminders,
+            'recommendations': recommendations
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'error': {'message': str(e)}
+        }), 500

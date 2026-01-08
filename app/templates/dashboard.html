@@ -138,6 +138,48 @@
         </div>
     </div>
 
+    <!-- Smart Insights Section -->
+    <div class="insights-section" id="insights-section" style="display: none;">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i data-lucide="sparkles"></i>
+                ข้อมูลเชิงลึก
+            </h2>
+        </div>
+
+        <!-- Budget Alerts -->
+        <div id="insights-alerts-container" style="display: none;">
+            <div class="alert-cards" id="insights-alerts">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Spending Trends -->
+        <div id="insights-trends-container" style="display: none;">
+            <div id="insights-trends">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Smart Recommendations -->
+        <div id="insights-recommendations-container" style="display: none;">
+            <div class="recommendation-cards" id="insights-recommendations">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Recurring Reminders -->
+        <div id="insights-reminders-container" style="display: none;">
+            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text);">
+                <i data-lucide="bell"></i>
+                รายการประจำใกล้ครบกำหนด
+            </h3>
+            <div class="reminder-cards" id="insights-reminders">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
     <!-- Recent Transactions -->
     <div class="section">
         <div class="section-header">
@@ -1144,10 +1186,187 @@ function renderBudgetAlerts(alerts) {
     section.classList.add('fade-in');
 }
 
+// ===== SMART INSIGHTS =====
+async function loadSmartInsights() {
+    try {
+        const result = await API.get(buildApiUrl('insights/all'));
+        
+        if (result) {
+            // Render Budget Alerts
+            if (result.alerts && result.alerts.length > 0) {
+                renderInsightsAlerts(result.alerts);
+            }
+            
+            // Render Spending Trends
+            if (result.trends) {
+                renderSpendingTrends(result.trends);
+            }
+            
+            // Render Recommendations
+            if (result.recommendations && result.recommendations.length > 0) {
+                renderRecommendations(result.recommendations);
+            }
+            
+            // Render Recurring Reminders
+            if (result.reminders && result.reminders.length > 0) {
+                renderRecurringReminders(result.reminders);
+            }
+            
+            // Show insights section if any data
+            const insightsSection = document.getElementById('insights-section');
+            if (insightsSection && (result.alerts.length > 0 || result.recommendations.length > 0 || result.reminders.length > 0)) {
+                insightsSection.style.display = 'block';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading insights:', error);
+        // Silently fail - insights are optional
+    }
+}
+
+function renderInsightsAlerts(alerts) {
+    const container = document.getElementById('insights-alerts');
+    const containerWrapper = document.getElementById('insights-alerts-container');
+    
+    if (!container || !containerWrapper) return;
+    
+    container.innerHTML = alerts.map(alert => `
+        <div class="alert-card alert-${alert.type} fade-in">
+            <div class="alert-icon-wrapper">
+                ${alert.icon}
+            </div>
+            <div class="alert-content">
+                <div class="alert-title">${alert.title}</div>
+                <div class="alert-category">${alert.category_icon} ${alert.category}</div>
+                <div class="alert-message">${alert.message}</div>
+            </div>
+        </div>
+    `).join('');
+    
+    containerWrapper.style.display = 'block';
+    
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
+function renderSpendingTrends(trends) {
+    const container = document.getElementById('insights-trends');
+    const containerWrapper = document.getElementById('insights-trends-container');
+    
+    if (!container || !containerWrapper) return;
+    
+    const change = trends.change;
+    const trendIcon = change.direction === 'up' ? '📈' : change.direction === 'down' ? '📉' : '➡️';
+    const trendClass = change.direction === 'up' ? 'trend-up' : change.direction === 'down' ? 'trend-down' : 'trend-same';
+    
+    container.innerHTML = `
+        <div class="trend-card fade-in">
+            <div class="trend-header">
+                <div class="trend-title">แนวโน้มการใช้จ่าย</div>
+                <div class="trend-badge ${trendClass}">
+                    ${trendIcon} ${Math.abs(change.percentage).toFixed(0)}%
+                </div>
+            </div>
+            <div class="trend-stats">
+                <div class="trend-stat">
+                    <div class="trend-stat-label">สัปดาห์นี้</div>
+                    <div class="trend-stat-value">฿${(trends.current_week.total / 100).toLocaleString('th-TH', {minimumFractionDigits: 0})}</div>
+                </div>
+                <div class="trend-stat">
+                    <div class="trend-stat-label">สัปดาห์ก่อน</div>
+                    <div class="trend-stat-value">฿${(trends.previous_week.total / 100).toLocaleString('th-TH', {minimumFractionDigits: 0})}</div>
+                </div>
+            </div>
+            ${trends.top_categories && trends.top_categories.length > 0 ? `
+                <div class="trend-categories">
+                    <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text);">หมวดหมู่ที่ใช้สูงสุด</div>
+                    ${trends.top_categories.map(cat => `
+                        <div class="trend-category-item">
+                            <div class="trend-category-name">
+                                <span>${cat.icon}</span>
+                                <span>${cat.category}</span>
+                            </div>
+                            <div class="trend-category-change ${cat.change_percentage > 0 ? 'positive' : 'negative'}">
+                                ${cat.change_percentage > 0 ? '+' : ''}${cat.change_percentage.toFixed(0)}%
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+        </div>
+    `;
+    
+    containerWrapper.style.display = 'block';
+    
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
+function renderRecommendations(recommendations) {
+    const container = document.getElementById('insights-recommendations');
+    const containerWrapper = document.getElementById('insights-recommendations-container');
+    
+    if (!container || !containerWrapper) return;
+    
+    container.innerHTML = recommendations.slice(0, 3).map(rec => `
+        <div class="recommendation-card fade-in">
+            <div class="recommendation-header">
+                <div class="recommendation-icon">${rec.icon}</div>
+                <div class="recommendation-content">
+                    <div class="recommendation-title">${rec.title}</div>
+                    <div class="recommendation-message">${rec.message}</div>
+                    <div class="recommendation-action">💡 ${rec.action}</div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    containerWrapper.style.display = 'block';
+    
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
+function renderRecurringReminders(reminders) {
+    const container = document.getElementById('insights-reminders');
+    const containerWrapper = document.getElementById('insights-reminders-container');
+    
+    if (!container || !containerWrapper) return;
+    
+    container.innerHTML = reminders.map(reminder => `
+        <div class="reminder-card fade-in">
+            <div class="reminder-icon ${reminder.type}">
+                ${reminder.icon}
+            </div>
+            <div class="reminder-info">
+                <div class="reminder-category">${reminder.category}</div>
+                <div class="reminder-date">
+                    <i data-lucide="calendar"></i>
+                    ${reminder.next_run_date}
+                    <span class="reminder-days-badge">${reminder.days_until} วัน</span>
+                </div>
+            </div>
+            <div class="reminder-amount ${reminder.type}">
+                ${reminder.type === 'expense' ? '-' : '+'}฿${(reminder.amount / 100).toLocaleString('th-TH', {minimumFractionDigits: 0})}
+            </div>
+        </div>
+    `).join('');
+    
+    containerWrapper.style.display = 'block';
+    
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
 // Load on page ready
 document.addEventListener('DOMContentLoaded', async () => {
     await loadCategories(); // Load categories first
     await loadDashboard(); // First load - no skeleton reset needed
+    await loadSmartInsights(); // Load insights
     handleDeepLink();
 });
 </script>
