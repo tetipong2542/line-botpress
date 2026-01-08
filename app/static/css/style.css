@@ -239,12 +239,13 @@ h2 i[data-lucide] {
 
 /* Mobile Container */
 .mobile-container {
-    width: 100vw;
+    width: 100%;
     max-width: 100vw;
     margin: 0;
-    padding: 0 0 80px 0;
+    padding: 0 16px 80px 16px;
     min-height: 100vh;
     background: var(--bg-secondary);
+    box-sizing: border-box;
 }
 
 /* Page Header */
@@ -852,19 +853,29 @@ h2 i[data-lucide] {
 
 @media (min-width: 769px) {
     .mobile-container {
-        max-width: 480px;
-        width: 480px;
+        max-width: 768px;
         margin: 0 auto;
         border-left: 1px solid var(--border);
         border-right: 1px solid var(--border);
     }
 
     .footer-menu {
-        max-width: 480px;
+        max-width: 768px;
         left: 50%;
         transform: translateX(-50%);
         border-left: 1px solid var(--border);
         border-right: 1px solid var(--border);
+    }
+}
+
+@media (min-width: 1200px) {
+    .mobile-container {
+        max-width: 1200px;
+        padding: 0 24px 80px 24px;
+    }
+
+    .footer-menu {
+        max-width: 1200px;
     }
 }
 
