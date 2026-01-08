@@ -4419,25 +4419,26 @@ input:checked + .slider:before {
     }
 }
 
-/* Disabled Setting Item */
+/* Disabled Setting Item - Improved for Dark Mode */
 .setting-item.disabled {
-    opacity: 0.6;
+    /* opacity: 0.6;  Removed to fix text contrast issues */
     cursor: not-allowed;
-    pointer-events: none;
+    color: var(--text-secondary); /* Explicit gray instead of opacity */
+    background: var(--bg); /* Ensure background stays opaque */
+}
+
+.setting-item.disabled .setting-icon {
+    opacity: 0.7; /* Dim only the icon */
+}
+
+.setting-item.disabled .setting-title,
+.setting-item.disabled .setting-desc {
+    color: var(--text-secondary);
 }
 
 .setting-item.disabled:hover {
-    background: var(--bg);
-}
-
-/* Override pointer-events for click handling */
-.setting-item.disabled {
-    pointer-events: auto;
-}
-
-.setting-item.disabled:hover {
-    background: var(--bg-secondary);
-    cursor: pointer;
+    background: var(--bg); /* No hover effect on disabled */
+    color: var(--text-secondary);
 }
 
 /* Feature badge positioning in setting items */
@@ -4446,10 +4447,33 @@ input:checked + .slider:before {
     right: 16px;
     top: 50%;
     transform: translateY(-50%);
+    z-index: 2; /* Ensure badge sits above opacity layers */
 }
 
+/* Explicit Hover Enhancement */
+.setting-item:not(.disabled):hover {
+    background: var(--bg-secondary);
+}
+
+.setting-item:not(.disabled):hover .setting-title {
+    color: var(--primary); /* Highlight text on hover */
+}
+
+/* Accessibility: Focus States */
+.setting-item:focus-visible,
+.btn:focus-visible,
+.form-input:focus-visible,
+button:focus-visible,
+a:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 8px;
+}
+
+/* Ensure badge purity */
 .setting-item.disabled .feature-badge {
-    pointer-events: none;
+    pointer-events: auto; /* Allow badge to be clicked/hovered even if parent is disabled */
+    opacity: 1; /* Keep badge vibrant */
 }
 
 /* ===== INSIGHT CARDS (Unified for Modal) ===== */
