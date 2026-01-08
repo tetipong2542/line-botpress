@@ -1014,15 +1014,6 @@ function handleDeepLink() {
     }
 }
 
-// Load on page ready
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadCategories(); // Load categories first
-    await loadDashboard(); // First load - no skeleton reset needed
-    handleDeepLink();
-});
-</script>
-{% endblock %}
-
 // ===== LOAD DASHBOARD WIDGETS =====
 async function loadDashboardWidgets() {
     try {
@@ -1145,3 +1136,12 @@ function renderBudgetAlerts(alerts) {
     section.style.display = 'block';
     section.classList.add('fade-in');
 }
+
+// Load on page ready
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadCategories(); // Load categories first
+    await loadDashboard(); // First load - no skeleton reset needed
+    handleDeepLink();
+});
+</script>
+{% endblock %}
