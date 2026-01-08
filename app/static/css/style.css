@@ -251,22 +251,28 @@ h2 i[data-lucide] {
 /* Page Header */
 .page-header {
     background: var(--bg);
-    padding: 24px 7px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 16px;
+    padding: 24px 20px;
+    border-bottom: 2px solid var(--border);
+    margin: 0 -7px 20px -7px;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 .header-content h1 {
-    font-size: 24px;
-    margin-bottom: 4px;
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 6px;
     text-align: left;
+    color: var(--text);
+    letter-spacing: -0.5px;
 }
 
 .header-content .subtitle {
-    font-size: 14px;
+    font-size: 15px;
     color: var(--text-secondary);
     margin: 0;
     text-align: left;
+    font-weight: 500;
 }
 
 /* Summary Section */
