@@ -47,6 +47,9 @@ class AnalyticsService:
         # Parse month
         year, month = map(int, month_str.split('-'))
         start_date, end_date = get_month_range(year, month)
+        
+        # Debug logging
+        print(f"📊 Analytics query: month={month_str}, start_date={start_date}, end_date={end_date}, project_id={project_id}")
 
         # Query income total
         income_total = db.session.query(
@@ -94,6 +97,10 @@ class AnalyticsService:
 
         # Calculate balance
         balance = income_total - expense_total
+        
+        # Debug logging
+        print(f"📊 Results: income={income_count} transactions (total={income_total}), "
+              f"expense={expense_count} transactions (total={expense_total})")
 
         return {
             "summary": {

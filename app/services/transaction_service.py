@@ -74,6 +74,11 @@ class TransactionService:
 
         db.session.add(transaction)
         db.session.commit()
+        
+        # Debug logging
+        print(f"✅ Transaction created: ID={transaction.id}, type={transaction.type}, "
+              f"amount={transaction.amount}, occurred_at={transaction.occurred_at}, "
+              f"project_id={transaction.project_id}, deleted_at={transaction.deleted_at}")
 
         return transaction
 
