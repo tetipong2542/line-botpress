@@ -114,6 +114,22 @@
                 </span>
             </a>
 
+            <div class="setting-item" id="dark-mode-setting">
+                <div class="setting-icon">
+                    <i data-lucide="moon"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">โหมดมืด</div>
+                    <div class="setting-desc">ปรับหน้าตาแอปเป็นโทนมืด</div>
+                </div>
+                <div class="setting-toggle">
+                    <label class="switch">
+                        <input type="checkbox" class="dark-mode-toggle" id="dark-mode-toggle-switch">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
             <a href="#" class="setting-item" id="about-app">
                 <div class="setting-icon">
                     <i data-lucide="info"></i>
@@ -139,29 +155,6 @@
         </div>
 
         <div class="settings-list">
-            <div class="setting-item disabled">
-                <div class="setting-icon">
-                    <i data-lucide="moon"></i>
-                </div>
-                <div class="setting-info">
-                    <div class="setting-title">โหมดมืด</div>
-                    <div class="setting-desc">ปรับหน้าตาแอปเป็นโทนมืด</div>
-                </div>
-
-            <div class="setting-item disabled">
-                <div class="setting-icon">
-                    <i data-lucide="moon"></i>
-                </div>
-                <div class="setting-info">
-                    <div class="setting-title">โหมดมืด</div>
-                    <div class="setting-desc">ปรับหน้าตาแอปเป็นโทนมืด</div>
-                </div>
-                <span class="feature-badge in-development">
-                    <i data-lucide="code"></i>
-                    กำลังพัฒนา
-                </span>
-            </div>
-
             <div class="setting-item disabled">
                 <div class="setting-icon">
                     <i data-lucide="download"></i>
@@ -450,6 +443,22 @@ document.getElementById('about-app').addEventListener('click', (e) => {
     e.preventDefault();
     alert('📱 PromptJOD {พร้อมจด}\n\nเวอร์ชัน: 1.0.0\n\nแอปจดรายรับรายจ่ายที่ง่ายที่สุด\nสำหรับครอบครัวและคนไทย\n\nMade with ❤️');
 });
+
+// Dark Mode Toggle
+const darkModeToggle = document.getElementById('dark-mode-toggle-switch');
+if (darkModeToggle) {
+    // Set initial state based on current theme
+    darkModeToggle.checked = window.getCurrentTheme() === 'dark';
+    
+    // Add event listener
+    darkModeToggle.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            window.toggleDarkMode();
+        } else {
+            window.toggleDarkMode();
+        }
+    });
+}
 
 // Disabled features
 document.querySelectorAll('.setting-item.disabled').forEach(item => {
