@@ -265,12 +265,12 @@
 <div class="modal" id="insights-modal">
     <div class="modal-overlay"></div>
     <div class="modal-content modal-large">
-        <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <div class="modal-header insights">
             <h2>
                 <i data-lucide="sparkles"></i>
                 ข้อมูลเชิงลึก & การวิเคราะห์
             </h2>
-            <button class="modal-close" style="color: white;">
+            <button class="modal-close">
                 <i data-lucide="x"></i>
             </button>
         </div>
@@ -281,7 +281,7 @@
                     <i data-lucide="alert-triangle"></i>
                     แจ้งเตือนงบประมาณ
                 </h3>
-                <div class="alert-cards" id="insights-alerts">
+                <div class="insights-cards" id="insights-alerts">
                     <!-- Populated by JavaScript -->
                 </div>
             </div>
@@ -301,9 +301,9 @@
             <div id="insights-recommendations-container" style="display: none;">
                 <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text);">
                     <i data-lucide="lightbulb"></i>
-                    ข้อเสนอแนะ
+                    ข้อเสนอแนะอัจฉริยะ
                 </h3>
-                <div class="recommendation-cards" id="insights-recommendations">
+                <div class="insights-cards" id="insights-recommendations">
                     <!-- Populated by JavaScript -->
                 </div>
             </div>
@@ -314,7 +314,7 @@
                     <i data-lucide="bell"></i>
                     รายการประจำใกล้ครบกำหนด
                 </h3>
-                <div class="reminder-cards" id="insights-reminders">
+                <div class="insights-cards" id="insights-reminders">
                     <!-- Populated by JavaScript -->
                 </div>
             </div>
@@ -1035,38 +1035,47 @@ function renderSpendingTrends(trends) {
     const containerWrapper = document.getElementById('insights-trends-container');
     
     const change = trends.change;
-    const trendIcon = change.direction === 'up' ? '📈' : change.direction === 'down' ? '📉' : '➡️';
+    let trendIcon, trendIconName;
+    if (change.direction === 'up') {
+        trendIconName = 'trending-up';
+    } else if (change.direction === 'down') {
+        trendIconName = 'trending-down';
+    } else {
+        trendIconName = 'minus';
+    }
     const trendClass = change.direction === 'up' ? 'trend-up' : change.direction === 'down' ? 'trend-down' : 'trend-same';
     
     container.innerHTML = `
-        <div class="trend-card fade-in">
-            <div class="trend-header">
-                <div class="trend-title">แนวโน้มการใช้จ่าย</div>
-                <div class="trend-badge ${trendClass}">
-                    ${trendIcon} ${Math.abs(change.percentage).toFixed(0)}%
+        <div class="insight-card fade-in">
+            <div class="insight-header">
+                <div class="insight-title">แนวโน้มการใช้จ่าย</div>
+                <div class="insight-badge ${trendClass}">
+                    <i data-lucide="${trendIconName}"></i>
+                    <span>${Math.abs(change.percentage).toFixed(0)}%</span>
                 </div>
             </div>
-            <div class="trend-stats">
-                <div class="trend-stat">
-                    <div class="trend-stat-label">สัปดาห์นี้</div>
-                    <div class="trend-stat-value">฿${(trends.current_week.total / 100).toLocaleString('th-TH', {minimumFractionDigits: 0})}</div>
+            <div class="insight-stats">
+                <div class="insight-stat">
+                    <div class="insight-stat-label">สัปดาห์นี้</div>
+                    <div class="insight-stat-value">฿${(trends.current_week.total / 100).toLocaleString('th-TH', {minimumFractionDigits: 0})}</div>
                 </div>
-                <div class="trend-stat">
-                    <div class="trend-stat-label">สัปดาห์ก่อน</div>
-                    <div class="trend-stat-value">฿${(trends.previous_week.total / 100).toLocaleString('th-TH', {minimumFractionDigits: 0})}</div>
+                <div class="insight-stat">
+                    <div class="insight-stat-label">สัปดาห์ก่อน</div>
+                    <div class="insight-stat-value">฿${(trends.previous_week.total / 100).toLocaleString('th-TH', {minimumFractionDigits: 0})}</div>
                 </div>
             </div>
             ${trends.top_categories && trends.top_categories.length > 0 ? `
-                <div class="trend-categories">
-                    <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text);">หมวดหมู่ที่ใช้สูงสุด</div>
+                <div class="insight-categories">
+                    <div class="insight-subtitle">หมวดหมู่ที่ใช้สูงสุด</div>
                     ${trends.top_categories.map(cat => `
-                        <div class="trend-category-item">
-                            <div class="trend-category-name">
+                        <div class="insight-category-item">
+                            <div class="insight-category-name">
                                 <span>${cat.icon}</span>
                                 <span>${cat.category}</span>
                             </div>
-                            <div class="trend-category-change ${cat.change_percentage > 0 ? 'positive' : 'negative'}">
-                                ${cat.change_percentage > 0 ? '+' : ''}${cat.change_percentage.toFixed(0)}%
+                            <div class="insight-category-change ${cat.change_percentage > 0 ? 'positive' : 'negative'}">
+                                <i data-lucide="${cat.change_percentage > 0 ? 'arrow-up' : 'arrow-down'}"></i>
+                                ${Math.abs(cat.change_percentage).toFixed(0)}%
                             </div>
                         </div>
                     `).join('')}
@@ -1087,13 +1096,16 @@ function renderRecommendations(recommendations) {
     const containerWrapper = document.getElementById('insights-recommendations-container');
     
     container.innerHTML = recommendations.slice(0, 3).map(rec => `
-        <div class="recommendation-card fade-in">
-            <div class="recommendation-header">
-                <div class="recommendation-icon">${rec.icon}</div>
-                <div class="recommendation-content">
-                    <div class="recommendation-title">${rec.title}</div>
-                    <div class="recommendation-message">${rec.message}</div>
-                    <div class="recommendation-action">💡 ${rec.action}</div>
+        <div class="insight-card fade-in">
+            <div class="insight-header">
+                <div class="insight-icon">${rec.icon}</div>
+                <div class="insight-content">
+                    <div class="insight-title">${rec.title}</div>
+                    <div class="insight-message">${rec.message}</div>
+                    <div class="insight-action">
+                        <i data-lucide="lightbulb"></i>
+                        <span>${rec.action}</span>
+                    </div>
                 </div>
             </div>
         </div>

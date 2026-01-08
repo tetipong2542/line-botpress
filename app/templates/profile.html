@@ -11,7 +11,7 @@
                 <i data-lucide="user"></i>
                 โปรไฟล์
             </h1>
-            <p class="subtitle">จัดการบัญชีและการตั้งค่า</p>
+            <p class="subtitle">จัดการบัญชีของคุณ</p>
         </div>
     </div>
 
@@ -27,19 +27,61 @@
             </div>
             <div class="profile-info">
                 <h2>{% if user %}{{ user.display_name }}{% else %}Guest User{% endif %}</h2>
-                {% if user and user.status_message %}
-                    <p class="profile-status">{{ user.status_message }}</p>
-                {% endif %}
                 <p class="profile-email">
                     {% if user and user.email %}
                         {{ user.email }}
                     {% elif user %}
-                        LINE ID: {{ user.line_user_id }}
+                        LINE ID: {{ user.line_user_id[:8] }}...
                     {% else %}
                         ไม่ได้เข้าสู่ระบบ
                     {% endif %}
                 </p>
             </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="section">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="zap"></i>
+                เข้าถึงรวดเร็ว
+            </h2>
+        </div>
+
+        <div class="settings-list">
+            <a href="/members" class="setting-item">
+                <div class="setting-icon">
+                    <i data-lucide="users"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">จัดการสมาชิก</div>
+                    <div class="setting-desc">เพิ่มสมาชิกครอบครัว</div>
+                </div>
+                <i data-lucide="chevron-right"></i>
+            </a>
+
+            <a href="/budgets" class="setting-item">
+                <div class="setting-icon">
+                    <i data-lucide="target"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">งบประมาณ</div>
+                    <div class="setting-desc">ตั้งงบรายหมวดหมู่</div>
+                </div>
+                <i data-lucide="chevron-right"></i>
+            </a>
+
+            <a href="/analytics" class="setting-item">
+                <div class="setting-icon">
+                    <i data-lucide="bar-chart-2"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">รายงานการเงิน</div>
+                    <div class="setting-desc">ดูสรุปและวิเคราะห์</div>
+                </div>
+                <i data-lucide="chevron-right"></i>
+            </a>
         </div>
     </div>
 
@@ -53,157 +95,7 @@
         </div>
 
         <div class="settings-list">
-            <a href="#" class="setting-item">
-                <div class="setting-icon">
-                    <i data-lucide="palette"></i>
-                </div>
-                <div class="setting-info">
-                    <div class="setting-title">ธีม</div>
-                    <div class="setting-desc">สว่าง</div>
-                </div>
-                <i data-lucide="chevron-right"></i>
-            </a>
-
-            <a href="#" class="setting-item">
-                <div class="setting-icon">
-                    <i data-lucide="bell"></i>
-                </div>
-                <div class="setting-info">
-                    <div class="setting-title">การแจ้งเตือน</div>
-                    <div class="setting-desc">จัดการการแจ้งเตือนผ่าน LINE</div>
-                </div>
-                <i data-lucide="chevron-right"></i>
-            </a>
-
-            <a href="#" class="setting-item">
-                <div class="setting-icon">
-                    <i data-lucide="globe"></i>
-                </div>
-                <div class="setting-info">
-                    <div class="setting-title">ภาษา</div>
-                    <div class="setting-desc">ภาษาไทย</div>
-                </div>
-                <i data-lucide="chevron-right"></i>
-            </a>
-
-            <a href="#" class="setting-item">
-                <div class="setting-icon">
-                    <i data-lucide="dollar-sign"></i>
-                </div>
-                <div class="setting-info">
-                    <div class="setting-title">สกุลเงิน</div>
-                    <div class="setting-desc">บาท (THB)</div>
-                </div>
-                <i data-lucide="chevron-right"></i>
-            </a>
-
-            <a href="#" class="setting-item">
-                <div class="setting-icon">
-                    <i data-lucide="calendar"></i>
-                </div>
-                <div class="setting-info">
-                    <div class="setting-title">รูปแบบวันที่</div>
-                    <div class="setting-desc">ค.ศ. (CE)</div>
-                </div>
-                <i data-lucide="chevron-right"></i>
-            </a>
-
-            <a href="#" class="setting-item">
-                <div class="setting-icon">
-                    <i data-lucide="hash"></i>
-                </div>
-                <div class="setting-info">
-                    <div class="setting-title">รูปแบบตัวเลข</div>
-                    <div class="setting-desc">2 ตำแหน่ง (1,234.56)</div>
-                </div>
-                <i data-lucide="chevron-right"></i>
-            </a>
-        </div>
-    </div>
-
-    <!-- App Settings -->
-    <div class="section">
-        <div class="section-header">
-            <h2>
-                <i data-lucide="sliders"></i>
-                การตั้งค่าแอป
-            </h2>
-        </div>
-
-        <div class="settings-list">
-            <a href="#" class="setting-item">
-                <div class="setting-icon">
-                    <i data-lucide="moon"></i>
-                </div>
-                <div class="setting-info">
-                    <div class="setting-title">โหมดมืด</div>
-                    <div class="setting-desc">ปิดอยู่</div>
-                </div>
-                <div class="setting-toggle">
-                    <label class="switch">
-                        <input type="checkbox" id="dark-mode-toggle">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            </a>
-
-            <a href="#" class="setting-item">
-                <div class="setting-icon">
-                    <i data-lucide="database"></i>
-                </div>
-                <div class="setting-info">
-                    <div class="setting-title">ข้อมูลและการสำรองข้อมูล</div>
-                    <div class="setting-desc">สำรองข้อมูลล่าสุด: ไม่เคย</div>
-                </div>
-                <i data-lucide="chevron-right"></i>
-            </a>
-
-            <a href="#" class="setting-item">
-                <div class="setting-icon">
-                    <i data-lucide="shield"></i>
-                </div>
-                <div class="setting-info">
-                    <div class="setting-title">ความเป็นส่วนตัว</div>
-                    <div class="setting-desc">จัดการข้อมูลส่วนบุคคล</div>
-                </div>
-                <i data-lucide="chevron-right"></i>
-            </a>
-        </div>
-    </div>
-
-    <!-- About & Support -->
-    <div class="section">
-        <div class="section-header">
-            <h2>
-                <i data-lucide="info"></i>
-                เกี่ยวกับ & ช่วยเหลือ
-            </h2>
-        </div>
-
-        <div class="settings-list">
-            <a href="#" class="setting-item">
-                <div class="setting-icon">
-                    <i data-lucide="help-circle"></i>
-                </div>
-                <div class="setting-info">
-                    <div class="setting-title">ศูนย์ช่วยเหลือ</div>
-                    <div class="setting-desc">คำถามที่พบบ่อย, คู่มือการใช้งาน</div>
-                </div>
-                <i data-lucide="chevron-right"></i>
-            </a>
-
-            <a href="#" class="setting-item">
-                <div class="setting-icon">
-                    <i data-lucide="file-text"></i>
-                </div>
-                <div class="setting-info">
-                    <div class="setting-title">เงื่อนไขการใช้งาน</div>
-                    <div class="setting-desc">นโยบายความเป็นส่วนตัว</div>
-                </div>
-                <i data-lucide="chevron-right"></i>
-            </a>
-
-            <a href="#" class="setting-item">
+            <a href="#" class="setting-item" id="about-app">
                 <div class="setting-icon">
                     <i data-lucide="info"></i>
                 </div>
@@ -224,6 +116,13 @@
         </button>
     </div>
 
+    <!-- Footer -->
+    <div class="section" style="text-align: center; padding: 20px 0;">
+        <p style="font-size: 12px; color: var(--text-secondary);">
+            ทำด้วย ❤️ สำหรับคนไทย
+        </p>
+    </div>
+
     <!-- Bottom spacing -->
     <div class="footer-spacing"></div>
 </div>
@@ -235,16 +134,6 @@
 
 {% block extra_js %}
 <script>
-// Dark mode toggle
-document.getElementById('dark-mode-toggle').addEventListener('change', (e) => {
-    if (e.target.checked) {
-        // TODO: Enable dark mode
-        alert('โหมดมืด (Coming soon!)');
-    } else {
-        // TODO: Disable dark mode
-    }
-});
-
 // Logout
 document.getElementById('logout-btn').addEventListener('click', async () => {
     if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
@@ -269,14 +158,10 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
     }
 });
 
-// Setting items
-document.querySelectorAll('.setting-item').forEach(item => {
-    if (!item.querySelector('.setting-toggle')) {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            alert('ฟีเจอร์นี้กำลังพัฒนา (Coming soon!)');
-        });
-    }
+// About App
+document.getElementById('about-app').addEventListener('click', (e) => {
+    e.preventDefault();
+    alert('📱 PromptJOD {พร้อมจด}\n\nเวอร์ชัน: 1.0.0\n\nแอปจดรายรับรายจ่ายที่ง่ายที่สุด\nสำหรับครอบครัวและคนไทย\n\nMade with ❤️');
 });
 </script>
 {% endblock %}
