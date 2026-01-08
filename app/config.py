@@ -20,15 +20,26 @@ class Config:
     BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
     # Railway volume mount support (/data)
-    DATA_DIR = os.getenv('DATA_DIR', os.path.join(BASE_DIR, 'instance'))
+    # Priority: Env Var > /data (if exists) > Local instance folder
+    if os.getenv('DATA_DIR'):
+        DATA_DIR = os.getenv('DATA_DIR')
+    elif os.path.exists('/data'):
+        DATA_DIR = '/data'
+    else:
+        DATA_DIR = os.path.join(BASE_DIR, 'instance')
 
     # Ensure data directory exists
-    os.makedirs(DATA_DIR, exist_ok=True)
+    try:
+        os.makedirs(DATA_DIR, exist_ok=True)
+        print(f"✅ Using data directory: {DATA_DIR}")
+    except Exception as e:
+        print(f"❌ Error creating data directory {DATA_DIR}: {e}")
 
     SQLALCHEMY_DATABASE_URI = os.getenv(
         'DATABASE_URL',
         f'sqlite:///{os.path.join(DATA_DIR, "finance.db")}'
     )
+    print(f"🔌 Database URI: {SQLALCHEMY_DATABASE_URI}")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = FLASK_ENV == 'development'
 
