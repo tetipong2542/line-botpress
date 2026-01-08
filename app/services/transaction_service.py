@@ -59,7 +59,14 @@ class TransactionService:
 
         # Parse occurred_at
         if occurred_at and isinstance(occurred_at, str):
+            # Parse the datetime string and strip timezone info
+            # Frontend sends local time (e.g. "2026-01-08T18:30:00")
+            # We store as naive datetime in database
             occurred_at = datetime.fromisoformat(occurred_at.replace('Z', '+00:00'))
+            # Remove timezone info if present (SQLite uses naive datetime)
+            if occurred_at.tzinfo is not None:
+                occurred_at = occurred_at.replace(tzinfo=None)
+            print(f"🕐 Parsed occurred_at: {occurred_at}")
 
         # Create transaction
         transaction = Transaction(
@@ -114,10 +121,16 @@ class TransactionService:
 
             if filters.get('from_date'):
                 from_date = datetime.fromisoformat(filters['from_date'].replace('Z', '+00:00'))
+                # Strip timezone info if present
+                if from_date.tzinfo is not None:
+                    from_date = from_date.replace(tzinfo=None)
                 query = query.filter(Transaction.occurred_at >= from_date)
 
             if filters.get('to_date'):
                 to_date = datetime.fromisoformat(filters['to_date'].replace('Z', '+00:00'))
+                # Strip timezone info if present
+                if to_date.tzinfo is not None:
+                    to_date = to_date.replace(tzinfo=None)
                 query = query.filter(Transaction.occurred_at <= to_date)
 
             if filters.get('member_id'):
@@ -174,6 +187,9 @@ class TransactionService:
             occurred_at = updates['occurred_at']
             if isinstance(occurred_at, str):
                 occurred_at = datetime.fromisoformat(occurred_at.replace('Z', '+00:00'))
+                # Strip timezone info if present
+                if occurred_at.tzinfo is not None:
+                    occurred_at = occurred_at.replace(tzinfo=None)
             transaction.occurred_at = occurred_at
 
         if 'note' in updates:
