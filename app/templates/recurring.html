@@ -15,137 +15,186 @@
         </div>
     </div>
 
-    <!-- Book-Switcher Strip (Account / Family Switcher) -->
-    <div class="book-switcher">
-        <button class="book-pill active" data-book="personal">
-            Pond Titipong
-        </button>
-        <button class="book-pill" data-book="family">
-            Family POND
-        </button>
+    <!-- Recurring Stats Cards -->
+    <div class="recurring-stats">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i data-lucide="list-checks"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="active-count">0</div>
+                <div class="stat-label">รายการทั้งหมด</div>
+            </div>
+        </div>
+        
+        <div class="stat-card income">
+            <div class="stat-icon">
+                <i data-lucide="trending-up"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="income-total">฿0</div>
+                <div class="stat-label">รายรับ/เดือน</div>
+            </div>
+        </div>
+        
+        <div class="stat-card expense">
+            <div class="stat-icon">
+                <i data-lucide="trending-down"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="expense-total">฿0</div>
+                <div class="stat-label">รายจ่าย/เดือน</div>
+            </div>
+        </div>
+        
+        <div class="stat-card net">
+            <div class="stat-icon">
+                <i data-lucide="calculator"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="net-total">฿0</div>
+                <div class="stat-label">สุทธิ/เดือน</div>
+            </div>
+        </div>
     </div>
 
-    <!-- Summary Strip -->
-    <div class="summary-strip">
-        <div class="summary-col income">
-            <div class="summary-strip-label">รายรับ</div>
-            <div class="summary-strip-amount">0.00</div>
-        </div>
-        <div class="summary-col expense">
-            <div class="summary-strip-label">รายจ่าย</div>
-            <div class="summary-strip-amount">300.00</div>
-        </div>
-        <div class="summary-col balance">
-            <div class="summary-strip-label">คงเหลือ</div>
-            <div class="summary-strip-amount">-300.00</div>
-        </div>
-    </div>
-
-    <!-- Filter & Sort Section -->
+    <!-- Unified Filter Panel -->
     <div class="section">
-        <!-- Quick Filters -->
-        <div class="quick-filters">
-            <button class="qf-btn active" data-filter="all" onclick="setQuickFilter('all')">
-                ทั้งหมด <span class="qf-badge" id="badge-all">0</span>
-            </button>
-            <button class="qf-btn" data-filter="expense" onclick="setQuickFilter('expense')">
-                💸 รายจ่าย <span class="qf-badge" id="badge-expense">0</span>
-            </button>
-            <button class="qf-btn" data-filter="income" onclick="setQuickFilter('income')">
-                💰 รายรับ <span class="qf-badge" id="badge-income">0</span>
-            </button>
-        </div>
-
-        <!-- Advanced Filter Toggle -->
-        <button class="filter-toggle-btn" onclick="toggleAdvancedFilters()">
-            <i data-lucide="sliders"></i>
-            <span>ตัวกรองเพิ่มเติม</span>
-            <i data-lucide="chevron-down" class="toggle-icon"></i>
-        </button>
-
-        <!-- Advanced Filters (Collapsible) -->
-        <div class="advanced-filters" id="advanced-filters" style="display: none;">
-            <!-- Search -->
-            <div class="filter-group">
-                <label>ค้นหา</label>
-                <input type="text" class="filter-input" id="search-input" placeholder="🔍 ค้นหารายการ...">
+        <div class="filter-panel">
+            <div class="filter-panel-header">
+                <h3 class="filter-panel-title">
+                    <i data-lucide="sliders"></i>
+                    ตัวกรอง & เรียงลำดับ
+                </h3>
+                <button class="panel-collapse-btn" onclick="toggleFilterPanel()">
+                    <i data-lucide="chevron-down" class="collapse-icon"></i>
+                </button>
             </div>
+            
+            <div class="filter-panel-content" id="filter-panel-content">
+                <!-- Type Tabs -->
+                <div class="type-tabs">
+                    <button class="type-tab active" data-type="all" onclick="setTypeTab('all')">
+                        <i data-lucide="list"></i>
+                        <span>ทั้งหมด</span>
+                        <span class="tab-badge" id="tab-badge-all">0</span>
+                    </button>
+                    <button class="type-tab" data-type="expense" onclick="setTypeTab('expense')">
+                        <i data-lucide="trending-down"></i>
+                        <span>รายจ่าย</span>
+                        <span class="tab-badge" id="tab-badge-expense">0</span>
+                    </button>
+                    <button class="type-tab" data-type="income" onclick="setTypeTab('income')">
+                        <i data-lucide="trending-up"></i>
+                        <span>รายรับ</span>
+                        <span class="tab-badge" id="tab-badge-income">0</span>
+                    </button>
+                </div>
 
-            <!-- Category Filter -->
-            <div class="filter-group">
-                <label>หมวดหมู่</label>
-                <select class="filter-select" id="category-filter">
-                    <option value="all">ทั้งหมด</option>
-                    <!-- Dynamic options from categories -->
-                </select>
-            </div>
+                <!-- Search -->
+                <div class="filter-group">
+                    <label class="filter-label">
+                        <i data-lucide="search"></i>
+                        ค้นหา
+                    </label>
+                    <input type="text" class="filter-input" id="search-input" placeholder="ค้นหารายการ...">
+                </div>
 
-            <!-- Frequency Filter -->
-            <div class="filter-group">
-                <label>ความถี่</label>
-                <div class="chip-group">
-                    <label class="chip-label">
-                        <input type="checkbox" value="daily" onchange="applyFilters()"> รายวัน
+                <!-- Category Filter -->
+                <div class="filter-group">
+                    <label class="filter-label">
+                        <i data-lucide="folder"></i>
+                        หมวดหมู่
                     </label>
-                    <label class="chip-label">
-                        <input type="checkbox" value="weekly" onchange="applyFilters()"> รายสัปดาห์
+                    <select class="filter-select" id="category-filter">
+                        <option value="all">ทั้งหมด</option>
+                        <!-- Dynamic options -->
+                    </select>
+                </div>
+
+                <!-- Frequency Filter -->
+                <div class="filter-group">
+                    <label class="filter-label">
+                        <i data-lucide="repeat"></i>
+                        ความถี่
                     </label>
-                    <label class="chip-label">
-                        <input type="checkbox" value="monthly" onchange="applyFilters()"> รายเดือน
+                    <div class="chip-group">
+                        <label class="chip-label">
+                            <input type="checkbox" value="daily" onchange="applyFilters()">
+                            <span>รายวัน</span>
+                        </label>
+                        <label class="chip-label">
+                            <input type="checkbox" value="weekly" onchange="applyFilters()">
+                            <span>รายสัปดาห์</span>
+                        </label>
+                        <label class="chip-label">
+                            <input type="checkbox" value="monthly" onchange="applyFilters()">
+                            <span>รายเดือน</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Amount Range -->
+                <div class="filter-group">
+                    <label class="filter-label">
+                        <i data-lucide="dollar-sign"></i>
+                        จำนวนเงิน
                     </label>
+                    <div class="range-inputs">
+                        <input type="number" class="filter-input" id="amount-min" placeholder="ต่ำสุด" min="0">
+                        <span>-</span>
+                        <input type="number" class="filter-input" id="amount-max" placeholder="สูงสุด" min="0">
+                    </div>
+                </div>
+
+                <!-- Sort Options -->
+                <div class="filter-group">
+                    <label class="filter-label">
+                        <i data-lucide="arrow-up-down"></i>
+                        เรียงตาม
+                    </label>
+                    <div class="sort-buttons">
+                        <button class="sort-btn-v2 active" data-sort="date" onclick="setSortBy('date')">
+                            <i data-lucide="calendar"></i>
+                            <span>วันที่</span>
+                        </button>
+                        <button class="sort-btn-v2" data-sort="amount" onclick="setSortBy('amount')">
+                            <i data-lucide="dollar-sign"></i>
+                            <span>จำนวนเงิน</span>
+                        </button>
+                        <button class="sort-btn-v2" data-sort="name" onclick="setSortBy('name')">
+                            <i data-lucide="type"></i>
+                            <span>ชื่อ</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Status & Bulk Actions -->
+                <div class="filter-group">
+                    <label class="filter-label">
+                        <i data-lucide="settings"></i>
+                        ตัวเลือก
+                    </label>
+                    <div class="options-row">
+                        <button class="option-btn" id="status-toggle-btn" onclick="toggleStatusFilter()">
+                            <i data-lucide="eye"></i>
+                            <span id="status-toggle-text">ใช้งานอยู่</span>
+                        </button>
+                        <button class="option-btn" onclick="toggleBulkMode()">
+                            <i data-lucide="check-square"></i>
+                            <span id="bulk-toggle-text">เลือกหลายรายการ</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Reset Button -->
+                <div class="filter-actions">
+                    <button class="btn-secondary btn-block" onclick="resetFilters()">
+                        <i data-lucide="rotate-ccw"></i>
+                        รีเซ็ตตัวกรอง
+                    </button>
                 </div>
             </div>
-
-            <!-- Amount Range -->
-            <div class="filter-group">
-                <label>จำนวนเงิน</label>
-                <div class="range-inputs">
-                    <input type="number" class="filter-input" id="amount-min" placeholder="ต่ำสุด" min="0">
-                    <span>-</span>
-                    <input type="number" class="filter-input" id="amount-max" placeholder="สูงสุด" min="0">
-                </div>
-            </div>
-
-            <!-- Status Toggle -->
-            <div class="filter-group">
-                <label class="toggle-switch">
-                    <input type="checkbox" id="filter-active" checked onchange="applyFilters()">
-                    <span>แสดงเฉพาะที่ใช้งาน</span>
-                </label>
-            </div>
-
-            <!-- Filter Actions -->
-            <div class="filter-actions">
-                <button class="btn-secondary btn-sm" onclick="resetFilters()">
-                    <i data-lucide="rotate-ccw"></i> รีเซ็ต
-                </button>
-                <button class="btn-primary btn-sm" onclick="applyFilters()">
-                    <i data-lucide="check"></i> ใช้ตัวกรอง
-                </button>
-            </div>
-        </div>
-
-        <!-- Sort & Bulk Actions Bar -->
-        <div class="toolbar">
-            <!-- Sort Options -->
-            <div class="sort-bar">
-                <label class="toolbar-label">เรียง:</label>
-                <button class="sort-btn active" data-sort="date" onclick="setSortBy('date')">
-                    <i data-lucide="calendar"></i> วันที่
-                </button>
-                <button class="sort-btn" data-sort="amount" onclick="setSortBy('amount')">
-                    <i data-lucide="dollar-sign"></i> จำนวน
-                </button>
-                <button class="sort-btn" data-sort="name" onclick="setSortBy('name')">
-                    <i data-lucide="type"></i> ชื่อ
-                </button>
-            </div>
-
-            <!-- Bulk Actions Toggle -->
-            <button class="bulk-toggle-btn" onclick="toggleBulkMode()">
-                <i data-lucide="check-square"></i>
-                <span id="bulk-toggle-text">เลือก</span>
-            </button>
         </div>
 
         <!-- Bulk Action Bar (Hidden by default) -->
@@ -169,29 +218,8 @@
     <!-- Recurring List -->
     <div class="section">
         <div class="recurring-list">
-            <!-- Sample Recurring Item (Expense) -->
-            <div class="recurring-card" data-id="1">
-                <div class="recurring-icon expense">
-                    <i data-lucide="tv"></i>
-                </div>
-                <div class="recurring-info">
-                    <div class="recurring-title">Netflix</div>
-                    <div class="recurring-meta">
-                        <span class="recurring-category">บันเทิง</span>
-                        <span class="recurring-freq">ทุกเดือน (วันที่ 1)</span>
-                    </div>
-                    <div class="recurring-alert">
-                        <i data-lucide="bell"></i>
-                        เตือนล่วงหน้า 3 วัน • ครบกำหนด 01/02/2026
-                    </div>
-                </div>
-                <div class="recurring-amount expense">
-                    300.00
-                </div>
-            </div>
-
-            <!-- Empty State (Hidden when has data) -->
-            <div class="empty-state" style="display: none;">
+            <!-- Empty State (will be replaced by JavaScript when data loads) -->
+            <div class="empty-state">
                 <i data-lucide="calendar-off"></i>
                 <p>ยังไม่มีรายการประจำ</p>
                 <p class="empty-subtitle">เพิ่มรายการที่เกิดซ้ำ เช่น Netflix, ค่าเช่า, เงินเดือน</p>
@@ -513,6 +541,9 @@ let selectedIds = new Set();
 function renderRecurringRules(rules) {
     allRecurringRules = rules;
     
+    // Update stats cards
+    updateRecurringStats(rules);
+    
     // Update count badges
     updateCountBadges(rules);
     
@@ -523,6 +554,45 @@ function renderRecurringRules(rules) {
     applyFilters();
 }
 
+// ===== STATS CARDS UPDATE =====
+function updateRecurringStats(rules) {
+    // Calculate totals
+    const activeRules = rules.filter(r => r.is_active);
+    
+    const incomeTotal = activeRules
+        .filter(r => r.type === 'income')
+        .reduce((sum, r) => sum + r.amount, 0);
+    
+    const expenseTotal = activeRules
+        .filter(r => r.type === 'expense')
+        .reduce((sum, r) => sum + r.amount, 0);
+    
+    const netTotal = incomeTotal - expenseTotal;
+    
+    // Format amounts
+    const formatAmount = (amount) => {
+        return '฿' + (amount / 100).toLocaleString('th-TH', {minimumFractionDigits: 0});
+    };
+    
+    // Update UI
+    document.getElementById('active-count').textContent = activeRules.length;
+    document.getElementById('income-total').textContent = formatAmount(incomeTotal);
+    document.getElementById('expense-total').textContent = formatAmount(expenseTotal);
+    
+    const netElement = document.getElementById('net-total');
+    netElement.textContent = formatAmount(Math.abs(netTotal));
+    
+    // Update net card styling based on positive/negative
+    const netCard = netElement.closest('.stat-card');
+    netCard.classList.remove('income', 'expense');
+    if (netTotal > 0) {
+        netCard.classList.add('income');
+    } else if (netTotal < 0) {
+        netCard.classList.add('expense');
+        netElement.textContent = '-' + formatAmount(Math.abs(netTotal));
+    }
+}
+
 function updateCountBadges(rules) {
     const counts = {
         all: rules.length,
@@ -530,9 +600,10 @@ function updateCountBadges(rules) {
         income: rules.filter(r => r.type === 'income').length
     };
     
-    document.getElementById('badge-all').textContent = counts.all;
-    document.getElementById('badge-expense').textContent = counts.expense;
-    document.getElementById('badge-income').textContent = counts.income;
+    // Update tab badges
+    document.getElementById('tab-badge-all').textContent = counts.all;
+    document.getElementById('tab-badge-expense').textContent = counts.expense;
+    document.getElementById('tab-badge-income').textContent = counts.income;
 }
 
 function populateCategoryFilter(rules) {
@@ -550,7 +621,8 @@ function populateCategoryFilter(rules) {
     categories.forEach(cat => {
         const option = document.createElement('option');
         option.value = cat.id;
-        option.textContent = `${cat.icon || ''} ${cat.name_th}`;
+        // Text only, no emoji/icon in dropdown
+        option.textContent = cat.name_th;
         select.appendChild(option);
     });
     
@@ -659,17 +731,18 @@ function renderCard(rule) {
     };
     
     const formatFrequency = (freq, dayOfWeek, dayOfMonth) => {
-        if (freq === 'daily') return '🔁 รายวัน';
+        const iconHtml = '<i data-lucide="repeat"></i>';
+        if (freq === 'daily') return `${iconHtml} รายวัน`;
         if (freq === 'weekly') {
             const days = ['จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส', 'อา'];
-            return `🔁 ${days[dayOfWeek]}`;
+            return `${iconHtml} ${days[dayOfWeek]}`;
         }
-        if (freq === 'monthly') return `🔁 ${dayOfMonth}`;
+        if (freq === 'monthly') return `${iconHtml} ${dayOfMonth}`;
         return freq;
     };
     
     const renderIcon = (iconName) => {
-        if (!iconName) return '🔄';
+        if (!iconName) return '<i data-lucide="circle-dashed"></i>';
         const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(iconName);
         if (isEmoji) return iconName;
         return `<i data-lucide="${iconName}"></i>`;
@@ -715,7 +788,7 @@ function renderCard(rule) {
                 </span>
                 ${rule.next_run_date ? `
                     <span class="card-detail-item">
-                        📅 ${formatDate(rule.next_run_date)}
+                        <i data-lucide="calendar"></i> ${formatDate(rule.next_run_date)}
                     </span>
                 ` : ''}
             </div>
@@ -772,36 +845,57 @@ function renderEmptyState() {
     }
 }
 
-// ===== FILTER & SORT HANDLERS =====
-function setQuickFilter(type) {
+// ===== NEW FILTER PANEL HANDLERS =====
+function setTypeTab(type) {
     currentFilter.type = type;
     
-    // Update active button
-    document.querySelectorAll('.qf-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.filter === type);
+    // Update active tab
+    document.querySelectorAll('.type-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.type === type);
     });
     
     applyFilters();
+    saveFilterPreferences();
 }
 
-function toggleAdvancedFilters() {
-    const advancedFilters = document.getElementById('advanced-filters');
-    const toggleIcon = document.querySelector('.filter-toggle-btn .toggle-icon');
-    const isVisible = advancedFilters.style.display !== 'none';
+function toggleFilterPanel() {
+    const panelContent = document.getElementById('filter-panel-content');
+    const collapseIcon = document.querySelector('.collapse-icon');
+    const isVisible = panelContent.style.display !== 'none';
     
-    advancedFilters.style.display = isVisible ? 'none' : 'block';
-    toggleIcon.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(180deg)';
+    panelContent.style.display = isVisible ? 'none' : 'block';
+    collapseIcon.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+function toggleStatusFilter() {
+    currentFilter.activeOnly = !currentFilter.activeOnly;
+    
+    // Update button text
+    const statusText = document.getElementById('status-toggle-text');
+    const statusBtn = document.getElementById('status-toggle-btn');
+    
+    if (currentFilter.activeOnly) {
+        statusText.textContent = 'ใช้งานอยู่';
+        statusBtn.classList.remove('option-btn-inactive');
+    } else {
+        statusText.textContent = 'ทั้งหมด';
+        statusBtn.classList.add('option-btn-inactive');
+    }
+    
+    applyFilters();
+    saveFilterPreferences();
 }
 
 function setSortBy(sortBy) {
     currentSort = sortBy;
     
     // Update active button
-    document.querySelectorAll('.sort-btn').forEach(btn => {
+    document.querySelectorAll('.sort-btn-v2').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.sort === sortBy);
     });
     
     applyFilters();
+    saveFilterPreferences();
 }
 
 function resetFilters() {
@@ -820,15 +914,70 @@ function resetFilters() {
     document.getElementById('category-filter').value = 'all';
     document.getElementById('amount-min').value = '';
     document.getElementById('amount-max').value = '';
-    document.getElementById('filter-active').checked = true;
     
     // Reset frequency checkboxes
     document.querySelectorAll('.chip-group input[type="checkbox"]').forEach(cb => {
         cb.checked = false;
     });
     
-    // Reset quick filter
-    setQuickFilter('all');
+    // Reset type tab
+    setTypeTab('all');
+    
+    // Reset status button
+    document.getElementById('status-toggle-text').textContent = 'ใช้งานอยู่';
+    document.getElementById('status-toggle-btn').classList.remove('option-btn-inactive');
+    
+    // Save and apply
+    saveFilterPreferences();
+}
+
+// ===== LOCALSTORAGE PERSISTENCE =====
+function saveFilterPreferences() {
+    try {
+        const prefs = {
+            type: currentFilter.type,
+            sort: currentSort,
+            activeOnly: currentFilter.activeOnly
+        };
+        localStorage.setItem('recurring_filters', JSON.stringify(prefs));
+    } catch (e) {
+        console.error('Failed to save filter preferences:', e);
+    }
+}
+
+function loadFilterPreferences() {
+    try {
+        const saved = localStorage.getItem('recurring_filters');
+        if (saved) {
+            const prefs = JSON.parse(saved);
+            currentFilter.type = prefs.type || 'all';
+            currentSort = prefs.sort || 'date';
+            currentFilter.activeOnly = prefs.activeOnly !== undefined ? prefs.activeOnly : true;
+            
+            // Update UI to match loaded preferences
+            document.querySelectorAll('.type-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.type === currentFilter.type);
+            });
+            
+            document.querySelectorAll('.sort-btn-v2').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.sort === currentSort);
+            });
+            
+            const statusText = document.getElementById('status-toggle-text');
+            const statusBtn = document.getElementById('status-toggle-btn');
+            if (statusText && statusBtn) {
+                if (currentFilter.activeOnly) {
+                    statusText.textContent = 'ใช้งานอยู่';
+                    statusBtn.classList.remove('option-btn-inactive');
+                } else {
+                    statusText.textContent = 'ทั้งหมด';
+                    statusBtn.classList.add('option-btn-inactive');
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Failed to load filter preferences:', e);
+    }
 }
 
 // Real-time filter updates
@@ -887,7 +1036,7 @@ function toggleBulkMode() {
     const bulkToggleText = document.getElementById('bulk-toggle-text');
     
     bulkActionBar.style.display = isBulkMode ? 'flex' : 'none';
-    bulkToggleText.textContent = isBulkMode ? 'ยกเลิก' : 'เลือก';
+    bulkToggleText.textContent = isBulkMode ? 'ยกเลิก' : 'เลือกหลายรายการ';
     
     // Re-render cards with/without checkboxes
     renderCards(filteredRules);

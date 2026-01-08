@@ -3330,47 +3330,90 @@ input:checked + .slider:before {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 8px;
-    margin-bottom: 12px;
-    color: white;
+    padding: 14px 16px;
+    background: var(--bg);
+    border: 2px solid var(--primary);
+    border-radius: 12px;
+    margin-bottom: 16px;
     animation: slideDown 0.3s ease-out;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .bulk-info {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 }
 
 .bulk-info input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     cursor: pointer;
+    accent-color: var(--primary);
 }
 
 .bulk-info label {
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 15px;
+    font-weight: 600;
     cursor: pointer;
     margin: 0;
+    color: var(--text);
 }
 
 .selected-count {
-    font-size: 13px;
-    opacity: 0.9;
-    margin-left: 8px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-left: 4px;
+    padding: 4px 10px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
 }
 
 .bulk-buttons {
     display: flex;
-    gap: 6px;
+    gap: 8px;
 }
 
 .bulk-buttons button {
-    padding: 6px 12px;
-    font-size: 13px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.bulk-buttons button i {
+    width: 16px;
+    height: 16px;
+}
+
+.bulk-buttons .btn-danger {
+    background: var(--error);
+    color: white;
+}
+
+.bulk-buttons .btn-danger:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.bulk-buttons .btn-secondary {
+    background: var(--bg-secondary);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.bulk-buttons .btn-secondary:hover {
+    background: var(--bg);
+    border-color: var(--secondary);
+    transform: translateY(-1px);
 }
 
 /* === NEW CARD DESIGN (V2) === */
@@ -3642,5 +3685,377 @@ input:checked + .slider:before {
     
     .advanced-filters {
         animation: none;
+    }
+}
+
+/* ==========================================
+   RECURRING PAGE V3 - UX CLEANUP
+   Stats Cards, Unified Filter Panel, No Emoji
+   ========================================== */
+
+/* === STATS CARDS === */
+.recurring-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: all 0.2s;
+}
+
+.stat-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
+}
+
+.stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: var(--bg-secondary);
+    color: var(--text);
+    flex-shrink: 0;
+}
+
+.stat-card.income .stat-icon {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    color: #059669;
+}
+
+.stat-card.expense .stat-icon {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #dc2626;
+}
+
+.stat-card.net.income .stat-icon {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    color: #059669;
+}
+
+.stat-card.net.expense .stat-icon {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #dc2626;
+}
+
+.stat-icon i {
+    width: 22px;
+    height: 22px;
+}
+
+.stat-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+}
+
+.stat-card.income .stat-value {
+    color: #059669;
+}
+
+.stat-card.expense .stat-value {
+    color: #dc2626;
+}
+
+.stat-card.net.income .stat-value {
+    color: #059669;
+}
+
+.stat-card.net.expense .stat-value {
+    color: #dc2626;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* === UNIFIED FILTER PANEL === */
+.filter-panel {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.filter-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+}
+
+.filter-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+}
+
+.filter-panel-title i {
+    width: 18px;
+    height: 18px;
+}
+
+.panel-collapse-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.panel-collapse-btn:hover {
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+}
+
+.collapse-icon {
+    width: 18px;
+    height: 18px;
+    transition: transform 0.3s;
+}
+
+.filter-panel-content {
+    padding: 16px;
+}
+
+/* Type Tabs */
+.type-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.type-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 8px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.type-tab i {
+    width: 20px;
+    height: 20px;
+}
+
+.type-tab:hover {
+    border-color: var(--primary);
+    background: var(--bg-secondary);
+}
+
+.type-tab.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.type-tab span:first-of-type {
+    font-weight: 500;
+}
+
+.tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 20px;
+    padding: 0 6px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.type-tab.active .tab-badge {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+}
+
+/* Filter Labels with Icons */
+.filter-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.filter-label i {
+    width: 16px;
+    height: 16px;
+    color: var(--text-secondary);
+}
+
+/* Sort Buttons v2 */
+.sort-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.sort-btn-v2 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sort-btn-v2 i {
+    width: 16px;
+    height: 16px;
+}
+
+.sort-btn-v2:hover {
+    border-color: var(--primary);
+    background: var(--bg-secondary);
+}
+
+.sort-btn-v2.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+/* Options Row */
+.options-row {
+    display: flex;
+    gap: 8px;
+}
+
+.option-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.option-btn i {
+    width: 16px;
+    height: 16px;
+}
+
+.option-btn:hover {
+    background: var(--bg-secondary);
+}
+
+.option-btn.option-btn-inactive {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+/* Full Width Button */
+.btn-block {
+    width: 100%;
+    justify-content: center;
+}
+
+/* === RESPONSIVE ADJUSTMENTS === */
+@media (max-width: 480px) {
+    .recurring-stats {
+        gap: 10px;
+    }
+    
+    .stat-card {
+        padding: 12px;
+        gap: 10px;
+    }
+    
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .stat-icon i {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .stat-value {
+        font-size: 16px;
+    }
+    
+    .stat-label {
+        font-size: 11px;
+    }
+    
+    .type-tabs {
+        gap: 6px;
+    }
+    
+    .type-tab {
+        padding: 10px 6px;
+        font-size: 12px;
+    }
+    
+    .type-tab i {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+@media (min-width: 768px) {
+    .recurring-stats {
+        grid-template-columns: repeat(4, 1fr);
     }
 }
