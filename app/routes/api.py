@@ -1253,3 +1253,83 @@ def get_budget_summary_data(project_id):
         return jsonify({
             "error": {"message": str(e)}
         }), 500
+
+
+# ============================================================
+# EXPORT
+# ============================================================
+
+@bp.route('/projects/<project_id>/export/transactions', methods=['GET'])
+def export_transactions_csv(project_id):
+    """Export transactions to CSV"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        import csv
+        import io
+        from flask import make_response
+
+        # Get filters from query params
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        category_id = request.args.get('category_id')
+        tx_type = request.args.get('type')
+
+        # Query transactions
+        query = Transaction.query.filter_by(
+            project_id=project_id,
+            deleted_at=None
+        )
+
+        if start_date:
+            query = query.filter(Transaction.occurred_at >= start_date)
+        if end_date:
+            query = query.filter(Transaction.occurred_at <= end_date)
+        if category_id:
+            query = query.filter_by(category_id=category_id)
+        if tx_type:
+            query = query.filter_by(type=tx_type)
+
+        transactions = query.order_by(Transaction.occurred_at.desc()).all()
+
+        # Create CSV in memory
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # Write header
+        writer.writerow([
+            'วันที่',
+            'เวลา',
+            'ประเภท',
+            'หมวดหมู่',
+            'จำนวนเงิน (บาท)',
+            'หมายเหตุ',
+            'สร้างเมื่อ'
+        ])
+
+        # Write data
+        for tx in transactions:
+            writer.writerow([
+                tx.occurred_at.strftime('%Y-%m-%d') if tx.occurred_at else '',
+                tx.occurred_at.strftime('%H:%M:%S') if tx.occurred_at else '',
+                'รายรับ' if tx.type == 'income' else 'รายจ่าย',
+                tx.category.name_th if tx.category else '',
+                f"{tx.amount / 100:.2f}",
+                tx.note or '',
+                tx.created_at.strftime('%Y-%m-%d %H:%M:%S') if tx.created_at else ''
+            ])
+
+        # Create response
+        output.seek(0)
+        response = make_response(output.getvalue())
+        response.headers['Content-Type'] = 'text/csv; charset=utf-8-sig'  # UTF-8 with BOM for Excel
+        response.headers['Content-Disposition'] = f'attachment; filename=transactions_{project_id}.csv'
+
+        return response
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500

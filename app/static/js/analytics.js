@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     updatePeriodDisplay();
     await loadAnalytics();
     setupPeriodNavigation();
+    setupExportButton();
 });
 
 // Load all analytics data
@@ -313,4 +314,53 @@ function updatePeriodDisplay() {
     if (periodEl) {
         periodEl.textContent = `${thaiMonths[currentMonth]} ${currentYear + 543}`;
     }
+}
+
+// ===== EXPORT TO CSV =====
+function setupExportButton() {
+    const exportBtn = document.getElementById('btn-export');
+    if (!exportBtn) return;
+
+    exportBtn.addEventListener('click', async () => {
+        try {
+            // Show loading
+            const originalContent = exportBtn.innerHTML;
+            exportBtn.disabled = true;
+            exportBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลัง Export...</span>';
+            lucide.createIcons();
+
+            // Get current month range
+            const month = formatMonthParam();
+            const [year, monthNum] = month.split('-');
+            
+            // Calculate start and end dates
+            const startDate = `${year}-${monthNum}-01`;
+            const lastDay = new Date(parseInt(year), parseInt(monthNum), 0).getDate();
+            const endDate = `${year}-${monthNum}-${lastDay}`;
+
+            // Build export URL
+            const exportUrl = buildApiUrl(`export/transactions`) + 
+                            `?start_date=${startDate}&end_date=${endDate}`;
+
+            // Download file
+            window.location.href = exportUrl;
+
+            // Reset button after short delay
+            setTimeout(() => {
+                exportBtn.disabled = false;
+                exportBtn.innerHTML = originalContent;
+                lucide.createIcons();
+            }, 1000);
+
+            showToast('กำลัง Download ไฟล์...', 'success');
+
+        } catch (error) {
+            console.error('Export error:', error);
+            showToast('ไม่สามารถ Export ได้', 'error');
+            
+            exportBtn.disabled = false;
+            exportBtn.innerHTML = originalContent;
+            lucide.createIcons();
+        }
+    });
 }
