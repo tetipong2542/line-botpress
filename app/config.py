@@ -20,38 +20,39 @@ class Config:
     BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
     # Railway volume mount support (/data)
-    # Priority: Env Var > /data (if exists) > Local instance folder
-    if os.getenv('DATA_DIR'):
-        DATA_DIR = os.getenv('DATA_DIR')
-    elif os.path.exists('/data'):
-        DATA_DIR = '/data'
-    else:
-        DATA_DIR = os.path.join(BASE_DIR, 'instance')
-
-    print(f"🔍 Diagnostic: Current User: {os.getuid()}:{os.getgid()}")
+    # Strategy: Try /data, but fallback to local instance folder if not writable
     
-    # Ensure data directory exists
-    try:
-        os.makedirs(DATA_DIR, exist_ok=True)
-        print(f"✅ Using data directory: {DATA_DIR}")
-        
-        # PROBE: Check directory permissions
-        stat = os.stat(DATA_DIR)
-        print(f"📂 Dir Permissions: Mode={oct(stat.st_mode)}, UID={stat.st_uid}, GID={stat.st_gid}")
-        
-        # PROBE: Test write permissions
-        test_file = os.path.join(DATA_DIR, 'write_test.tmp')
-        with open(test_file, 'w') as f:
-            f.write('write_check')
-        os.remove(test_file)
-        print(f"✅ Write permission confirmed for {DATA_DIR}")
-        
-    except Exception as e:
-        print(f"❌ CRITICAL ERROR with data directory {DATA_DIR}: {e}")
-        # Fallback to temp directory if completely broken, to allow app to at least boot (and show log)
-        # But this implies data loss, so we just log heavily.
+    # 1. Determine candidate path
+    candidate_dir = '/data' if os.path.exists('/data') else None
+    if os.getenv('DATA_DIR'):
+        candidate_dir = os.getenv('DATA_DIR')
+    
+    local_instance_dir = os.path.join(BASE_DIR, 'instance')
+    DATA_DIR = local_instance_dir # Default to local
 
-    # Fix for SQLite URL on Unix: needs 4 slashes for absolute paths
+    if candidate_dir:
+        try:
+            # Try to create/use the candidate directory
+            os.makedirs(candidate_dir, exist_ok=True)
+            
+            # Test write permissions
+            test_file = os.path.join(candidate_dir, 'perm_test.tmp')
+            with open(test_file, 'w') as f:
+                f.write('ok')
+            os.remove(test_file)
+            
+            # If we got here, it's writable
+            DATA_DIR = candidate_dir
+            print(f"✅ Successfully selected persistent storage: {DATA_DIR}")
+        except Exception as e:
+            print(f"⚠️ WARNING: Could not write to {candidate_dir}: {e}")
+            print(f"⚠️ Falling back to local directory: {local_instance_dir}")
+            DATA_DIR = local_instance_dir
+
+    # Ensure final DATA_DIR exists
+    os.makedirs(DATA_DIR, exist_ok=True)
+
+    # Construct DB URI
     db_path = os.path.join(DATA_DIR, "finance.db")
     SQLALCHEMY_DATABASE_URI = os.getenv(
         'DATABASE_URL',
