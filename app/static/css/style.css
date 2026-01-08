@@ -251,7 +251,7 @@ h2 i[data-lucide] {
 /* Page Header */
 .page-header {
     background: var(--bg);
-    padding: 24px 20px;
+    padding: 24px 7px;
     border-bottom: 1px solid var(--border);
     margin-bottom: 16px;
 }
@@ -271,7 +271,7 @@ h2 i[data-lucide] {
 
 /* Summary Section */
 .summary-section {
-    padding: 0 16px 16px;
+    padding: 0 0 16px;
     display: grid;
     gap: 12px;
 }
@@ -330,7 +330,7 @@ h2 i[data-lucide] {
 
 /* Quick Actions */
 .quick-actions {
-    padding: 0 16px 16px;
+    padding: 0 0 16px;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
@@ -370,7 +370,7 @@ h2 i[data-lucide] {
 
 /* Section */
 .section {
-    padding: 0 16px 16px;
+    padding: 0 0 16px;
 }
 
 .section-header {
@@ -695,7 +695,7 @@ h2 i[data-lucide] {
 .tabs {
     display: flex;
     gap: 8px;
-    padding: 0 16px 16px;
+    padding: 0 0 16px;
 }
 
 .tab {
@@ -998,7 +998,7 @@ h2 i[data-lucide] {
 
 /* Book Switcher (Pill Tabs) */
 .book-switcher {
-    padding: 0 16px 16px;
+    padding: 0 0 16px;
     display: flex;
     gap: 8px;
     overflow-x: auto;
@@ -1036,7 +1036,7 @@ h2 i[data-lucide] {
 
 /* Summary Strip (3 Columns) */
 .summary-strip {
-    padding: 0 16px 16px;
+    padding: 0 0 16px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
@@ -1387,7 +1387,7 @@ h2 i[data-lucide] {
 
 /* Period Selector */
 .period-selector {
-    padding: 0 16px 16px;
+    padding: 0 0 16px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -3678,7 +3678,7 @@ input:checked + .slider:before {
 /* === EMPTY STATE - MOBILE FIRST === */
 .empty-state {
     text-align: center;
-    padding: 48px 20px;
+    padding: 48px 7px;
 }
 
 .empty-state i {
@@ -3937,7 +3937,7 @@ input:checked + .slider:before {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 16px;
+    padding: 16px 7px;
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border);
     cursor: pointer;
@@ -3989,7 +3989,7 @@ input:checked + .slider:before {
 }
 
 .filter-panel-content {
-    padding: 16px;
+    padding: 16px 9px;
 }
 
 /* Type Tabs - Mobile First */
