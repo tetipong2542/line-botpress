@@ -20,15 +20,16 @@ class Config:
     BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
     # Railway volume mount support (/data)
-    # Strategy: Try /data, but fallback to local instance folder if not writable
+    # Strategy: Try /data, but fallback to /tmp (guaranteed writable) if validation fails
     
     # 1. Determine candidate path
     candidate_dir = '/data' if os.path.exists('/data') else None
     if os.getenv('DATA_DIR'):
         candidate_dir = os.getenv('DATA_DIR')
     
-    local_instance_dir = os.path.join(BASE_DIR, 'instance')
-    DATA_DIR = local_instance_dir # Default to local
+    # Fallback to /tmp which is always writable on Linux
+    fallback_dir = '/tmp'
+    DATA_DIR = fallback_dir 
 
     if candidate_dir:
         try:
@@ -46,8 +47,8 @@ class Config:
             print(f"✅ Successfully selected persistent storage: {DATA_DIR}")
         except Exception as e:
             print(f"⚠️ WARNING: Could not write to {candidate_dir}: {e}")
-            print(f"⚠️ Falling back to local directory: {local_instance_dir}")
-            DATA_DIR = local_instance_dir
+            print(f"⚠️ Falling back to temp directory: {fallback_dir}")
+            DATA_DIR = fallback_dir
 
     # Ensure final DATA_DIR exists
     os.makedirs(DATA_DIR, exist_ok=True)
