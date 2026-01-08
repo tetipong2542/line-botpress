@@ -20,18 +20,30 @@ class Config:
     BASE_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
     # Railway volume mount support (/data)
-    # Strategy: Try /data, but fallback to /tmp (guaranteed writable) if validation fails
+    # Strategy: Try /data first (Railway persistent storage), then instance dir, then /tmp
     
-    # 1. Determine candidate path
-    candidate_dir = '/data' if os.path.exists('/data') else None
+    # 1. Determine candidate paths in priority order
+    candidates = []
+    
+    # Priority 1: /data (Railway persistent volume)
+    if os.path.exists('/data'):
+        candidates.append(('/data', 'Railway persistent storage'))
+    
+    # Priority 2: Custom DATA_DIR from environment
     if os.getenv('DATA_DIR'):
-        candidate_dir = os.getenv('DATA_DIR')
+        candidates.append((os.getenv('DATA_DIR'), 'Custom DATA_DIR'))
     
-    # Fallback to /tmp which is always writable on Linux
-    fallback_dir = '/tmp'
-    DATA_DIR = fallback_dir 
-
-    if candidate_dir:
+    # Priority 3: Local instance directory (for development)
+    instance_dir = os.path.join(BASE_DIR, 'instance')
+    candidates.append((instance_dir, 'Local instance directory'))
+    
+    # Priority 4: /tmp (guaranteed writable fallback)
+    candidates.append(('/tmp', 'Temporary directory'))
+    
+    DATA_DIR = None
+    
+    # Try each candidate in order
+    for candidate_dir, description in candidates:
         try:
             # Try to create/use the candidate directory
             os.makedirs(candidate_dir, exist_ok=True)
@@ -44,22 +56,27 @@ class Config:
             
             # If we got here, it's writable
             DATA_DIR = candidate_dir
-            print(f"✅ Successfully selected persistent storage: {DATA_DIR}")
+            print(f"✅ Using {description}: {DATA_DIR}")
+            break
         except Exception as e:
-            print(f"⚠️ WARNING: Could not write to {candidate_dir}: {e}")
-            print(f"⚠️ Falling back to temp directory: {fallback_dir}")
-            DATA_DIR = fallback_dir
+            print(f"⚠️ Cannot use {description} ({candidate_dir}): {e}")
+            continue
+    
+    if not DATA_DIR:
+        raise RuntimeError("❌ No writable directory found for database!")
 
-    # Ensure final DATA_DIR exists
-    os.makedirs(DATA_DIR, exist_ok=True)
-
-    # Construct DB URI
-    db_path = os.path.join(DATA_DIR, "finance.db")
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        'DATABASE_URL',
-        f'sqlite:///{db_path}'
-    )
-    print(f"🔌 Database URI: {SQLALCHEMY_DATABASE_URI}")
+    # Construct DB URI - only use DATABASE_URL if explicitly set and is an absolute path
+    env_db_url = os.getenv('DATABASE_URL')
+    if env_db_url and (env_db_url.startswith('sqlite:////') or env_db_url.startswith('postgresql://') or env_db_url.startswith('mysql://')):
+        # Use explicit DATABASE_URL if it's an absolute path or external DB
+        SQLALCHEMY_DATABASE_URI = env_db_url
+        print(f"🔌 Using explicit DATABASE_URL: {SQLALCHEMY_DATABASE_URI}")
+    else:
+        # Use auto-configured path
+        db_path = os.path.join(DATA_DIR, "finance.db")
+        SQLALCHEMY_DATABASE_URI = f'sqlite:///{db_path}'
+        print(f"🔌 Database path: {db_path}")
+        print(f"🔌 Database URI: {SQLALCHEMY_DATABASE_URI}")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = FLASK_ENV == 'development'
 
