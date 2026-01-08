@@ -258,6 +258,8 @@ def me():
     user = User.query.get(user_id)
 
     if not user:
+        # User doesn't exist (e.g., database was reset), clear session
+        session.clear()
         return jsonify({
             'error': {
                 'code': 'USER_NOT_FOUND',

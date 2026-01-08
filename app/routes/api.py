@@ -21,7 +21,14 @@ def get_current_user():
     user_id = session.get('user_id')
     if not user_id:
         return None
-    return User.query.get(user_id)
+    
+    user = User.query.get(user_id)
+    if not user:
+        # User doesn't exist (e.g., database was reset), clear session
+        session.clear()
+        return None
+    
+    return user
 
 
 def require_auth():

@@ -11,8 +11,17 @@ bp = Blueprint('web', __name__)
 def require_login(f):
     """Decorator to require login"""
     def decorated_function(*args, **kwargs):
-        if not session.get('user_id'):
+        user_id = session.get('user_id')
+        if not user_id:
             return redirect('/')
+        
+        # Validate that user actually exists in database
+        user = User.query.get(user_id)
+        if not user:
+            # User doesn't exist (e.g., database was reset), clear session
+            session.clear()
+            return redirect('/')
+        
         return f(*args, **kwargs)
     decorated_function.__name__ = f.__name__
     return decorated_function
@@ -32,6 +41,10 @@ def get_user_project(user_id):
     # Auto-create project if user doesn't have one
     if not project:
         user = User.query.get(user_id)
+        
+        # Safety check: user must exist
+        if not user:
+            raise ValueError(f"User {user_id} not found in database")
 
         # Create default project
         project = Project(
