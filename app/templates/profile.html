@@ -11,7 +11,7 @@
                 <i data-lucide="user"></i>
                 โปรไฟล์
             </h1>
-            <p class="subtitle">จัดการบัญชีของคุณ</p>
+            <p class="subtitle">จัดการบัญชีและการตั้งค่า</p>
         </div>
     </div>
 
@@ -58,7 +58,9 @@
                     <div class="setting-title">จัดการสมาชิก</div>
                     <div class="setting-desc">เพิ่มสมาชิกครอบครัว</div>
                 </div>
-                <i data-lucide="chevron-right"></i>
+                <span class="feature-badge available">
+                    <span class="badge-dot"></span>
+                </span>
             </a>
 
             <a href="/budgets" class="setting-item">
@@ -69,7 +71,9 @@
                     <div class="setting-title">งบประมาณ</div>
                     <div class="setting-desc">ตั้งงบรายหมวดหมู่</div>
                 </div>
-                <i data-lucide="chevron-right"></i>
+                <span class="feature-badge available">
+                    <span class="badge-dot"></span>
+                </span>
             </a>
 
             <a href="/analytics" class="setting-item">
@@ -80,17 +84,19 @@
                     <div class="setting-title">รายงานการเงิน</div>
                     <div class="setting-desc">ดูสรุปและวิเคราะห์</div>
                 </div>
-                <i data-lucide="chevron-right"></i>
+                <span class="feature-badge available">
+                    <span class="badge-dot"></span>
+                </span>
             </a>
         </div>
     </div>
 
-    <!-- Account Settings -->
+    <!-- Available Features -->
     <div class="section">
         <div class="section-header">
             <h2>
-                <i data-lucide="settings"></i>
-                การตั้งค่าบัญชี
+                <i data-lucide="check-circle"></i>
+                ฟีเจอร์ที่ใช้ได้
             </h2>
         </div>
 
@@ -103,8 +109,78 @@
                     <div class="setting-title">เกี่ยวกับแอป</div>
                     <div class="setting-desc">เวอร์ชัน 1.0.0</div>
                 </div>
-                <i data-lucide="chevron-right"></i>
+                <span class="feature-badge available">
+                    <span class="badge-dot"></span>
+                </span>
             </a>
+        </div>
+    </div>
+
+    <!-- Coming Soon Features -->
+    <div class="section">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="rocket"></i>
+                ฟีเจอร์ที่กำลังพัฒนา
+            </h2>
+        </div>
+
+        <div class="settings-list">
+            <div class="setting-item disabled">
+                <div class="setting-icon">
+                    <i data-lucide="bell"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">การแจ้งเตือน</div>
+                    <div class="setting-desc">แจ้งเตือนผ่าน LINE</div>
+                </div>
+                <span class="feature-badge coming-soon">
+                    <i data-lucide="clock"></i>
+                    เร็วๆ นี้
+                </span>
+            </div>
+
+            <div class="setting-item disabled">
+                <div class="setting-icon">
+                    <i data-lucide="moon"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">โหมดมืด</div>
+                    <div class="setting-desc">ปรับหน้าตาแอปเป็นโทนมืด</div>
+                </div>
+                <span class="feature-badge in-development">
+                    <i data-lucide="code"></i>
+                    กำลังพัฒนา
+                </span>
+            </div>
+
+            <div class="setting-item disabled">
+                <div class="setting-icon">
+                    <i data-lucide="download"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">สำรองข้อมูล</div>
+                    <div class="setting-desc">ดาวน์โหลดข้อมูลเป็นไฟล์</div>
+                </div>
+                <span class="feature-badge in-development">
+                    <i data-lucide="code"></i>
+                    กำลังพัฒนา
+                </span>
+            </div>
+
+            <div class="setting-item disabled">
+                <div class="setting-icon">
+                    <i data-lucide="help-circle"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">ศูนย์ช่วยเหลือ</div>
+                    <div class="setting-desc">คำถามที่พบบ่อยและคู่มือ</div>
+                </div>
+                <span class="feature-badge coming-soon">
+                    <i data-lucide="clock"></i>
+                    เร็วๆ นี้
+                </span>
+            </div>
         </div>
     </div>
 
@@ -119,7 +195,7 @@
     <!-- Footer -->
     <div class="section" style="text-align: center; padding: 20px 0;">
         <p style="font-size: 12px; color: var(--text-secondary);">
-            ทำด้วย ❤️ สำหรับคนไทย
+            ทำด้วย ❤️ สำหรับคนไทย • เวอร์ชัน 1.0.0
         </p>
     </div>
 
@@ -162,6 +238,21 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
 document.getElementById('about-app').addEventListener('click', (e) => {
     e.preventDefault();
     alert('📱 PromptJOD {พร้อมจด}\n\nเวอร์ชัน: 1.0.0\n\nแอปจดรายรับรายจ่ายที่ง่ายที่สุด\nสำหรับครอบครัวและคนไทย\n\nMade with ❤️');
+});
+
+// Disabled features
+document.querySelectorAll('.setting-item.disabled').forEach(item => {
+    item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const title = item.querySelector('.setting-title').textContent;
+        const badge = item.querySelector('.feature-badge');
+        
+        if (badge.classList.contains('coming-soon')) {
+            showToast(`🚀 ${title}\n\nฟีเจอร์นี้จะมาเร็วๆ นี้\nเรากำลังพัฒนาอย่างเต็มที่!`, 'info');
+        } else if (badge.classList.contains('in-development')) {
+            showToast(`👨‍💻 ${title}\n\nฟีเจอร์นี้อยู่ระหว่างการพัฒนา\nติดตามได้เร็วๆ นี้!`, 'info');
+        }
+    });
 });
 </script>
 {% endblock %}
