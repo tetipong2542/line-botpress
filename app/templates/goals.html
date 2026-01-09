@@ -146,6 +146,35 @@
     </div>
 </div>
 
+<!-- Modal: Withdraw -->
+<div class="modal" id="withdraw-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header expense">
+            <h2>ถอนเงินออม</h2>
+            <button class="modal-close">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <form class="modal-body" id="withdraw-form">
+            <input type="hidden" id="withdraw-goal-id">
+            <div class="goal-current-info" id="withdraw-info"></div>
+            <div class="form-group">
+                <label class="form-label">จำนวนเงินที่ถอน (THB)</label>
+                <div class="amount-input-wrapper">
+                    <span class="currency">฿</span>
+                    <input type="number" class="form-input amount-input" id="withdraw-amount" placeholder="1000"
+                        required>
+                </div>
+            </div>
+            <button type="submit" class="btn-danger">
+                <i data-lucide="minus"></i>
+                <span>ถอนเงิน</span>
+            </button>
+        </form>
+    </div>
+</div>
+
 <!-- Footer Menu -->
 {% set current_page = 'goals' %}
 {% include 'components/footer_menu.html' %}
@@ -238,8 +267,13 @@
                         <p class="goal-target">เป้าหมาย: ฿${target.toLocaleString('th-TH')}</p>
                     </div>
                     <div class="goal-actions">
+                        ${!isCompleted && current > 0 ? `
+                            <button class="btn-icon withdraw" onclick="openWithdraw('${goal.id}', '${goal.name}', ${current})" title="ถอนเงิน">
+                                <i data-lucide="minus-circle"></i>
+                            </button>
+                        ` : ''}
                         ${!isCompleted ? `
-                            <button class="btn-icon" onclick="openContribute('${goal.id}')" title="เพิ่มเงิน">
+                            <button class="btn-icon add" onclick="openContribute('${goal.id}')" title="เพิ่มเงิน">
                                 <i data-lucide="plus-circle"></i>
                             </button>
                         ` : ''}
@@ -328,6 +362,42 @@
             await API.post(buildApiUrl('savings-goals', goalId, 'contribute'), { amount });
             showToast('เพิ่มเงินออมสำเร็จ!', 'success');
             closeModal(contributeModal);
+            await loadGoals();
+        } catch (error) {
+            showToast(error.message || 'เกิดข้อผิดพลาด', 'error');
+        } finally {
+            submitBtn.disabled = false;
+        }
+    });
+
+    // Withdraw modal
+    const withdrawModal = document.getElementById('withdraw-modal');
+
+    function openWithdraw(goalId, goalName, currentAmount) {
+        document.getElementById('withdraw-goal-id').value = goalId;
+        document.getElementById('withdraw-amount').value = '';
+        document.getElementById('withdraw-info').innerHTML = `
+            <div class="info-box">
+                <strong>🎯 ${goalName}</strong><br>
+                <span>ยอดปัจจุบัน: ฿${currentAmount.toLocaleString('th-TH')}</span>
+            </div>
+        `;
+        openModal(withdrawModal);
+    }
+
+    // Withdraw submit
+    document.getElementById('withdraw-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+
+        const goalId = document.getElementById('withdraw-goal-id').value;
+        const amount = Math.round(parseFloat(document.getElementById('withdraw-amount').value) * 100);
+
+        try {
+            await API.post(buildApiUrl('savings-goals', goalId, 'withdraw'), { amount });
+            showToast('ถอนเงินสำเร็จ!', 'success');
+            closeModal(withdrawModal);
             await loadGoals();
         } catch (error) {
             showToast(error.message || 'เกิดข้อผิดพลาด', 'error');
@@ -520,6 +590,97 @@
 
     .goal-footer.completed {
         text-align: center;
+    }
+
+    /* Withdraw button */
+    .btn-icon.withdraw:hover {
+        background: var(--expense-color);
+        color: white;
+    }
+
+    .btn-icon.add:hover {
+        background: var(--income-color);
+        color: white;
+    }
+
+    /* Danger button */
+    .btn-danger {
+        width: 100%;
+        padding: 1rem;
+        border: none;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background: var(--expense-color);
+        color: white;
+        transition: all 0.2s;
+    }
+
+    .btn-danger:hover {
+        background: #dc2626;
+        transform: translateY(-2px);
+    }
+
+    /* Info box */
+    .info-box {
+        background: var(--bg-secondary);
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+
+    .info-box strong {
+        color: var(--text-primary);
+        font-size: 1.1rem;
+    }
+
+    .info-box span {
+        color: var(--text-secondary);
+    }
+
+    /* Card animations */
+    .goal-card {
+        animation: fadeInUp 0.3s ease;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Mobile touch improvements */
+    @media (max-width: 480px) {
+        .goal-actions {
+            gap: 0.25rem;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .goal-card {
+            padding: 0.875rem;
+        }
+
+        .goals-stats {
+            gap: 0.5rem;
+            padding: 0 0.75rem;
+        }
     }
 </style>
 {% endblock %}

@@ -2319,6 +2319,75 @@ def delete_savings_goal(project_id, goal_id):
         }), 500
 
 
+@bp.route('/projects/<project_id>/savings-goals/<goal_id>/contribute', methods=['POST'])
+def contribute_to_goal(project_id, goal_id):
+    """Contribute money to savings goal"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    data = request.json
+    amount = data.get('amount', 0)
+
+    try:
+        goal = SavingsGoal.get_goal(goal_id, project_id)
+        if not goal:
+            return jsonify({
+                "error": {"message": "Goal not found"}
+            }), 404
+
+        goal.current_amount = (goal.current_amount or 0) + amount
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'goal': goal.to_dict(),
+            'message': f'เพิ่มเงินออม ฿{amount/100:,.0f} สำเร็จ'
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/savings-goals/<goal_id>/withdraw', methods=['POST'])
+def withdraw_from_goal(project_id, goal_id):
+    """Withdraw money from savings goal"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    data = request.json
+    amount = data.get('amount', 0)
+
+    try:
+        goal = SavingsGoal.get_goal(goal_id, project_id)
+        if not goal:
+            return jsonify({
+                "error": {"message": "Goal not found"}
+            }), 404
+
+        if amount > goal.current_amount:
+            return jsonify({
+                "error": {"message": f"ยอดเงินไม่พอ มี ฿{goal.current_amount/100:,.0f}"}
+            }), 400
+
+        goal.current_amount = goal.current_amount - amount
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'goal': goal.to_dict(),
+            'message': f'ถอนเงิน ฿{amount/100:,.0f} สำเร็จ'
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
 # ============================================================================
 # AGGREGATION ENDPOINTS
 # ============================================================================

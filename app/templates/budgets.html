@@ -69,7 +69,7 @@
                 งบประมาณรายหมวดหมู่
             </h2>
         </div>
-        
+
         <div id="budgets-list" class="budgets-list">
             <!-- Populated by JavaScript -->
             <div class="empty-state">
@@ -117,8 +117,8 @@
                 <label class="form-label">งบประมาณ (บาท)</label>
                 <div class="amount-input-wrapper">
                     <span class="currency">฿</span>
-                    <input type="number" class="form-input amount-input" id="budget-amount" 
-                           placeholder="0.00" step="0.01" min="0" required>
+                    <input type="number" class="form-input amount-input" id="budget-amount" placeholder="0.00"
+                        step="0.01" min="0" required>
                 </div>
             </div>
 
@@ -147,94 +147,94 @@
 
 {% block extra_js %}
 <script>
-// ===== STATE =====
-let currentMonth = new Date().getMonth();
-let currentYear = new Date().getFullYear();
-let editingBudgetId = null;
-let allCategories = [];
+    // ===== STATE =====
+    let currentMonth = new Date().getMonth();
+    let currentYear = new Date().getFullYear();
+    let editingBudgetId = null;
+    let allCategories = [];
 
-// Thai month names
-const thaiMonths = [
-    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
-];
+    // Thai month names
+    const thaiMonths = [
+        'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+        'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+    ];
 
-// ===== INITIALIZATION =====
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadCategories();
-    updatePeriodDisplay();
-    await loadBudgets();
-    setupEventListeners();
-});
+    // ===== INITIALIZATION =====
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadCategories();
+        updatePeriodDisplay();
+        await loadBudgets();
+        setupEventListeners();
+    });
 
-// ===== LOAD CATEGORIES =====
-async function loadCategories() {
-    try {
-        const result = await API.get(buildApiUrl('categories'));
-        
-        if (result.categories) {
-            // Filter only expense categories (budgets are typically for expenses)
-            allCategories = result.categories.filter(c => c.type === 'expense' && c.is_active);
-            
-            // Populate category dropdown
-            const select = document.getElementById('budget-category');
-            select.innerHTML = '<option value="">เลือกหมวดหมู่...</option>' +
-                allCategories.map(cat => `
+    // ===== LOAD CATEGORIES =====
+    async function loadCategories() {
+        try {
+            const result = await API.get(buildApiUrl('categories'));
+
+            if (result.categories) {
+                // Filter only expense categories (budgets are typically for expenses)
+                allCategories = result.categories.filter(c => c.type === 'expense' && c.is_active);
+
+                // Populate category dropdown
+                const select = document.getElementById('budget-category');
+                select.innerHTML = '<option value="">เลือกหมวดหมู่...</option>' +
+                    allCategories.map(cat => `
                     <option value="${cat.id}">${cat.icon || '📁'} ${cat.name_th}</option>
                 `).join('');
+            }
+        } catch (error) {
+            console.error('Error loading categories:', error);
         }
-    } catch (error) {
-        console.error('Error loading categories:', error);
     }
-}
 
-// ===== LOAD BUDGETS =====
-async function loadBudgets() {
-    try {
-        const month = formatMonthParam();
-        
-        const [budgetsResult, summaryResult] = await Promise.all([
-            API.get(buildApiUrl(`budgets?month=${month}`)),
-            API.get(buildApiUrl(`budgets/summary?month=${month}`))
-        ]);
+    // ===== LOAD BUDGETS =====
+    async function loadBudgets() {
+        try {
+            const month = formatMonthParam();
 
-        // Update summary cards
-        if (summaryResult.summary) {
-            updateSummaryCards(summaryResult.summary);
-        }
+            const [budgetsResult, summaryResult] = await Promise.all([
+                API.get(buildApiUrl(`budgets?month=${month}`)),
+                API.get(buildApiUrl(`budgets/summary?month=${month}`))
+            ]);
 
-        // Render budget list
-        if (budgetsResult.budgets && budgetsResult.budgets.length > 0) {
-            renderBudgets(budgetsResult.budgets);
-        } else {
+            // Update summary cards
+            if (summaryResult.summary) {
+                updateSummaryCards(summaryResult.summary);
+            }
+
+            // Render budget list
+            if (budgetsResult.budgets && budgetsResult.budgets.length > 0) {
+                renderBudgets(budgetsResult.budgets);
+            } else {
+                showEmptyState();
+            }
+
+        } catch (error) {
+            console.error('Error loading budgets:', error);
             showEmptyState();
         }
-
-    } catch (error) {
-        console.error('Error loading budgets:', error);
-        showEmptyState();
     }
-}
 
-// ===== UPDATE SUMMARY CARDS =====
-function updateSummaryCards(summary) {
-    const formatMoney = (amount) => {
-        return amount.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    };
+    // ===== UPDATE SUMMARY CARDS =====
+    function updateSummaryCards(summary) {
+        const formatMoney = (amount) => {
+            return amount.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
 
-    document.getElementById('total-budgeted').textContent = `฿${formatMoney(summary.total_budgeted_formatted)}`;
-    document.getElementById('total-spent').textContent = `฿${formatMoney(summary.total_spent_formatted)}`;
-    
-    const remainingEl = document.getElementById('total-remaining');
-    remainingEl.textContent = `฿${formatMoney(summary.total_remaining_formatted)}`;
-    remainingEl.style.color = summary.total_remaining >= 0 ? 'var(--success, #10b981)' : 'var(--error, #ef4444)';
-}
+        document.getElementById('total-budgeted').textContent = `฿${formatMoney(summary.total_budgeted_formatted)}`;
+        document.getElementById('total-spent').textContent = `฿${formatMoney(summary.total_spent_formatted)}`;
 
-// ===== RENDER BUDGETS =====
-function renderBudgets(budgets) {
-    const container = document.getElementById('budgets-list');
-    
-    container.innerHTML = budgets.map(budget => `
+        const remainingEl = document.getElementById('total-remaining');
+        remainingEl.textContent = `฿${formatMoney(summary.total_remaining_formatted)}`;
+        remainingEl.style.color = summary.total_remaining >= 0 ? 'var(--success, #10b981)' : 'var(--error, #ef4444)';
+    }
+
+    // ===== RENDER BUDGETS =====
+    function renderBudgets(budgets) {
+        const container = document.getElementById('budgets-list');
+
+        container.innerHTML = budgets.map(budget => `
         <div class="budget-item ${budget.is_over_budget ? 'over-budget' : ''}">
             <div class="budget-header">
                 <div class="budget-info">
@@ -275,194 +275,458 @@ function renderBudgets(budgets) {
         </div>
     `).join('');
 
-    lucide.createIcons();
-}
+        lucide.createIcons();
+    }
 
-// ===== SHOW EMPTY STATE =====
-function showEmptyState() {
-    const container = document.getElementById('budgets-list');
-    container.innerHTML = `
+    // ===== SHOW EMPTY STATE =====
+    function showEmptyState() {
+        const container = document.getElementById('budgets-list');
+        container.innerHTML = `
         <div class="empty-state">
             <i data-lucide="wallet"></i>
             <p>ยังไม่มีงบประมาณ</p>
             <p class="empty-subtitle">เริ่มตั้งงบประมาณสำหรับหมวดหมู่ต่างๆ</p>
         </div>
     `;
-    lucide.createIcons();
-}
+        lucide.createIcons();
+    }
 
-// ===== MODAL MANAGEMENT =====
-const modal = document.getElementById('budget-modal');
+    // ===== MODAL MANAGEMENT =====
+    const modal = document.getElementById('budget-modal');
 
-function openModal() {
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
+    function openModal() {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
 
-function closeModal() {
-    modal.classList.remove('active');
-    document.body.style.overflow = '';
-    editingBudgetId = null;
-    document.getElementById('budget-form').reset();
-    document.getElementById('modal-title').textContent = 'เพิ่มงบประมาณ';
-}
-
-// ===== EVENT LISTENERS =====
-function setupEventListeners() {
-    // Add budget button
-    document.getElementById('btn-add-budget').addEventListener('click', () => {
+    function closeModal() {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
         editingBudgetId = null;
+        document.getElementById('budget-form').reset();
         document.getElementById('modal-title').textContent = 'เพิ่มงบประมาณ';
-        
-        // Set default month to current period
-        const defaultMonth = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
-        document.getElementById('budget-month').value = defaultMonth;
-        
-        openModal();
-    });
+    }
 
-    // Close modal
-    modal.querySelector('.modal-close').addEventListener('click', closeModal);
-    modal.querySelector('.modal-overlay').addEventListener('click', closeModal);
+    // ===== EVENT LISTENERS =====
+    function setupEventListeners() {
+        // Add budget button
+        document.getElementById('btn-add-budget').addEventListener('click', () => {
+            editingBudgetId = null;
+            document.getElementById('modal-title').textContent = 'เพิ่มงบประมาณ';
 
-    // Form submit
-    document.getElementById('budget-form').addEventListener('submit', handleSubmit);
+            // Set default month to current period
+            const defaultMonth = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+            document.getElementById('budget-month').value = defaultMonth;
 
-    // Period navigation
-    document.getElementById('prev-period').addEventListener('click', () => {
-        currentMonth--;
-        if (currentMonth < 0) {
-            currentMonth = 11;
-            currentYear--;
-        }
-        updatePeriodDisplay();
-        loadBudgets();
-    });
+            openModal();
+        });
 
-    document.getElementById('next-period').addEventListener('click', () => {
-        currentMonth++;
-        if (currentMonth > 11) {
-            currentMonth = 0;
-            currentYear++;
-        }
-        updatePeriodDisplay();
-        loadBudgets();
-    });
+        // Close modal
+        modal.querySelector('.modal-close').addEventListener('click', closeModal);
+        modal.querySelector('.modal-overlay').addEventListener('click', closeModal);
 
-    // ESC key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
+        // Form submit
+        document.getElementById('budget-form').addEventListener('submit', handleSubmit);
+
+        // Period navigation
+        document.getElementById('prev-period').addEventListener('click', () => {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            updatePeriodDisplay();
+            loadBudgets();
+        });
+
+        document.getElementById('next-period').addEventListener('click', () => {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            updatePeriodDisplay();
+            loadBudgets();
+        });
+
+        // ESC key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    }
+
+    // ===== FORM SUBMIT =====
+    async function handleSubmit(e) {
+        e.preventDefault();
+
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalContent = submitBtn.innerHTML;
+
+        try {
+            // Get form data
+            const categoryId = document.getElementById('budget-category').value;
+            const month = document.getElementById('budget-month').value;
+            const amount = parseFloat(document.getElementById('budget-amount').value);
+            const rolloverPolicy = document.getElementById('budget-rollover').value;
+
+            // Validation
+            if (!categoryId || !month || !amount || amount <= 0) {
+                showToast('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+                return;
+            }
+
+            // Loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังบันทึก...</span>';
+            lucide.createIcons();
+
+            // Prepare payload
+            const payload = {
+                category_id: categoryId,
+                month: month,
+                limit_amount: Math.round(amount * 100), // Convert to satang
+                rollover_policy: rolloverPolicy
+            };
+
+            if (editingBudgetId) {
+                // Update existing budget
+                await API.put(buildApiUrl('budgets', editingBudgetId), payload);
+                showToast('อัพเดทงบประมาณสำเร็จ!', 'success');
+            } else {
+                // Create new budget
+                await API.post(buildApiUrl('budgets'), payload);
+                showToast('เพิ่มงบประมาณสำเร็จ!', 'success');
+            }
+
             closeModal();
+            await loadBudgets();
+
+        } catch (error) {
+            console.error('Budget save error:', error);
+            showToast(error.message || 'ไม่สามารถบันทึกได้', 'error');
+
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalContent;
+            lucide.createIcons();
         }
-    });
-}
+    }
 
-// ===== FORM SUBMIT =====
-async function handleSubmit(e) {
-    e.preventDefault();
+    // ===== EDIT BUDGET =====
+    async function editBudget(budgetId) {
+        try {
+            const result = await API.get(buildApiUrl('budgets', budgetId));
+            const budget = result.budget;
 
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    const originalContent = submitBtn.innerHTML;
+            editingBudgetId = budgetId;
+            document.getElementById('modal-title').textContent = 'แก้ไขงบประมาณ';
 
-    try {
-        // Get form data
-        const categoryId = document.getElementById('budget-category').value;
-        const month = document.getElementById('budget-month').value;
-        const amount = parseFloat(document.getElementById('budget-amount').value);
-        const rolloverPolicy = document.getElementById('budget-rollover').value;
+            // Fill form
+            document.getElementById('budget-category').value = budget.category_id;
+            document.getElementById('budget-month').value = budget.month_yyyymm;
+            document.getElementById('budget-amount').value = budget.limit_amount_formatted;
+            document.getElementById('budget-rollover').value = budget.rollover_policy;
 
-        // Validation
-        if (!categoryId || !month || !amount || amount <= 0) {
-            showToast('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+            openModal();
+
+        } catch (error) {
+            showToast(error.message || 'ไม่สามารถโหลดข้อมูลได้', 'error');
+        }
+    }
+
+    // ===== DELETE BUDGET =====
+    async function deleteBudget(budgetId) {
+        if (!confirm('ต้องการลบงบประมาณนี้หรือไม่?')) {
             return;
         }
 
-        // Loading state
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังบันทึก...</span>';
-        lucide.createIcons();
+        try {
+            await API.delete(buildApiUrl('budgets', budgetId));
+            showToast('ลบงบประมาณเรียบร้อยแล้ว', 'success');
+            await loadBudgets();
 
-        // Prepare payload
-        const payload = {
-            category_id: categoryId,
-            month: month,
-            limit_amount: Math.round(amount * 100), // Convert to satang
-            rollover_policy: rolloverPolicy
-        };
+        } catch (error) {
+            showToast(error.message || 'ไม่สามารถลบได้', 'error');
+        }
+    }
 
-        if (editingBudgetId) {
-            // Update existing budget
-            await API.put(buildApiUrl('budgets', editingBudgetId), payload);
-            showToast('อัพเดทงบประมาณสำเร็จ!', 'success');
-        } else {
-            // Create new budget
-            await API.post(buildApiUrl('budgets'), payload);
-            showToast('เพิ่มงบประมาณสำเร็จ!', 'success');
+    // ===== UTILITY FUNCTIONS =====
+    function formatMonthParam() {
+        const month = String(currentMonth + 1).padStart(2, '0');
+        return `${currentYear}-${month}`;
+    }
+
+    function updatePeriodDisplay() {
+        const periodEl = document.getElementById('current-period');
+        if (periodEl) {
+            periodEl.textContent = `${thaiMonths[currentMonth]} ${currentYear + 543}`;
+        }
+    }
+</script>
+
+<style>
+    /* Summary Section */
+    .summary-section {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        padding: 0 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .summary-card {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .summary-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .summary-label {
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.125rem;
+    }
+
+    .summary-amount {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    /* Budget List */
+    .budgets-list {
+        padding: 0 1rem;
+    }
+
+    .budget-item {
+        background: var(--card-bg);
+        border-radius: 16px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        border: 1px solid var(--border-color);
+        animation: fadeInUp 0.3s ease;
+    }
+
+    .budget-item.over-budget {
+        border-color: var(--expense-color);
+        background: color-mix(in srgb, var(--expense-color) 5%, var(--card-bg));
+    }
+
+    .budget-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .budget-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .budget-icon {
+        font-size: 1.25rem;
+    }
+
+    .budget-name {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .budget-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .budget-amounts {
+        margin-bottom: 0.75rem;
+    }
+
+    .budget-amount-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+
+    .budget-amount-row .negative {
+        color: var(--expense-color);
+        font-weight: 600;
+    }
+
+    /* Progress Bar */
+    .budget-progress {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .budget-progress-bar {
+        flex: 1;
+        height: 8px;
+        background: var(--bg-secondary);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .budget-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #10b981, #34d399);
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+
+    .budget-progress-fill.warning {
+        background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    }
+
+    .budget-progress-fill.over {
+        background: linear-gradient(90deg, var(--expense-color), #f87171);
+    }
+
+    .budget-progress-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        min-width: 45px;
+        text-align: right;
+    }
+
+    /* Btn Icon */
+    .btn-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: none;
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .btn-icon:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    /* FAB */
+    .fab {
+        position: fixed;
+        bottom: calc(70px + 1rem);
+        right: 1rem;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: white;
+        border: none;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+        z-index: 100;
+    }
+
+    .fab:hover {
+        transform: scale(1.1);
+    }
+
+    /* Period Selector */
+    .period-selector {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .period-nav {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: none;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .period-nav:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .period-display {
+        font-weight: 600;
+        color: var(--text-primary);
+        min-width: 150px;
+        text-align: center;
+    }
+
+    /* Animation */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
         }
 
-        closeModal();
-        await loadBudgets();
-
-    } catch (error) {
-        console.error('Budget save error:', error);
-        showToast(error.message || 'ไม่สามารถบันทึกได้', 'error');
-
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalContent;
-        lucide.createIcons();
-    }
-}
-
-// ===== EDIT BUDGET =====
-async function editBudget(budgetId) {
-    try {
-        const result = await API.get(buildApiUrl('budgets', budgetId));
-        const budget = result.budget;
-
-        editingBudgetId = budgetId;
-        document.getElementById('modal-title').textContent = 'แก้ไขงบประมาณ';
-
-        // Fill form
-        document.getElementById('budget-category').value = budget.category_id;
-        document.getElementById('budget-month').value = budget.month_yyyymm;
-        document.getElementById('budget-amount').value = budget.limit_amount_formatted;
-        document.getElementById('budget-rollover').value = budget.rollover_policy;
-
-        openModal();
-
-    } catch (error) {
-        showToast(error.message || 'ไม่สามารถโหลดข้อมูลได้', 'error');
-    }
-}
-
-// ===== DELETE BUDGET =====
-async function deleteBudget(budgetId) {
-    if (!confirm('ต้องการลบงบประมาณนี้หรือไม่?')) {
-        return;
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
-    try {
-        await API.delete(buildApiUrl('budgets', budgetId));
-        showToast('ลบงบประมาณเรียบร้อยแล้ว', 'success');
-        await loadBudgets();
+    /* Mobile */
+    @media (max-width: 480px) {
+        .summary-section {
+            gap: 0.5rem;
+            padding: 0 0.75rem;
+        }
 
-    } catch (error) {
-        showToast(error.message || 'ไม่สามารถลบได้', 'error');
+        .summary-card {
+            padding: 0.625rem;
+        }
+
+        .summary-amount {
+            font-size: 0.8rem;
+        }
+
+        .budget-item {
+            padding: 0.875rem;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            -webkit-tap-highlight-color: transparent;
+        }
     }
-}
-
-// ===== UTILITY FUNCTIONS =====
-function formatMonthParam() {
-    const month = String(currentMonth + 1).padStart(2, '0');
-    return `${currentYear}-${month}`;
-}
-
-function updatePeriodDisplay() {
-    const periodEl = document.getElementById('current-period');
-    if (periodEl) {
-        periodEl.textContent = `${thaiMonths[currentMonth]} ${currentYear + 543}`;
-    }
-}
-</script>
+</style>
 {% endblock %}
