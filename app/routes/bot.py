@@ -1812,7 +1812,7 @@ def analyze_finances():
 
 
 @bp.route('/smart', methods=['POST'])
-@require_bot_auth
+@require_bot_auth()
 def smart_message():
     """
     Smart NLP endpoint - Universal message handler using Gemini AI
