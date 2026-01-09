@@ -5949,3 +5949,141 @@ a:focus-visible {
 [data-theme="dark"] .custom-date-range label {
     color: #9ca3af !important;
 }
+
+/* ===== ALERT DARK MODE FIXES ===== */
+[data-theme="dark"] .alert {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .alert-error {
+    background: rgba(239, 68, 68, 0.15) !important;
+    border-left-color: #ef4444 !important;
+}
+
+[data-theme="dark"] .alert-warning {
+    background: rgba(245, 158, 11, 0.15) !important;
+    border-left-color: #f59e0b !important;
+}
+
+[data-theme="dark"] .alert-info {
+    background: rgba(16, 185, 129, 0.15) !important;
+    border-left-color: #10b981 !important;
+}
+
+[data-theme="dark"] .alert-content strong {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .alert-content span {
+    color: #d1d5db !important;
+}
+
+[data-theme="dark"] .alert-icon {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .alert-title {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .alert-message {
+    color: #d1d5db !important;
+}
+
+[data-theme="dark"] .alert-category {
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .alert-dismiss {
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .alert-dismiss:hover {
+    background: #374151 !important;
+    color: #f9fafb !important;
+}
+
+/* ===== TRANSACTION ACTIONS UX IMPROVEMENTS ===== */
+/* Always show transaction actions for better UX (mobile-first) */
+.transaction-actions {
+    opacity: 1 !important;
+}
+
+/* Transaction action buttons - better visibility */
+.transaction-actions .btn-icon {
+    padding: 8px;
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
+
+.transaction-actions .btn-edit {
+    color: #3b82f6;
+}
+
+.transaction-actions .btn-edit:hover {
+    background: rgba(59, 130, 246, 0.15) !important;
+    color: #3b82f6 !important;
+}
+
+.transaction-actions .btn-delete {
+    color: #ef4444;
+}
+
+.transaction-actions .btn-delete:hover {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #ef4444 !important;
+}
+
+/* Dark Mode Transaction Actions */
+[data-theme="dark"] .transaction-actions .btn-icon {
+    background: #374151 !important;
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .transaction-actions .btn-edit {
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .transaction-actions .btn-edit:hover {
+    background: rgba(59, 130, 246, 0.25) !important;
+    color: #93c5fd !important;
+}
+
+[data-theme="dark"] .transaction-actions .btn-delete {
+    color: #f87171 !important;
+}
+
+[data-theme="dark"] .transaction-actions .btn-delete:hover {
+    background: rgba(239, 68, 68, 0.25) !important;
+    color: #fca5a5 !important;
+}
+
+/* ===== BTN-INSIGHTS FIXES ===== */
+#btn-insights {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+#btn-insights i {
+    width: 18px;
+    height: 18px;
+}
+
+[data-theme="dark"] #btn-insights {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] #btn-insights:hover {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+}

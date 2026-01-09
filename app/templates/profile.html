@@ -20,20 +20,20 @@
         <div class="profile-card">
             <div class="profile-avatar">
                 {% if user and user.picture_url %}
-                    <img src="{{ user.picture_url }}" alt="{{ user.display_name }}" class="profile-avatar-img">
+                <img src="{{ user.picture_url }}" alt="{{ user.display_name }}" class="profile-avatar-img">
                 {% else %}
-                    <i data-lucide="user"></i>
+                <i data-lucide="user"></i>
                 {% endif %}
             </div>
             <div class="profile-info">
                 <h2>{% if user %}{{ user.display_name }}{% else %}Guest User{% endif %}</h2>
                 <p class="profile-email">
                     {% if user and user.email %}
-                        {{ user.email }}
+                    {{ user.email }}
                     {% elif user %}
-                        LINE ID: {{ user.line_user_id[:8] }}...
+                    LINE ID: {{ user.line_user_id[:8] }}...
                     {% else %}
-                        ไม่ได้เข้าสู่ระบบ
+                    ไม่ได้เข้าสู่ระบบ
                     {% endif %}
                 </p>
             </div>
@@ -58,9 +58,6 @@
                     <div class="setting-title">จัดการสมาชิก</div>
                     <div class="setting-desc">เพิ่มสมาชิกครอบครัว</div>
                 </div>
-                <span class="feature-badge available">
-                    <span class="badge-dot"></span>
-                </span>
             </a>
 
             <a href="/budgets" class="setting-item">
@@ -71,9 +68,6 @@
                     <div class="setting-title">งบประมาณ</div>
                     <div class="setting-desc">ตั้งงบรายหมวดหมู่</div>
                 </div>
-                <span class="feature-badge available">
-                    <span class="badge-dot"></span>
-                </span>
             </a>
 
             <a href="/analytics" class="setting-item">
@@ -84,9 +78,6 @@
                     <div class="setting-title">รายงานการเงิน</div>
                     <div class="setting-desc">ดูสรุปและวิเคราะห์</div>
                 </div>
-                <span class="feature-badge available">
-                    <span class="badge-dot"></span>
-                </span>
             </a>
         </div>
     </div>
@@ -109,9 +100,6 @@
                     <div class="setting-title">การแจ้งเตือน</div>
                     <div class="setting-desc">แจ้งเตือนงบประมาณและรายการประจำ</div>
                 </div>
-                <span class="feature-badge available">
-                    <span class="badge-dot"></span>
-                </span>
             </a>
 
             <div class="setting-item" id="dark-mode-setting">
@@ -138,9 +126,6 @@
                     <div class="setting-title">เกี่ยวกับแอป</div>
                     <div class="setting-desc">เวอร์ชัน 1.0.0</div>
                 </div>
-                <span class="feature-badge available">
-                    <span class="badge-dot"></span>
-                </span>
             </a>
         </div>
     </div>
@@ -163,9 +148,6 @@
                     <div class="setting-title">ศูนย์ช่วยเหลือ</div>
                     <div class="setting-desc">คำถามที่พบบ่อยและคู่มือ</div>
                 </div>
-                <span class="feature-badge available">
-                    <span class="badge-dot"></span>
-                </span>
             </a>
         </div>
     </div>
@@ -188,9 +170,6 @@
                     <div class="setting-title">ส่งออก CSV</div>
                     <div class="setting-desc">ดาวน์โหลดรายการทั้งหมดเป็นไฟล์ CSV</div>
                 </div>
-                <span class="feature-badge available">
-                    <span class="badge-dot"></span>
-                </span>
             </a>
 
             <a href="/api/v1/export/json" class="setting-item" id="export-json">
@@ -201,9 +180,6 @@
                     <div class="setting-title">ส่งออก JSON</div>
                     <div class="setting-desc">ดาวน์โหลดข้อมูลทั้งหมดเป็นไฟล์ JSON</div>
                 </div>
-                <span class="feature-badge available">
-                    <span class="badge-dot"></span>
-                </span>
             </a>
         </div>
     </div>
@@ -247,7 +223,7 @@
                     <i data-lucide="target"></i>
                     การแจ้งเตือนงบประมาณ
                 </h3>
-                
+
                 <div class="notification-toggle-item">
                     <div class="notification-toggle-info">
                         <div class="notification-toggle-title">เปิดการแจ้งเตือนงบประมาณ</div>
@@ -277,7 +253,7 @@
                     <i data-lucide="refresh-cw"></i>
                     การแจ้งเตือนรายการประจำ
                 </h3>
-                
+
                 <div class="notification-toggle-item">
                     <div class="notification-toggle-info">
                         <div class="notification-toggle-title">เปิดการแจ้งเตือนรายการประจำ</div>
@@ -307,7 +283,7 @@
                     <i data-lucide="message-circle"></i>
                     การแจ้งเตือนผ่าน LINE
                 </h3>
-                
+
                 <div class="notification-toggle-item">
                     <div class="notification-toggle-info">
                         <div class="notification-toggle-title">ส่งการแจ้งเตือนผ่าน LINE</div>
@@ -338,164 +314,164 @@
 
 {% block extra_js %}
 <script>
-// Notification Settings Modal
-const notificationModal = document.getElementById('notification-settings-modal');
-const notificationCloseBtn = notificationModal.querySelector('.modal-close');
-const notificationOverlay = notificationModal.querySelector('.modal-overlay');
+    // Notification Settings Modal
+    const notificationModal = document.getElementById('notification-settings-modal');
+    const notificationCloseBtn = notificationModal.querySelector('.modal-close');
+    const notificationOverlay = notificationModal.querySelector('.modal-overlay');
 
-function openNotificationSettings() {
-    notificationModal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-    loadNotificationPreferences();
-}
-
-function closeNotificationSettings() {
-    notificationModal.classList.remove('active');
-    document.body.style.overflow = '';
-}
-
-// Open modal
-document.getElementById('notifications-settings').addEventListener('click', (e) => {
-    e.preventDefault();
-    openNotificationSettings();
-});
-
-// Close modal
-notificationCloseBtn.addEventListener('click', closeNotificationSettings);
-notificationOverlay.addEventListener('click', closeNotificationSettings);
-
-// Load notification preferences
-async function loadNotificationPreferences() {
-    try {
-        const response = await fetch('/api/v1/notifications/preferences');
-        if (response.ok) {
-            const result = await response.json();
-            const prefs = result.preferences;
-
-            // Update UI
-            document.getElementById('budget-alerts-toggle').checked = prefs.budget_alerts;
-            document.getElementById('budget-threshold').value = prefs.budget_threshold;
-            document.getElementById('recurring-reminders-toggle').checked = prefs.recurring_reminders;
-            document.getElementById('reminder-days').value = prefs.reminder_days_before;
-            document.getElementById('line-notifications-toggle').checked = prefs.line_notifications;
-
-            // Show/hide detail settings
-            toggleBudgetThresholdSetting();
-            toggleReminderDaysSetting();
-        }
-    } catch (error) {
-        console.error('Error loading preferences:', error);
+    function openNotificationSettings() {
+        notificationModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        loadNotificationPreferences();
     }
-}
 
-// Toggle budget threshold setting
-document.getElementById('budget-alerts-toggle').addEventListener('change', toggleBudgetThresholdSetting);
-
-function toggleBudgetThresholdSetting() {
-    const isEnabled = document.getElementById('budget-alerts-toggle').checked;
-    const setting = document.getElementById('budget-threshold-setting');
-    setting.style.display = isEnabled ? 'block' : 'none';
-}
-
-// Toggle reminder days setting
-document.getElementById('recurring-reminders-toggle').addEventListener('change', toggleReminderDaysSetting);
-
-function toggleReminderDaysSetting() {
-    const isEnabled = document.getElementById('recurring-reminders-toggle').checked;
-    const setting = document.getElementById('reminder-days-setting');
-    setting.style.display = isEnabled ? 'block' : 'none';
-}
-
-// Save notification settings
-document.getElementById('save-notification-settings').addEventListener('click', async () => {
-    const preferences = {
-        budget_alerts: document.getElementById('budget-alerts-toggle').checked,
-        budget_threshold: parseInt(document.getElementById('budget-threshold').value),
-        recurring_reminders: document.getElementById('recurring-reminders-toggle').checked,
-        reminder_days_before: parseInt(document.getElementById('reminder-days').value),
-        line_notifications: document.getElementById('line-notifications-toggle').checked
-    };
-
-    try {
-        const response = await fetch('/api/v1/notifications/preferences', {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(preferences)
-        });
-
-        if (response.ok) {
-            showToast('บันทึกการตั้งค่าแล้ว ✅', 'success');
-            closeNotificationSettings();
-        } else {
-            showToast('ไม่สามารถบันทึกได้ กรุณาลองอีกครั้ง', 'error');
-        }
-    } catch (error) {
-        console.error('Error saving preferences:', error);
-        showToast('เกิดข้อผิดพลาด กรุณาลองอีกครั้ง', 'error');
+    function closeNotificationSettings() {
+        notificationModal.classList.remove('active');
+        document.body.style.overflow = '';
     }
-});
 
-// Logout
-document.getElementById('logout-btn').addEventListener('click', async () => {
-    if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
+    // Open modal
+    document.getElementById('notifications-settings').addEventListener('click', (e) => {
+        e.preventDefault();
+        openNotificationSettings();
+    });
+
+    // Close modal
+    notificationCloseBtn.addEventListener('click', closeNotificationSettings);
+    notificationOverlay.addEventListener('click', closeNotificationSettings);
+
+    // Load notification preferences
+    async function loadNotificationPreferences() {
         try {
-            const response = await fetch('/auth/logout', {
-                method: 'POST',
+            const response = await fetch('/api/v1/notifications/preferences');
+            if (response.ok) {
+                const result = await response.json();
+                const prefs = result.preferences;
+
+                // Update UI
+                document.getElementById('budget-alerts-toggle').checked = prefs.budget_alerts;
+                document.getElementById('budget-threshold').value = prefs.budget_threshold;
+                document.getElementById('recurring-reminders-toggle').checked = prefs.recurring_reminders;
+                document.getElementById('reminder-days').value = prefs.reminder_days_before;
+                document.getElementById('line-notifications-toggle').checked = prefs.line_notifications;
+
+                // Show/hide detail settings
+                toggleBudgetThresholdSetting();
+                toggleReminderDaysSetting();
+            }
+        } catch (error) {
+            console.error('Error loading preferences:', error);
+        }
+    }
+
+    // Toggle budget threshold setting
+    document.getElementById('budget-alerts-toggle').addEventListener('change', toggleBudgetThresholdSetting);
+
+    function toggleBudgetThresholdSetting() {
+        const isEnabled = document.getElementById('budget-alerts-toggle').checked;
+        const setting = document.getElementById('budget-threshold-setting');
+        setting.style.display = isEnabled ? 'block' : 'none';
+    }
+
+    // Toggle reminder days setting
+    document.getElementById('recurring-reminders-toggle').addEventListener('change', toggleReminderDaysSetting);
+
+    function toggleReminderDaysSetting() {
+        const isEnabled = document.getElementById('recurring-reminders-toggle').checked;
+        const setting = document.getElementById('reminder-days-setting');
+        setting.style.display = isEnabled ? 'block' : 'none';
+    }
+
+    // Save notification settings
+    document.getElementById('save-notification-settings').addEventListener('click', async () => {
+        const preferences = {
+            budget_alerts: document.getElementById('budget-alerts-toggle').checked,
+            budget_threshold: parseInt(document.getElementById('budget-threshold').value),
+            recurring_reminders: document.getElementById('recurring-reminders-toggle').checked,
+            reminder_days_before: parseInt(document.getElementById('reminder-days').value),
+            line_notifications: document.getElementById('line-notifications-toggle').checked
+        };
+
+        try {
+            const response = await fetch('/api/v1/notifications/preferences', {
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
-                }
+                },
+                body: JSON.stringify(preferences)
             });
 
             if (response.ok) {
-                window.location.href = '/';
+                showToast('บันทึกการตั้งค่าแล้ว ✅', 'success');
+                closeNotificationSettings();
             } else {
-                alert('ไม่สามารถออกจากระบบได้ กรุณาลองอีกครั้ง');
+                showToast('ไม่สามารถบันทึกได้ กรุณาลองอีกครั้ง', 'error');
             }
         } catch (error) {
-            console.error('Logout error:', error);
-            // Fallback: redirect anyway
-            window.location.href = '/';
-        }
-    }
-});
-
-// About App
-document.getElementById('about-app').addEventListener('click', (e) => {
-    e.preventDefault();
-    alert('📱 PromptJOD {พร้อมจด}\n\nเวอร์ชัน: 1.0.0\n\nแอปจดรายรับรายจ่ายที่ง่ายที่สุด\nสำหรับครอบครัวและคนไทย\n\nMade with ❤️');
-});
-
-// Dark Mode Toggle
-const darkModeToggle = document.getElementById('dark-mode-toggle-switch');
-if (darkModeToggle) {
-    // Set initial state based on current theme
-    darkModeToggle.checked = window.getCurrentTheme() === 'dark';
-    
-    // Add event listener
-    darkModeToggle.addEventListener('change', (e) => {
-        if (e.target.checked) {
-            window.toggleDarkMode();
-        } else {
-            window.toggleDarkMode();
+            console.error('Error saving preferences:', error);
+            showToast('เกิดข้อผิดพลาด กรุณาลองอีกครั้ง', 'error');
         }
     });
-}
 
-// Disabled features
-document.querySelectorAll('.setting-item.disabled').forEach(item => {
-    item.addEventListener('click', (e) => {
+    // Logout
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+        if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
+            try {
+                const response = await fetch('/auth/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    window.location.href = '/';
+                } else {
+                    alert('ไม่สามารถออกจากระบบได้ กรุณาลองอีกครั้ง');
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+                // Fallback: redirect anyway
+                window.location.href = '/';
+            }
+        }
+    });
+
+    // About App
+    document.getElementById('about-app').addEventListener('click', (e) => {
         e.preventDefault();
-        const title = item.querySelector('.setting-title').textContent;
-        const badge = item.querySelector('.feature-badge');
-        
-        if (badge.classList.contains('coming-soon')) {
-            showToast(`🚀 ${title}\n\nฟีเจอร์นี้จะมาเร็วๆ นี้\nเรากำลังพัฒนาอย่างเต็มที่!`, 'info');
-        } else if (badge.classList.contains('in-development')) {
-            showToast(`👨‍💻 ${title}\n\nฟีเจอร์นี้อยู่ระหว่างการพัฒนา\nติดตามได้เร็วๆ นี้!`, 'info');
-        }
+        alert('📱 PromptJOD {พร้อมจด}\n\nเวอร์ชัน: 1.0.0\n\nแอปจดรายรับรายจ่ายที่ง่ายที่สุด\nสำหรับครอบครัวและคนไทย\n\nMade with ❤️');
     });
-});
+
+    // Dark Mode Toggle
+    const darkModeToggle = document.getElementById('dark-mode-toggle-switch');
+    if (darkModeToggle) {
+        // Set initial state based on current theme
+        darkModeToggle.checked = window.getCurrentTheme() === 'dark';
+
+        // Add event listener
+        darkModeToggle.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                window.toggleDarkMode();
+            } else {
+                window.toggleDarkMode();
+            }
+        });
+    }
+
+    // Disabled features
+    document.querySelectorAll('.setting-item.disabled').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const title = item.querySelector('.setting-title').textContent;
+            const badge = item.querySelector('.feature-badge');
+
+            if (badge.classList.contains('coming-soon')) {
+                showToast(`🚀 ${title}\n\nฟีเจอร์นี้จะมาเร็วๆ นี้\nเรากำลังพัฒนาอย่างเต็มที่!`, 'info');
+            } else if (badge.classList.contains('in-development')) {
+                showToast(`👨‍💻 ${title}\n\nฟีเจอร์นี้อยู่ระหว่างการพัฒนา\nติดตามได้เร็วๆ นี้!`, 'info');
+            }
+        });
+    });
 </script>
 {% endblock %}
