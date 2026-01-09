@@ -66,33 +66,79 @@ def resolve_context():
 def create_transaction():
     """
     Create transaction via bot (with idempotency)
+    Supports both category_id and category_name
     """
+    from app.models.category import Category
+    
     data = request.json
 
     line_user_id = data.get('line_user_id')
     type = data.get('type')
     category_id = data.get('category_id')
+    category_name = data.get('category_name')  # Support category name
     amount = data.get('amount')
     note = data.get('note')
     occurred_at = data.get('occurred_at')
 
-    # Validate required fields
-    if not all([line_user_id, type, category_id, amount]):
-        return jsonify({
-            'error': {
-                'code': 'BAD_REQUEST',
-                'message': 'Missing required fields'
-            }
-        }), 400
-
-    # Find user
+    # Find user first (needed for category lookup)
     user = User.query.filter_by(line_user_id=line_user_id).first()
 
     if not user or not user.current_project_id:
         return jsonify({
             'error': {
                 'code': 'USER_NO_PROJECT',
-                'message': 'User has no active project'
+                'message': 'User has no active project. Please login via web first.'
+            }
+        }), 400
+
+    # Auto-lookup category if category_name is provided
+    if not category_id and category_name:
+        # Map common names to English names
+        name_mapping = {
+            'อาหาร': 'food', 'food': 'food', 'กินข้าว': 'food',
+            'เดินทาง': 'transport', 'transport': 'transport',
+            'ช้อปปิ้ง': 'shopping', 'shopping': 'shopping',
+            'บันเทิง': 'entertainment', 'entertainment': 'entertainment',
+            'สุขภาพ': 'health', 'health': 'health',
+            'บิล': 'bills', 'bills': 'bills', 'ค่าใช้จ่าย': 'bills',
+            'เงินเดือน': 'salary', 'salary': 'salary',
+            'โบนัส': 'bonus', 'bonus': 'bonus',
+            'อื่นๆ': 'other_income', 'other': 'other_income'
+        }
+        
+        lookup_name = name_mapping.get(category_name.lower(), category_name.lower())
+        
+        # Find category by name_en or name_th
+        category = Category.query.filter(
+            Category.project_id == user.current_project_id,
+            (Category.name_en == lookup_name) | (Category.name_th == category_name)
+        ).first()
+        
+        if category:
+            category_id = category.id
+        else:
+            # Use default category based on type
+            default_cat = Category.query.filter(
+                Category.project_id == user.current_project_id,
+                Category.type == type
+            ).first()
+            if default_cat:
+                category_id = default_cat.id
+
+    # Validate required fields
+    if not all([line_user_id, type, amount]):
+        return jsonify({
+            'error': {
+                'code': 'BAD_REQUEST',
+                'message': 'Missing required fields: line_user_id, type, amount'
+            }
+        }), 400
+    
+    if not category_id:
+        return jsonify({
+            'error': {
+                'code': 'BAD_REQUEST',
+                'message': 'No valid category found. Please provide category_id or category_name'
             }
         }), 400
 
