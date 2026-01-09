@@ -235,8 +235,31 @@ class GeminiNLPService:
         elif any(x in message_lower for x in ['เว็บ', 'website', 'ลิงก์', 'link', 'profile', 'โปรไฟล์', 'dashboard', 'หน้าเว็บ']):
             result['intent'] = 'get_web_link'
         
-        # Check for transactions list (ดูรายการ, แสดงรายการ, รายการเดือนนี้)
-        elif any(x in message_lower for x in ['แสดงรายการ', 'ดูรายการ', 'รายการทั้งหมด', 'รายการล่าสุด', 'รายการวันนี้', 'รายการเดือน', 'มีรายการอะไร', 'รายการการเงิน']):
+        # Check for delete transaction FIRST (ลบรายการ, ลบรายการล่าสุด, ลบรายการที่ 1)
+        elif any(x in message_lower for x in ['ลบรายการ']) and 'ประจำ' not in message_lower:
+            result['intent'] = 'delete_transaction'
+            
+            # Check for "ล่าสุด" - delete latest
+            if 'ล่าสุด' in message_lower:
+                result['entities']['delete_latest'] = True
+            
+            # Check for number (ลบรายการที่ 1, ลบรายการ 2)
+            num_match = re.search(r'ที่\s*(\d+)|รายการ\s*(\d+)', message)
+            if num_match:
+                result['entities']['index'] = int(num_match.group(1) or num_match.group(2))
+            
+            # Extract keyword after ลบรายการ (if not number)
+            if 'delete_latest' not in result['entities'] and 'index' not in result['entities']:
+                words = message.split()
+                for i, w in enumerate(words):
+                    if 'รายการ' in w and i + 1 < len(words):
+                        next_word = words[i + 1]
+                        if not next_word.isdigit() and next_word not in ['ที่', 'ล่าสุด', 'ทั้งหมด']:
+                            result['entities']['keyword'] = next_word
+                            break
+        
+        # Check for transactions list (ดูรายการ, แสดงรายการ, รายการเดือนนี้) - NO ลบ
+        elif any(x in message_lower for x in ['แสดงรายการ', 'ดูรายการ', 'รายการทั้งหมด', 'รายการล่าสุด', 'รายการวันนี้', 'รายการเดือน', 'มีรายการอะไร', 'รายการการเงิน']) and 'ลบ' not in message_lower:
             result['intent'] = 'get_transactions'
             if 'วันนี้' in message_lower:
                 result['entities']['period'] = 'today'
@@ -244,16 +267,6 @@ class GeminiNLPService:
                 result['entities']['period'] = 'this_week'
             else:
                 result['entities']['period'] = 'this_month'
-        
-        # Check for delete transaction (ลบรายการ but not ลบรายการประจำ)
-        elif any(x in message_lower for x in ['ลบรายการ']) and 'ประจำ' not in message_lower:
-            result['intent'] = 'delete_transaction'
-            # Extract keyword after ลบรายการ
-            words = message.split()
-            for i, w in enumerate(words):
-                if 'ลบ' in w and i + 1 < len(words):
-                    result['entities']['keyword'] = words[i + 1]
-                    break
         
         # Check for contribute goal (เติมเงิน xxx บาท)
         elif any(x in message_lower for x in ['เติมเงิน', 'เพิ่มเงิน']) and re.search(r'\d+\s*บาท', message):

@@ -2600,14 +2600,17 @@ def smart_message():
             
             lines = [f"📝 รายการ{period_text} (ล่าสุด 10):", ""]
             
-            for t in transactions:
+            for idx, t in enumerate(transactions, 1):
                 icon = '💰' if t.type == 'income' else '💸'
                 cat_name = t.category.name_th if t.category else 'ไม่ระบุ'
                 amount = t.amount / 100
                 date_str = t.occurred_at.strftime('%d/%m')
-                lines.append(f"{icon} {date_str} | {cat_name}: {amount:,.0f}฿")
+                lines.append(f"#{idx} {icon} {date_str} | {cat_name}: {amount:,.0f}฿")
                 if t.note:
-                    lines.append(f"   📝 {t.note}")
+                    lines.append(f"    📝 {t.note}")
+            
+            lines.append("")
+            lines.append("💡 พิมพ์ \"ลบรายการที่ 1\" เพื่อลบ")
             
             return jsonify({
                 'success': True,
@@ -2621,31 +2624,71 @@ def smart_message():
         elif intent == 'delete_transaction':
             trans_id = entities.get('transaction_id')
             keyword = entities.get('keyword')
+            delete_latest = entities.get('delete_latest', False)
+            index = entities.get('index')
             
-            if not trans_id and not keyword:
+            # Get transactions for the current month
+            today = datetime.utcnow()
+            start_date = datetime(today.year, today.month, 1)
+            
+            transactions = Transaction.query.filter(
+                Transaction.project_id == project_id,
+                Transaction.occurred_at >= start_date,
+                Transaction.deleted_at.is_(None)
+            ).order_by(Transaction.occurred_at.desc()).limit(10).all()
+            
+            if not transactions:
+                return jsonify({
+                    'success': False,
+                    'message': '❌ ไม่มีรายการให้ลบ'
+                })
+            
+            transaction = None
+            
+            # Delete by index (ลบรายการที่ 1)
+            if index:
+                if 1 <= index <= len(transactions):
+                    transaction = transactions[index - 1]
+                else:
+                    return jsonify({
+                        'success': False,
+                        'message': f'❌ ไม่พบรายการที่ {index}\n\nมีรายการ 1-{len(transactions)} เท่านั้น'
+                    })
+            
+            # Delete latest (ลบรายการล่าสุด)
+            elif delete_latest:
+                transaction = transactions[0]
+            
+            # Delete by keyword
+            elif keyword:
+                for t in transactions:
+                    if t.note and keyword.lower() in t.note.lower():
+                        transaction = t
+                        break
+                if not transaction:
+                    return jsonify({
+                        'success': False,
+                        'message': f'❌ ไม่พบรายการ "{keyword}"'
+                    })
+            
+            # No criteria - show list
+            else:
+                lines = ["❓ ต้องการลบรายการไหนคะ?", ""]
+                for idx, t in enumerate(transactions[:5], 1):
+                    icon = '💰' if t.type == 'income' else '💸'
+                    cat_name = t.category.name_th if t.category else 'ไม่ระบุ'
+                    amount = t.amount / 100
+                    lines.append(f"#{idx} {icon} {cat_name}: {amount:,.0f}฿")
+                lines.append("")
+                lines.append("พิมพ์ \"ลบรายการที่ 1\" หรือ \"ลบรายการล่าสุด\"")
+                
                 return jsonify({
                     'success': True,
                     'need_more_info': True,
-                    'message': '❓ ต้องการลบรายการไหนคะ? กรุณาระบุรายละเอียด\n\nพิมพ์ "รายการ" เพื่อดูรายการทั้งหมดก่อน'
+                    'message': '\n'.join(lines)
                 })
             
-            # Find transaction
-            query = Transaction.query.filter(
-                Transaction.project_id == project_id,
-                Transaction.deleted_at.is_(None)
-            )
-            
-            if keyword:
-                query = query.filter(Transaction.note.ilike(f'%{keyword}%'))
-            
-            transaction = query.order_by(Transaction.occurred_at.desc()).first()
-            
-            if not transaction:
-                return jsonify({
-                    'success': False,
-                    'message': '❌ ไม่พบรายการ'
-                })
-            
+            # Execute delete
             cat_name = transaction.category.name_th if transaction.category else 'ไม่ระบุ'
             amount = transaction.amount / 100
             
