@@ -1,0 +1,387 @@
+{% extends "base.html" %}
+
+{% block title %}ศูนย์ช่วยเหลือ - จดรายรับรายจ่าย{% endblock %}
+
+{% block content %}
+<div class="mobile-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>
+                <i data-lucide="help-circle"></i>
+                ศูนย์ช่วยเหลือ
+            </h1>
+            <p class="subtitle">คำถามที่พบบ่อยและคู่มือการใช้งาน</p>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="section">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="zap"></i>
+                เริ่มต้นใช้งาน
+            </h2>
+        </div>
+
+        <div class="settings-list">
+            <a href="#line-commands" class="setting-item">
+                <div class="setting-icon">
+                    <i data-lucide="message-circle"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">คำสั่ง LINE Bot</div>
+                    <div class="setting-desc">วิธีใช้งานผ่าน LINE Chatbot</div>
+                </div>
+                <i data-lucide="chevron-right" class="chevron-icon"></i>
+            </a>
+
+            <a href="#web-features" class="setting-item">
+                <div class="setting-icon">
+                    <i data-lucide="monitor"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">ฟีเจอร์เว็บ</div>
+                    <div class="setting-desc">การใช้งานผ่านเว็บไซต์</div>
+                </div>
+                <i data-lucide="chevron-right" class="chevron-icon"></i>
+            </a>
+
+            <a href="#faq" class="setting-item">
+                <div class="setting-icon">
+                    <i data-lucide="help-circle"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">คำถามที่พบบ่อย</div>
+                    <div class="setting-desc">FAQ และวิธีแก้ปัญหา</div>
+                </div>
+                <i data-lucide="chevron-right" class="chevron-icon"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- LINE Commands Section -->
+    <div class="section" id="line-commands">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="message-circle"></i>
+                คำสั่ง LINE Bot
+            </h2>
+        </div>
+
+        <div class="help-content">
+            <div class="help-card">
+                <h3>
+                    <i data-lucide="plus-circle"></i>
+                    บันทึกรายการ
+                </h3>
+                <div class="help-examples">
+                    <div class="help-example">
+                        <code>อาหาร 150</code>
+                        <span>บันทึกรายจ่าย 150 บาท หมวดอาหาร</span>
+                    </div>
+                    <div class="help-example">
+                        <code>เงินเดือน 30000</code>
+                        <span>บันทึกรายรับ 30,000 บาท หมวดเงินเดือน</span>
+                    </div>
+                    <div class="help-example">
+                        <code>เดินทาง 500 ไปทำงาน</code>
+                        <span>บันทึกรายจ่ายพร้อมหมายเหตุ</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-card">
+                <h3>
+                    <i data-lucide="search"></i>
+                    ดูรายการ
+                </h3>
+                <div class="help-examples">
+                    <div class="help-example">
+                        <code>รายการวันนี้</code>
+                        <span>ดูรายการทั้งหมดวันนี้</span>
+                    </div>
+                    <div class="help-example">
+                        <code>รายการเดือนนี้</code>
+                        <span>ดูรายการทั้งหมดเดือนนี้</span>
+                    </div>
+                    <div class="help-example">
+                        <code>สรุป</code>
+                        <span>ดูสรุปรายรับ-รายจ่าย</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-card">
+                <h3>
+                    <i data-lucide="target"></i>
+                    วิเคราะห์และรายงาน
+                </h3>
+                <div class="help-examples">
+                    <div class="help-example">
+                        <code>วิเคราะห์</code>
+                        <span>วิเคราะห์การใช้จ่ายอัตโนมัติ</span>
+                    </div>
+                    <div class="help-example">
+                        <code>วิเคราะห์ 7 วัน</code>
+                        <span>วิเคราะห์ช่วง 7 วันที่ผ่านมา</span>
+                    </div>
+                    <div class="help-example">
+                        <code>รายงานเดือนนี้</code>
+                        <span>ดูรายงานสรุปเดือนนี้</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-card">
+                <h3>
+                    <i data-lucide="refresh-cw"></i>
+                    รายการประจำ
+                </h3>
+                <div class="help-examples">
+                    <div class="help-example">
+                        <code>รายการประจำ</code>
+                        <span>ดูรายการประจำทั้งหมด</span>
+                    </div>
+                    <div class="help-example">
+                        <code>เพิ่มรายการประจำ</code>
+                        <span>เพิ่มรายการประจำใหม่</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="help-card">
+                <h3>
+                    <i data-lucide="help-circle"></i>
+                    คำสั่งอื่นๆ
+                </h3>
+                <div class="help-examples">
+                    <div class="help-example">
+                        <code>ช่วยเหลือ</code>
+                        <span>แสดงคำสั่งทั้งหมด</span>
+                    </div>
+                    <div class="help-example">
+                        <code>หมวด</code>
+                        <span>ดูหมวดหมู่ทั้งหมด</span>
+                    </div>
+                    <div class="help-example">
+                        <code>งบประมาณ</code>
+                        <span>ดูงบประมาณที่ตั้งไว้</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Web Features Section -->
+    <div class="section" id="web-features">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="monitor"></i>
+                ฟีเจอร์เว็บ
+            </h2>
+        </div>
+
+        <div class="help-content">
+            <div class="help-card">
+                <h3>
+                    <i data-lucide="home"></i>
+                    หน้าหลัก (Dashboard)
+                </h3>
+                <p>ดูสรุปรายรับ-รายจ่าย รายการล่าสุด และสถิติการเงิน</p>
+            </div>
+
+            <div class="help-card">
+                <h3>
+                    <i data-lucide="list"></i>
+                    รายการ
+                </h3>
+                <p>จัดการรายรับ-รายจ่าย เพิ่ม แก้ไข หรือลบรายการ</p>
+            </div>
+
+            <div class="help-card">
+                <h3>
+                    <i data-lucide="tags"></i>
+                    หมวดหมู่
+                </h3>
+                <p>จัดการหมวดหมู่ เพิ่ม แก้ไข หรือลบหมวดหมู่</p>
+            </div>
+
+            <div class="help-card">
+                <h3>
+                    <i data-lucide="target"></i>
+                    งบประมาณ
+                </h3>
+                <p>ตั้งงบประมาณรายหมวด และติดตามการใช้จ่าย</p>
+            </div>
+
+            <div class="help-card">
+                <h3>
+                    <i data-lucide="refresh-cw"></i>
+                    รายการประจำ
+                </h3>
+                <p>จัดการรายการที่เกิดขึ้นเป็นประจำ เช่น ค่าเช่า ค่าน้ำค่าไฟ</p>
+            </div>
+
+            <div class="help-card">
+                <h3>
+                    <i data-lucide="bar-chart-2"></i>
+                    รายงานการเงิน
+                </h3>
+                <p>ดูรายงานและวิเคราะห์การใช้จ่ายด้วยกราฟและสถิติ</p>
+            </div>
+
+            <div class="help-card">
+                <h3>
+                    <i data-lucide="users"></i>
+                    สมาชิก
+                </h3>
+                <p>จัดการสมาชิกในครอบครัว เพิ่มหรือลบสมาชิก</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="section" id="faq">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="help-circle"></i>
+                คำถามที่พบบ่อย
+            </h2>
+        </div>
+
+        <div class="help-content">
+            <div class="faq-item">
+                <div class="faq-question">
+                    <i data-lucide="help-circle"></i>
+                    <span>จะเชื่อมต่อ LINE Bot ได้อย่างไร?</span>
+                </div>
+                <div class="faq-answer">
+                    <p>หลังจากเข้าสู่ระบบแล้ว ไปที่หน้าโปรไฟล์ และคลิกที่ "เชื่อมต่อ LINE" หรือไปที่เมนูการตั้งค่าเพื่อเชื่อมต่อบัญชี LINE ของคุณ</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <i data-lucide="help-circle"></i>
+                    <span>สามารถใช้หลายโปรเจคได้หรือไม่?</span>
+                </div>
+                <div class="faq-answer">
+                    <p>ได้ครับ คุณสามารถสร้างหลายโปรเจค เช่น "ครอบครัว" "ทริปเที่ยว" หรือ "ธุรกิจ" และสลับใช้งานได้</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <i data-lucide="help-circle"></i>
+                    <span>จะตั้งงบประมาณได้อย่างไร?</span>
+                </div>
+                <div class="faq-answer">
+                    <p>ไปที่หน้า "งบประมาณ" จากเมนูหลัก แล้วคลิก "เพิ่มงบประมาณ" เลือกหมวดหมู่และระบุจำนวนเงินที่ต้องการ</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <i data-lucide="help-circle"></i>
+                    <span>รายการประจำทำงานอย่างไร?</span>
+                </div>
+                <div class="faq-answer">
+                    <p>รายการประจำจะสร้างรายการอัตโนมัติตามความถี่ที่คุณตั้งไว้ เช่น รายวัน รายสัปดาห์ หรือรายเดือน</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <i data-lucide="help-circle"></i>
+                    <span>จะส่งออกข้อมูลได้อย่างไร?</span>
+                </div>
+                <div class="faq-answer">
+                    <p>ไปที่หน้าโปรไฟล์ แล้วเลือก "ส่งออก CSV" หรือ "ส่งออก JSON" เพื่อดาวน์โหลดข้อมูลทั้งหมด</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <i data-lucide="help-circle"></i>
+                    <span>ข้อมูลถูกเก็บไว้ที่ไหน?</span>
+                </div>
+                <div class="faq-answer">
+                    <p>ข้อมูลทั้งหมดถูกเก็บไว้ในฐานข้อมูลที่ปลอดภัย และสามารถเข้าถึงได้ผ่านบัญชีของคุณเท่านั้น</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Section -->
+    <div class="section">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="mail"></i>
+                ติดต่อเรา
+            </h2>
+        </div>
+
+        <div class="help-content">
+            <div class="help-card">
+                <p style="color: var(--text-secondary); line-height: 1.6;">
+                    หากคุณมีคำถามเพิ่มเติมหรือพบปัญหาในการใช้งาน 
+                    กรุณาติดต่อทีมงานผ่านช่องทางที่ระบุไว้ในแอปพลิเคชัน
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="section" style="text-align: center; padding: 20px 0;">
+        <p style="font-size: 12px; color: var(--text-secondary);">
+            ทำด้วย ❤️ สำหรับคนไทย • เวอร์ชัน 1.0.0
+        </p>
+    </div>
+
+    <!-- Bottom spacing -->
+    <div class="footer-spacing"></div>
+</div>
+
+<!-- Sticky Footer Menu -->
+{% set current_page = 'profile' %}
+{% include 'components/footer_menu.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    });
+});
+
+// FAQ Accordion
+document.querySelectorAll('.faq-item').forEach(item => {
+    const question = item.querySelector('.faq-question');
+    const answer = item.querySelector('.faq-answer');
+    
+    question.addEventListener('click', () => {
+        const isOpen = item.classList.contains('open');
+        
+        // Close all FAQ items
+        document.querySelectorAll('.faq-item').forEach(faq => {
+            faq.classList.remove('open');
+        });
+        
+        // Open clicked item if it wasn't open
+        if (!isOpen) {
+            item.classList.add('open');
+        }
+    });
+});
+</script>
+{% endblock %}

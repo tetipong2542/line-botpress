@@ -177,3 +177,12 @@ def invite_accept_page(token):
     user_id = session.get('user_id')
     user = User.query.get(user_id)
     return render_template('invite_accept.html', token=token, user=user)
+
+
+@bp.route('/help')
+@require_login
+def help():
+    """Help center page"""
+    user_id = session.get('user_id')
+    user = User.query.get(user_id)
+    return render_template('help.html', user=user)

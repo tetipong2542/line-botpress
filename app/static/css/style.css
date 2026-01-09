@@ -4507,6 +4507,10 @@ a:focus-visible {
     color: #f9fafb !important;
 }
 
+[data-theme="dark"] .page-header h1 i {
+    color: #10b981 !important;
+}
+
 [data-theme="dark"] .page-header .subtitle {
     color: #9ca3af !important;
 }
@@ -4518,6 +4522,41 @@ a:focus-visible {
 
 [data-theme="dark"] .section-header h2 i {
     color: #10b981 !important;
+}
+
+/* Quick Actions Links in Dark Mode */
+[data-theme="dark"] .setting-item:not(.disabled) {
+    transition: all 0.2s ease !important;
+}
+
+[data-theme="dark"] .setting-item:not(.disabled):hover {
+    transform: translateX(4px) !important;
+}
+
+/* Enhanced Button States in Dark Mode */
+[data-theme="dark"] .btn-primary {
+    background: #10b981 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .btn-primary:hover {
+    background: #059669 !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+}
+
+[data-theme="dark"] .btn-primary:active {
+    background: #047857 !important;
+    transform: translateY(1px) !important;
+}
+
+/* Enhanced Link States in Dark Mode */
+[data-theme="dark"] a.setting-item:not(.disabled):hover {
+    text-decoration: none !important;
+}
+
+[data-theme="dark"] a.setting-item:not(.disabled):hover i[data-lucide="chevron-right"] {
+    color: #10b981 !important;
+    transform: translateX(4px) !important;
 }
 
 /* Profile Card in Dark Mode */
@@ -4572,12 +4611,43 @@ a:focus-visible {
     color: #9ca3af !important;
 }
 
-/* Setting Item Hover in Dark Mode */
+/* Setting Item Hover in Dark Mode - Enhanced Visibility */
 [data-theme="dark"] .setting-item:not(.disabled):hover {
     background: #374151 !important;
+    border-color: #4b5563 !important;
 }
 
 [data-theme="dark"] .setting-item:not(.disabled):hover .setting-title {
+    color: #10b981 !important;
+    font-weight: 600 !important;
+}
+
+[data-theme="dark"] .setting-item:not(.disabled):hover .setting-desc {
+    color: #d1d5db !important;
+}
+
+[data-theme="dark"] .setting-item:not(.disabled):hover .setting-icon {
+    background: #4b5563 !important;
+    border-color: #10b981 !important;
+}
+
+[data-theme="dark"] .setting-item:not(.disabled):hover .setting-icon i {
+    color: #10b981 !important;
+}
+
+/* Setting Item Active/Focus in Dark Mode */
+[data-theme="dark"] .setting-item:not(.disabled):active {
+    background: #4b5563 !important;
+    transform: scale(0.98);
+}
+
+[data-theme="dark"] .setting-item:not(.disabled):focus-visible {
+    outline: 2px solid #10b981 !important;
+    outline-offset: 2px !important;
+    background: #374151 !important;
+}
+
+[data-theme="dark"] .setting-item:not(.disabled):focus-visible .setting-title {
     color: #10b981 !important;
 }
 
@@ -4653,8 +4723,22 @@ a:focus-visible {
     color: #f9fafb !important;
 }
 
-[data-theme="dark"] .modal-close i {
+[data-theme="dark"] .modal-close {
     color: #9ca3af !important;
+}
+
+[data-theme="dark"] .modal-close:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .modal-close:focus-visible {
+    outline: 2px solid #10b981 !important;
+    outline-offset: 2px !important;
+}
+
+[data-theme="dark"] .modal-close i {
+    color: inherit !important;
 }
 
 /* Form Elements in Dark Mode (Notification Settings) */
@@ -4676,6 +4760,19 @@ a:focus-visible {
     border-color: #4b5563 !important;
 }
 
+[data-theme="dark"] .form-select:hover {
+    border-color: #6b7280 !important;
+    background: #4b5563 !important;
+}
+
+[data-theme="dark"] .form-select:focus {
+    outline: none !important;
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+    background: #4b5563 !important;
+    color: #f9fafb !important;
+}
+
 [data-theme="dark"] .form-label {
     color: #f9fafb !important;
 }
@@ -4685,8 +4782,20 @@ a:focus-visible {
     background-color: #4b5563 !important;
 }
 
+[data-theme="dark"] .slider:hover {
+    background-color: #6b7280 !important;
+}
+
 [data-theme="dark"] input:checked+.slider {
     background-color: #10b981 !important;
+}
+
+[data-theme="dark"] input:checked+.slider:hover {
+    background-color: #059669 !important;
+}
+
+[data-theme="dark"] input:focus-visible+.slider {
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3) !important;
 }
 
 /* Footer text in Dark Mode */
@@ -4694,11 +4803,30 @@ a:focus-visible {
     color: #9ca3af !important;
 }
 
-/* Focus States in Dark Mode */
+/* Focus States in Dark Mode - Enhanced */
 [data-theme="dark"] .setting-item:focus-visible,
 [data-theme="dark"] .btn:focus-visible,
 [data-theme="dark"] a:focus-visible {
-    outline-color: #10b981 !important;
+    outline: 2px solid #10b981 !important;
+    outline-offset: 2px !important;
+    background: #374151 !important;
+}
+
+[data-theme="dark"] .setting-item:focus-visible .setting-title {
+    color: #10b981 !important;
+    font-weight: 600 !important;
+}
+
+[data-theme="dark"] .btn-primary:focus-visible {
+    outline: 2px solid #10b981 !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2) !important;
+}
+
+[data-theme="dark"] .btn-logout:focus-visible {
+    outline: 2px solid #ffffff !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.3) !important;
 }
 
 /* ===== INSIGHT CARDS (Unified for Modal) ===== */
@@ -5035,4 +5163,596 @@ a:focus-visible {
 /* Hide detail settings initially */
 .notification-settings-detail[style*="display: none"] {
     display: none !important;
+}
+
+/* ===== HELP CENTER STYLES ===== */
+
+.help-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.help-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.2s ease;
+}
+
+.help-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.help-card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.help-card h3 i {
+    width: 20px;
+    height: 20px;
+    color: var(--primary);
+}
+
+.help-card p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.help-examples {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.help-example {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border-left: 3px solid var(--primary);
+}
+
+.help-example code {
+    font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary);
+    background: var(--bg);
+    padding: 6px 10px;
+    border-radius: 6px;
+    display: inline-block;
+    border: 1px solid var(--border);
+}
+
+.help-example span {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* FAQ Styles */
+.faq-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.faq-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.faq-question {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s ease;
+}
+
+.faq-question:hover {
+    background: var(--bg-secondary);
+}
+
+.faq-question i {
+    width: 20px;
+    height: 20px;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.faq-question span {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+}
+
+.faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    padding: 0 20px;
+}
+
+.faq-item.open .faq-answer {
+    max-height: 500px;
+    padding: 0 20px 20px 20px;
+}
+
+.faq-answer p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+    padding-top: 12px;
+}
+
+/* Dark Mode for Help Center */
+[data-theme="dark"] .help-card {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .help-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-theme="dark"] .help-card h3 {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .help-card h3 i {
+    color: #10b981 !important;
+}
+
+[data-theme="dark"] .help-example {
+    background: #374151 !important;
+    border-left-color: #10b981 !important;
+}
+
+[data-theme="dark"] .help-example code {
+    background: #1f2937 !important;
+    color: #10b981 !important;
+    border-color: #4b5563 !important;
+}
+
+[data-theme="dark"] .help-example span {
+    color: #d1d5db !important;
+}
+
+[data-theme="dark"] .faq-item {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .faq-question {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .faq-question:hover {
+    background: #374151 !important;
+}
+
+[data-theme="dark"] .faq-question span {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .faq-question i {
+    color: #10b981 !important;
+}
+
+[data-theme="dark"] .faq-answer p {
+    color: #d1d5db !important;
+}
+
+/* Chevron Icon for Help Links */
+.chevron-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.setting-item:hover .chevron-icon {
+    color: var(--primary);
+    transform: translateX(4px);
+}
+
+[data-theme="dark"] .setting-item:hover .chevron-icon {
+    color: #10b981 !important;
+}
+
+/* ===== COMPREHENSIVE DARK MODE TEXT VISIBILITY FIXES ===== */
+
+/* Footer Menu Items - Text must be visible in dark mode */
+[data-theme="dark"] .menu-item:hover {
+    color: #10b981 !important;
+    background: #374151 !important;
+}
+
+[data-theme="dark"] .menu-item.active {
+    color: #10b981 !important;
+}
+
+[data-theme="dark"] .menu-item.active i {
+    color: #10b981 !important;
+}
+
+/* Balance Card Icon - Override white primary */
+[data-theme="dark"] .summary-card.balance .summary-icon {
+    background: #374151 !important;
+    color: #10b981 !important;
+}
+
+/* Section Link / View All Links */
+[data-theme="dark"] .section-link {
+    color: #10b981 !important;
+}
+
+[data-theme="dark"] .section-link:hover {
+    color: #34d399 !important;
+}
+
+/* Quick Action Buttons Text */
+[data-theme="dark"] .quick-action-btn {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .quick-action-btn:hover {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+}
+
+[data-theme="dark"] .quick-action-btn span {
+    color: #f9fafb !important;
+}
+
+/* Summary Cards Text in Dark Mode */
+[data-theme="dark"] .summary-card {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .summary-label {
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .summary-amount {
+    color: #f9fafb !important;
+}
+
+/* Transaction List Elements */
+[data-theme="dark"] .transactions-list {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .transaction-item {
+    border-bottom-color: #374151 !important;
+}
+
+[data-theme="dark"] .transaction-item:hover {
+    background: #374151 !important;
+}
+
+[data-theme="dark"] .transaction-title {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .transaction-meta {
+    color: #9ca3af !important;
+}
+
+/* Empty State in Dark Mode */
+[data-theme="dark"] .empty-state {
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .empty-state i {
+    color: #4b5563 !important;
+}
+
+[data-theme="dark"] .empty-state p {
+    color: #d1d5db !important;
+}
+
+[data-theme="dark"] .empty-subtitle {
+    color: #9ca3af !important;
+}
+
+/* Comparison Cards in Dark Mode */
+[data-theme="dark"] .comparison-card {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .comparison-header h3 {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .comparison-item .label {
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .comparison-item .amount {
+    color: #f9fafb !important;
+}
+
+/* Budget Progress Section */
+[data-theme="dark"] .budget-quick-list {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+/* Alerts Section */
+[data-theme="dark"] .alerts-list {
+    background: #1f2937 !important;
+}
+
+/* Category List/Stats */
+[data-theme="dark"] .category-list,
+[data-theme="dark"] .category-stats {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .category-item {
+    border-bottom-color: #374151 !important;
+}
+
+[data-theme="dark"] .category-name {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .category-meta {
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .category-stat-name {
+    color: #f9fafb !important;
+}
+
+/* Recurring List */
+[data-theme="dark"] .recurring-list {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .recurring-card {
+    border-bottom-color: #374151 !important;
+}
+
+[data-theme="dark"] .recurring-card:hover {
+    background: #374151 !important;
+}
+
+[data-theme="dark"] .recurring-title {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .recurring-details {
+    color: #9ca3af !important;
+}
+
+/* Member List */
+[data-theme="dark"] .member-list {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .member-card {
+    border-bottom-color: #374151 !important;
+}
+
+/* Tab Controls */
+[data-theme="dark"] .tab {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .tab:hover:not(.active) {
+    background: #374151 !important;
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .tab.active {
+    background: #10b981 !important;
+    border-color: #10b981 !important;
+    color: #ffffff !important;
+}
+
+/* Book Switcher Pills */
+[data-theme="dark"] .book-pill {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .book-pill:hover:not(.active) {
+    background: #374151 !important;
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .book-pill.active {
+    background: #10b981 !important;
+    border-color: #10b981 !important;
+    color: #ffffff !important;
+}
+
+/* Form Inputs in Dark Mode */
+[data-theme="dark"] .form-input,
+[data-theme="dark"] .form-textarea {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .form-input::placeholder,
+[data-theme="dark"] .form-textarea::placeholder {
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .form-input:focus,
+[data-theme="dark"] .form-textarea:focus {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+}
+
+/* Amount Input Wrapper */
+[data-theme="dark"] .amount-input-wrapper .currency {
+    color: #9ca3af !important;
+}
+
+/* Type Toggle Buttons */
+[data-theme="dark"] .type-btn {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+    color: #f9fafb !important;
+}
+
+/* Transaction Form Container */
+[data-theme="dark"] .transaction-form {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+/* Chart Container */
+[data-theme="dark"] .chart-container {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .chart-placeholder {
+    color: #9ca3af !important;
+}
+
+/* Period Selector */
+[data-theme="dark"] .period-nav {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .period-nav:hover {
+    background: #374151 !important;
+}
+
+[data-theme="dark"] .period-nav i {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .period-display {
+    color: #f9fafb !important;
+}
+
+/* Summary Strip */
+[data-theme="dark"] .summary-col {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .summary-strip-label {
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .summary-strip-amount {
+    color: #f9fafb !important;
+}
+
+/* Insight Cards */
+[data-theme="dark"] .insight-card {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+[data-theme="dark"] .insight-title {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .insight-message {
+    color: #d1d5db !important;
+}
+
+[data-theme="dark"] .insight-action {
+    background: rgba(16, 185, 129, 0.15) !important;
+    color: #10b981 !important;
+}
+
+[data-theme="dark"] .insight-stat-label {
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .insight-stat-value {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .insight-subtitle {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .insight-category-name {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .insight-category {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .insight-date {
+    color: #9ca3af !important;
+}
+
+/* Code Elements in Dark Mode */
+[data-theme="dark"] code {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+    color: #10b981 !important;
+}
+
+/* Responsive Help Center */
+@media (max-width: 480px) {
+    .help-card {
+        padding: 16px;
+    }
+
+    .faq-question {
+        padding: 14px 16px;
+    }
+
+    .faq-answer {
+        padding: 0 16px;
+    }
+
+    .faq-item.open .faq-answer {
+        padding: 0 16px 16px 16px;
+    }
+}
+
+/* Brand Text - Used for app name display */
+.brand-text {
+    color: #3b82f6;
+    font-weight: 700;
+}
+
+[data-theme="dark"] .brand-text {
+    color: #60a5fa !important;
 }
