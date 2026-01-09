@@ -122,6 +122,24 @@ class GeminiNLPService:
         if any(x in message_lower for x in ['ตั้งงบ', 'งบประมาณ', 'budget', 'งบ']):
             if any(x in message_lower for x in ['ดู', 'แสดง', 'เท่าไหร่']):
                 result['intent'] = 'get_budget'
+            elif any(x in message_lower for x in ['ลบ', 'ยกเลิก']):
+                result['intent'] = 'delete_budget'
+                # Extract category
+                cat_match = re.search(r'(?:ลบงบ|ยกเลิกงบ)\s*(\S+)', message)
+                if cat_match:
+                    result['entities']['category_name'] = cat_match.group(1)
+            elif any(x in message_lower for x in ['แก้', 'เปลี่ยน', 'อัพเดท']):
+                result['intent'] = 'update_budget'
+                # Extract amount
+                amount_match = re.search(r'(\d+(?:,\d+)?)\s*บาท', message)
+                if amount_match:
+                    result['entities']['amount'] = float(amount_match.group(1).replace(',', ''))
+                # Extract category
+                cat_match = re.search(r'(?:แก้งบ|เปลี่ยนงบ|อัพเดทงบ)\s*(\S+)', message)
+                if cat_match:
+                    cat_name = cat_match.group(1)
+                    if not cat_name.isdigit() and 'บาท' not in cat_name and 'เป็น' not in cat_name:
+                        result['entities']['category_name'] = cat_name
             else:
                 result['intent'] = 'set_budget'
                 # Extract amount first
@@ -337,6 +355,22 @@ class GeminiNLPService:
                 amount_match = re.search(r'(\d+(?:,\d+)?)\s*บาท', message)
                 if amount_match:
                     result['entities']['amount'] = float(amount_match.group(1).replace(',', ''))
+            elif any(x in message_lower for x in ['แก้ไข', 'เปลี่ยน', 'อัพเดท']):
+                result['intent'] = 'update_goal'
+                # Extract goal name (first non-keyword word)
+                name_match = re.search(r'(?:แก้ไข|เปลี่ยน|อัพเดท)(?:เป้าหมาย)?\s*(\S+)', message)
+                if name_match:
+                    result['entities']['goal_name'] = name_match.group(1)
+                # Extract new target
+                amount_match = re.search(r'(\d+(?:,\d+)?)\s*บาท', message)
+                if amount_match:
+                    result['entities']['target_amount'] = float(amount_match.group(1).replace(',', ''))
+            elif any(x in message_lower for x in ['ลบ', 'ยกเลิก']):
+                result['intent'] = 'delete_goal'
+                # Extract goal name
+                name_match = re.search(r'(?:ลบ|ยกเลิก)(?:เป้าหมาย)?\s*(\S+)', message)
+                if name_match:
+                    result['entities']['goal_name'] = name_match.group(1)
             else:
                 result['intent'] = 'get_goals'
         

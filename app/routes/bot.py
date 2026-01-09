@@ -2423,6 +2423,221 @@ def smart_message():
             })
         
         # ========================
+        # UPDATE GOAL
+        # ========================
+        elif intent == 'update_goal':
+            goal_name = entities.get('goal_name')
+            new_target = entities.get('target_amount')
+            
+            if not goal_name:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': '❓ ต้องการแก้ไขเป้าหมายไหนคะ?\n\nพิมพ์ "เป้าหมาย" เพื่อดูรายการ'
+                })
+            
+            goal = SavingsGoal.query.filter(
+                SavingsGoal.project_id == project_id,
+                SavingsGoal.name.ilike(f'%{goal_name}%'),
+                SavingsGoal.is_active == True
+            ).first()
+            
+            if not goal:
+                return jsonify({
+                    'success': False,
+                    'message': f'❌ ไม่พบเป้าหมาย "{goal_name}"'
+                })
+            
+            if not new_target:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': f'🎯 {goal.name}\n💰 เป้าปัจจุบัน: {goal.target_amount/100:,.0f} บาท\n\nพิมพ์จำนวนเงินใหม่ เช่น "50000 บาท"'
+                })
+            
+            old_target = goal.target_amount / 100
+            goal.target_amount = int(new_target * 100)
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f"✅ แก้ไขเป้าหมายสำเร็จ!\n\n"
+                          f"🎯 {goal.name}\n"
+                          f"💵 {old_target:,.0f} → {new_target:,.0f} บาท\n"
+                          f"📊 Progress: {goal.progress_percentage:.0f}%"
+            })
+        
+        # ========================
+        # GET GOALS
+        # ========================
+        elif intent == 'get_goals':
+            goals = SavingsGoal.query.filter_by(
+                project_id=project_id,
+                is_active=True
+            ).order_by(SavingsGoal.created_at.desc()).all()
+            
+            if not goals:
+                return jsonify({
+                    'success': True,
+                    'message': "🎯 ยังไม่มีเป้าหมายออมเงิน\n\nพิมพ์ \"ตั้งเป้าออม iPhone 45000 บาท\""
+                })
+            
+            lines = ["🎯 เป้าหมายออมเงิน:", ""]
+            total_saved = 0
+            
+            for idx, g in enumerate(goals, 1):
+                current = g.current_amount / 100
+                target = g.target_amount / 100
+                pct = g.progress_percentage
+                total_saved += current
+                
+                if g.is_completed:
+                    icon = "✅"
+                elif g.is_overdue:
+                    icon = "⚠️"
+                else:
+                    icon = "🎯"
+                
+                lines.append(f"#{idx} {icon} {g.name}")
+                lines.append(f"    💰 {current:,.0f}/{target:,.0f}฿ ({pct:.0f}%)")
+            
+            lines.append("")
+            lines.append(f"📊 รวมออมแล้ว: {total_saved:,.0f} บาท")
+            lines.append("")
+            lines.append("💡 \"เติม iPhone 5000 บาท\" / \"ถอน iPhone 1000 บาท\"")
+            
+            return jsonify({
+                'success': True,
+                'count': len(goals),
+                'message': '\n'.join(lines)
+            })
+        
+        # ========================
+        # DELETE BUDGET
+        # ========================
+        elif intent == 'delete_budget':
+            category_name = entities.get('category_name')
+            today = datetime.utcnow()
+            month_yyyymm = today.strftime('%Y-%m')
+            
+            if not category_name:
+                # Show budgets list
+                budgets = Budget.query.filter_by(
+                    project_id=project_id,
+                    month_yyyymm=month_yyyymm
+                ).all()
+                
+                if not budgets:
+                    return jsonify({
+                        'success': False,
+                        'message': '❌ ไม่มีงบประมาณให้ลบ'
+                    })
+                
+                lines = ["❓ ต้องการลบงบหมวดไหนคะ?", ""]
+                for b in budgets:
+                    cat_name = b.category.name_th if b.category else 'ไม่ระบุ'
+                    limit = b.limit_amount / 100
+                    lines.append(f"📁 {cat_name}: {limit:,.0f}฿")
+                lines.append("")
+                lines.append("พิมพ์: \"ลบงบอาหาร\"")
+                
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': '\n'.join(lines)
+                })
+            
+            # Find category
+            category = Category.query.filter(
+                Category.project_id == project_id,
+                Category.name_th.ilike(f'%{category_name}%')
+            ).first()
+            
+            if not category:
+                return jsonify({
+                    'success': False,
+                    'message': f'❌ ไม่พบหมวดหมู่ "{category_name}"'
+                })
+            
+            budget = Budget.query.filter_by(
+                project_id=project_id,
+                category_id=category.id,
+                month_yyyymm=month_yyyymm
+            ).first()
+            
+            if not budget:
+                return jsonify({
+                    'success': False,
+                    'message': f'❌ ไม่มีงบสำหรับ "{category.name_th}" เดือนนี้'
+                })
+            
+            db.session.delete(budget)
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f"🗑️ ลบงบสำเร็จ!\n\n📁 {category.name_th}"
+            })
+        
+        # ========================
+        # UPDATE BUDGET
+        # ========================
+        elif intent == 'update_budget':
+            category_name = entities.get('category_name')
+            amount = entities.get('amount')
+            today = datetime.utcnow()
+            month_yyyymm = today.strftime('%Y-%m')
+            
+            if not category_name:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': '❓ ต้องการแก้งบหมวดไหนคะ?\n\nพิมพ์: "แก้งบอาหาร 6000 บาท"'
+                })
+            
+            # Find category
+            category = Category.query.filter(
+                Category.project_id == project_id,
+                Category.name_th.ilike(f'%{category_name}%')
+            ).first()
+            
+            if not category:
+                return jsonify({
+                    'success': False,
+                    'message': f'❌ ไม่พบหมวดหมู่ "{category_name}"'
+                })
+            
+            budget = Budget.query.filter_by(
+                project_id=project_id,
+                category_id=category.id,
+                month_yyyymm=month_yyyymm
+            ).first()
+            
+            if not budget:
+                return jsonify({
+                    'success': False,
+                    'message': f'❌ ยังไม่มีงบสำหรับ "{category.name_th}"\n\nพิมพ์: "ตั้งงบ{category.name_th} 5000 บาท"'
+                })
+            
+            if not amount:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': f'📁 {category.name_th}\n💰 งบปัจจุบัน: {budget.limit_amount/100:,.0f} บาท\n\nพิมพ์จำนวนใหม่ เช่น "6000 บาท"'
+                })
+            
+            old_amount = budget.limit_amount / 100
+            budget.limit_amount = int(amount * 100)
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f"✅ แก้งบสำเร็จ!\n\n"
+                          f"📁 {category.name_th}\n"
+                          f"💵 {old_amount:,.0f} → {amount:,.0f} บาท/เดือน"
+            })
+        
+        # ========================
         # GET SUMMARY
         # ========================
         elif intent == 'get_summary':
