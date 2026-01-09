@@ -810,3 +810,273 @@ def universal_query():
             'transaction_count': count,
             'message': '\n'.join(lines)
         })
+
+
+@bp.route('/action', methods=['POST'])
+@require_bot_auth()
+def universal_action():
+    """
+    Universal Action endpoint - One endpoint for all data mutations
+    Used by Botpress actionData action
+    
+    Supports action_types:
+    - update_transaction: Update a transaction
+    - delete_transaction: Delete a transaction
+    - create_category: Create a new category
+    - delete_category: Delete a category
+    """
+    from app.models.category import Category
+    from app.utils.helpers import generate_id
+    
+    data = request.json
+    botpress_user_id = data.get('botpress_user_id') or data.get('line_user_id')
+    action_type = data.get('action_type')
+    params = data.get('params', {})
+    
+    if not botpress_user_id:
+        return jsonify({
+            'success': False,
+            'message': 'botpress_user_id is required'
+        }), 400
+    
+    if not action_type:
+        return jsonify({
+            'success': False,
+            'message': 'action_type is required'
+        }), 400
+    
+    # Find user
+    user = User.query.filter_by(botpress_user_id=botpress_user_id).first()
+    if not user:
+        user = User.query.filter_by(line_user_id=botpress_user_id).first()
+    
+    if not user or not user.current_project_id:
+        return jsonify({
+            'success': False,
+            'message': 'ยังไม่ได้เชื่อมต่อบัญชี กรุณาพิมพ์ "เชื่อมต่อ" เพื่อลงทะเบียน'
+        }), 400
+    
+    project_id = user.current_project_id
+    
+    # ============================================
+    # ACTION: update_transaction
+    # ============================================
+    if action_type == 'update_transaction':
+        transaction_id = params.get('transaction_id')
+        
+        if not transaction_id:
+            # Try to find by description (last N transactions)
+            keyword = params.get('keyword')
+            if keyword:
+                transactions = Transaction.query.filter(
+                    Transaction.project_id == project_id,
+                    Transaction.note.ilike(f'%{keyword}%'),
+                    Transaction.deleted_at.is_(None)
+                ).order_by(Transaction.occurred_at.desc()).limit(5).all()
+                
+                if not transactions:
+                    return jsonify({
+                        'success': False,
+                        'message': f'ไม่พบรายการที่มี "{keyword}"'
+                    })
+                
+                if len(transactions) > 1:
+                    lines = ["พบหลายรายการ กรุณาระบุให้ชัดเจน:", ""]
+                    for i, t in enumerate(transactions, 1):
+                        cat = Category.query.get(t.category_id)
+                        cat_name = cat.name_th if cat else "ไม่ระบุ"
+                        amount = t.amount / 100
+                        lines.append(f"{i}. {cat_name}: {amount:,.2f}฿ - {t.note or 'ไม่มีหมายเหตุ'}")
+                    return jsonify({
+                        'success': False,
+                        'message': '\n'.join(lines)
+                    })
+                
+                transaction_id = transactions[0].id
+        
+        transaction = Transaction.query.get(transaction_id)
+        
+        if not transaction or transaction.project_id != project_id:
+            return jsonify({
+                'success': False,
+                'message': 'ไม่พบรายการ'
+            })
+        
+        # Update fields
+        updated = []
+        if 'amount' in params and params['amount']:
+            new_amount = params['amount']
+            if new_amount < 1000000:  # Assume baht
+                new_amount = int(new_amount * 100)
+            transaction.amount = new_amount
+            updated.append(f"จำนวน: {new_amount/100:,.2f}฿")
+        
+        if 'note' in params:
+            transaction.note = params['note']
+            updated.append(f"หมายเหตุ: {params['note']}")
+        
+        if 'category_name' in params:
+            cat = Category.query.filter(
+                Category.project_id == project_id,
+                Category.name_th.ilike(f"%{params['category_name']}%")
+            ).first()
+            if cat:
+                transaction.category_id = cat.id
+                updated.append(f"หมวดหมู่: {cat.name_th}")
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f"✅ แก้ไขรายการสำเร็จ!\n\nอัพเดท: {', '.join(updated) if updated else 'ไม่มีการเปลี่ยนแปลง'}"
+        })
+    
+    # ============================================
+    # ACTION: delete_transaction
+    # ============================================
+    elif action_type == 'delete_transaction':
+        transaction_id = params.get('transaction_id')
+        keyword = params.get('keyword')
+        delete_last = params.get('delete_last', False)
+        
+        if delete_last:
+            # Delete the most recent transaction
+            transaction = Transaction.query.filter(
+                Transaction.project_id == project_id,
+                Transaction.deleted_at.is_(None)
+            ).order_by(Transaction.occurred_at.desc()).first()
+        elif keyword:
+            transaction = Transaction.query.filter(
+                Transaction.project_id == project_id,
+                Transaction.note.ilike(f'%{keyword}%'),
+                Transaction.deleted_at.is_(None)
+            ).order_by(Transaction.occurred_at.desc()).first()
+        elif transaction_id:
+            transaction = Transaction.query.get(transaction_id)
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'กรุณาระบุรายการที่ต้องการลบ เช่น "ลบรายการล่าสุด" หรือ "ลบรายการกินข้าว"'
+            })
+        
+        if not transaction or transaction.project_id != project_id:
+            return jsonify({
+                'success': False,
+                'message': 'ไม่พบรายการ'
+            })
+        
+        # Get info before delete
+        cat = Category.query.get(transaction.category_id)
+        cat_name = cat.name_th if cat else "ไม่ระบุ"
+        amount = transaction.amount / 100
+        note = transaction.note or ""
+        
+        # Soft delete
+        transaction.deleted_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f"🗑️ ลบรายการสำเร็จ!\n\n{cat_name}: {amount:,.2f}฿{' - ' + note if note else ''}"
+        })
+    
+    # ============================================
+    # ACTION: create_category
+    # ============================================
+    elif action_type == 'create_category':
+        name = params.get('name')
+        cat_type = params.get('type', 'expense')  # expense or income
+        
+        if not name:
+            return jsonify({
+                'success': False,
+                'message': 'กรุณาระบุชื่อหมวดหมู่'
+            })
+        
+        # Check if exists
+        existing = Category.query.filter(
+            Category.project_id == project_id,
+            Category.name_th == name
+        ).first()
+        
+        if existing:
+            return jsonify({
+                'success': False,
+                'message': f'หมวดหมู่ "{name}" มีอยู่แล้ว'
+            })
+        
+        # Get max sort_order
+        max_order = db.session.query(db.func.max(Category.sort_order)).filter(
+            Category.project_id == project_id
+        ).scalar() or 0
+        
+        # Create category
+        category = Category(
+            project_id=project_id,
+            type=cat_type,
+            name_th=name,
+            name_en=name.lower().replace(' ', '_'),
+            icon='tag',
+            color='#6B7280',
+            sort_order=max_order + 1
+        )
+        category.id = generate_id('cat')
+        db.session.add(category)
+        db.session.commit()
+        
+        icon = "💸" if cat_type == 'expense' else "💰"
+        return jsonify({
+            'success': True,
+            'message': f"✅ สร้างหมวดหมู่สำเร็จ!\n\n{icon} {name} ({cat_type})"
+        })
+    
+    # ============================================
+    # ACTION: delete_category
+    # ============================================
+    elif action_type == 'delete_category':
+        name = params.get('name')
+        
+        if not name:
+            return jsonify({
+                'success': False,
+                'message': 'กรุณาระบุชื่อหมวดหมู่ที่ต้องการลบ'
+            })
+        
+        category = Category.query.filter(
+            Category.project_id == project_id,
+            Category.name_th.ilike(f'%{name}%')
+        ).first()
+        
+        if not category:
+            return jsonify({
+                'success': False,
+                'message': f'ไม่พบหมวดหมู่ "{name}"'
+            })
+        
+        # Check if category has transactions
+        trans_count = Transaction.query.filter(
+            Transaction.category_id == category.id,
+            Transaction.deleted_at.is_(None)
+        ).count()
+        
+        if trans_count > 0:
+            return jsonify({
+                'success': False,
+                'message': f'ไม่สามารถลบหมวดหมู่ "{category.name_th}" ได้ เพราะมีรายการอยู่ {trans_count} รายการ'
+            })
+        
+        cat_name = category.name_th
+        db.session.delete(category)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f"🗑️ ลบหมวดหมู่สำเร็จ!\n\n{cat_name}"
+        })
+    
+    # Unknown action
+    else:
+        return jsonify({
+            'success': False,
+            'message': f'ไม่รู้จัก action_type: {action_type}\n\nรองรับ: update_transaction, delete_transaction, create_category, delete_category'
+        })
