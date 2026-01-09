@@ -735,6 +735,51 @@ def universal_query():
         })
     
     # ============================================
+    # QUERY TYPE: goals (Savings Goals)
+    # ============================================
+    elif query_type == 'goals':
+        from app.models.savings_goal import SavingsGoal
+        
+        goals = SavingsGoal.get_active_goals(project_id)
+        
+        if not goals:
+            return jsonify({
+                'success': True,
+                'message': '🎯 ยังไม่มีเป้าหมายออมเงิน\n\nพิมพ์ "ตั้งเป้าออม [ชื่อ] [จำนวน] บาทใน [เดือน] เดือน"'
+            })
+        
+        lines = ["🎯 เป้าหมายออมเงินของคุณ:", ""]
+        total_progress = 0
+        
+        for goal in goals:
+            current = goal.current_amount / 100
+            target = goal.target_amount / 100
+            progress = goal.progress_percentage
+            total_progress += progress
+            
+            status = "✅" if goal.is_completed else ("⚠️" if goal.is_overdue else "🔄")
+            
+            lines.append(f"{status} {goal.name}")
+            lines.append(f"   💰 {current:,.0f}/{target:,.0f}฿ ({progress:.0f}%)")
+            
+            if goal.days_remaining is not None and not goal.is_completed:
+                # Calculate daily required
+                remaining = target - current
+                if goal.days_remaining > 0:
+                    daily = remaining / goal.days_remaining
+                    lines.append(f"   📅 เหลือ {goal.days_remaining} วัน (ต้องออมวันละ {daily:,.0f}฿)")
+            lines.append("")
+        
+        avg_progress = total_progress / len(goals) if goals else 0
+        lines.append(f"📊 ค่าเฉลี่ยความคืบหน้า: {avg_progress:.0f}%")
+        
+        return jsonify({
+            'success': True,
+            'goals_count': len(goals),
+            'message': '\n'.join(lines)
+        })
+    
+    # ============================================
     # QUERY TYPE: summary (default)
     # ============================================
     else:
@@ -1074,11 +1119,162 @@ def universal_action():
             'message': f"🗑️ ลบหมวดหมู่สำเร็จ!\n\n{cat_name}"
         })
     
+    # ============================================
+    # ACTION: create_goal (Savings Goal)
+    # ============================================
+    elif action_type == 'create_goal':
+        from app.models.savings_goal import SavingsGoal
+        from app.utils.helpers import generate_id
+        from datetime import date
+        from dateutil.relativedelta import relativedelta
+        
+        name = params.get('name')
+        target_amount = params.get('target_amount')
+        months = params.get('months', 6)  # Default 6 months
+        
+        if not name or not target_amount:
+            return jsonify({
+                'success': False,
+                'message': 'กรุณาระบุชื่อเป้าหมายและจำนวนเงิน เช่น "ตั้งเป้าออม ซื้อรถ 500000 บาทใน 12 เดือน"'
+            })
+        
+        # Convert to satang
+        if target_amount < 1000000:
+            target_amount = int(target_amount * 100)
+        
+        # Calculate target date
+        target_date = date.today() + relativedelta(months=int(months))
+        
+        goal = SavingsGoal(
+            project_id=project_id,
+            name=name,
+            target_amount=target_amount,
+            current_amount=0,
+            target_date=target_date
+        )
+        goal.id = generate_id('goal')
+        
+        db.session.add(goal)
+        db.session.commit()
+        
+        target_baht = target_amount / 100
+        monthly_required = target_baht / int(months)
+        
+        return jsonify({
+            'success': True,
+            'message': f"🎯 สร้างเป้าหมายสำเร็จ!\n\n"
+                      f"📌 {name}\n"
+                      f"💰 เป้าหมาย: {target_baht:,.0f} บาท\n"
+                      f"📅 ภายใน: {months} เดือน ({target_date.strftime('%d/%m/%Y')})\n"
+                      f"💵 ต้องออมเดือนละ: {monthly_required:,.0f} บาท\n\n"
+                      f"พิมพ์ \"เพิ่มเงินออม [จำนวน]\" เพื่อบันทึกความคืบหน้า"
+        })
+    
+    # ============================================
+    # ACTION: contribute_goal (Add to Savings)
+    # ============================================
+    elif action_type == 'contribute_goal':
+        from app.models.savings_goal import SavingsGoal
+        
+        amount = params.get('amount')
+        goal_name = params.get('goal_name')
+        
+        if not amount:
+            return jsonify({
+                'success': False,
+                'message': 'กรุณาระบุจำนวนเงิน เช่น "เพิ่มเงินออม 5000"'
+            })
+        
+        # Convert to satang
+        if amount < 1000000:
+            amount = int(amount * 100)
+        
+        # Find goal
+        if goal_name:
+            goal = SavingsGoal.query.filter(
+                SavingsGoal.project_id == project_id,
+                SavingsGoal.name.ilike(f'%{goal_name}%'),
+                SavingsGoal.is_active == True
+            ).first()
+        else:
+            # Get first active goal
+            goal = SavingsGoal.query.filter(
+                SavingsGoal.project_id == project_id,
+                SavingsGoal.is_active == True
+            ).order_by(SavingsGoal.created_at.desc()).first()
+        
+        if not goal:
+            return jsonify({
+                'success': False,
+                'message': 'ยังไม่มีเป้าหมายออมเงิน\n\nพิมพ์ "ตั้งเป้าออม [ชื่อ] [จำนวน] บาทใน [เดือน] เดือน"'
+            })
+        
+        # Add contribution
+        goal.current_amount += amount
+        db.session.commit()
+        
+        amount_baht = amount / 100
+        current_baht = goal.current_amount / 100
+        target_baht = goal.target_amount / 100
+        progress = goal.progress_percentage
+        
+        # Check if completed
+        if goal.is_completed:
+            status = "🎉 ยินดีด้วย! บรรลุเป้าหมายแล้ว!"
+        else:
+            remaining = target_baht - current_baht
+            status = f"📊 เหลืออีก {remaining:,.0f} บาท"
+        
+        return jsonify({
+            'success': True,
+            'message': f"✅ เพิ่มเงินออมสำเร็จ!\n\n"
+                      f"📌 {goal.name}\n"
+                      f"💰 เพิ่ม: {amount_baht:,.0f} บาท\n"
+                      f"📊 ความคืบหน้า: {current_baht:,.0f}/{target_baht:,.0f} บาท ({progress:.0f}%)\n\n"
+                      f"{status}"
+        })
+    
+    # ============================================
+    # ACTION: get_goals
+    # ============================================
+    elif action_type == 'get_goals':
+        from app.models.savings_goal import SavingsGoal
+        
+        goals = SavingsGoal.get_active_goals(project_id)
+        
+        if not goals:
+            return jsonify({
+                'success': True,
+                'message': '🎯 ยังไม่มีเป้าหมายออมเงิน\n\nพิมพ์ "ตั้งเป้าออม [ชื่อ] [จำนวน] บาทใน [เดือน] เดือน"'
+            })
+        
+        lines = ["🎯 เป้าหมายออมเงินของคุณ:", ""]
+        
+        for i, goal in enumerate(goals, 1):
+            current = goal.current_amount / 100
+            target = goal.target_amount / 100
+            progress = goal.progress_percentage
+            
+            status = "✅" if goal.is_completed else ("⚠️" if goal.is_overdue else "🔄")
+            
+            lines.append(f"{status} {goal.name}")
+            lines.append(f"   💰 {current:,.0f}/{target:,.0f}฿ ({progress:.0f}%)")
+            
+            if goal.days_remaining is not None and not goal.is_completed:
+                lines.append(f"   📅 เหลือ {goal.days_remaining} วัน")
+            lines.append("")
+        
+        return jsonify({
+            'success': True,
+            'goals_count': len(goals),
+            'message': '\n'.join(lines)
+        })
+    
     # Unknown action
     else:
         return jsonify({
             'success': False,
-            'message': f'ไม่รู้จัก action_type: {action_type}\n\nรองรับ: update_transaction, delete_transaction, create_category, delete_category'
+            'message': f'ไม่รู้จัก action_type: {action_type}\n\nรองรับ: update_transaction, delete_transaction, create_category, delete_category, create_goal, contribute_goal, get_goals'
         })
 
 
