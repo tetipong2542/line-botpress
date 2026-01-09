@@ -2421,6 +2421,96 @@ def smart_message():
             })
         
         # ========================
+        # GET TRANSACTIONS (ดูรายการ)
+        # ========================
+        elif intent == 'get_transactions':
+            period = entities.get('period', 'this_month')
+            today = datetime.utcnow()
+            
+            if period == 'today':
+                start_date = datetime(today.year, today.month, today.day)
+                period_text = 'วันนี้'
+            elif period == 'this_week':
+                start_date = today - timedelta(days=today.weekday())
+                period_text = 'สัปดาห์นี้'
+            else:
+                start_date = datetime(today.year, today.month, 1)
+                period_text = 'เดือนนี้'
+            
+            transactions = Transaction.query.filter(
+                Transaction.project_id == project_id,
+                Transaction.occurred_at >= start_date,
+                Transaction.deleted_at.is_(None)
+            ).order_by(Transaction.occurred_at.desc()).limit(10).all()
+            
+            if not transactions:
+                return jsonify({
+                    'success': True,
+                    'message': f"📝 ยังไม่มีรายการ{period_text}\n\nพิมพ์ \"กินข้าว 350 บาท\" เพื่อบันทึกรายการใหม่"
+                })
+            
+            lines = [f"📝 รายการ{period_text} (ล่าสุด 10):", ""]
+            
+            for t in transactions:
+                icon = '💰' if t.type == 'income' else '💸'
+                cat_name = t.category.name_th if t.category else 'ไม่ระบุ'
+                amount = t.amount / 100
+                date_str = t.occurred_at.strftime('%d/%m')
+                lines.append(f"{icon} {date_str} | {cat_name}: {amount:,.0f}฿")
+                if t.note:
+                    lines.append(f"   📝 {t.note}")
+            
+            return jsonify({
+                'success': True,
+                'count': len(transactions),
+                'message': '\n'.join(lines)
+            })
+        
+        # ========================
+        # DELETE TRANSACTION
+        # ========================
+        elif intent == 'delete_transaction':
+            trans_id = entities.get('transaction_id')
+            keyword = entities.get('keyword')
+            
+            if not trans_id and not keyword:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': '❓ ต้องการลบรายการไหนคะ? กรุณาระบุรายละเอียด\n\nพิมพ์ "รายการ" เพื่อดูรายการทั้งหมดก่อน'
+                })
+            
+            # Find transaction
+            query = Transaction.query.filter(
+                Transaction.project_id == project_id,
+                Transaction.deleted_at.is_(None)
+            )
+            
+            if keyword:
+                query = query.filter(Transaction.note.ilike(f'%{keyword}%'))
+            
+            transaction = query.order_by(Transaction.occurred_at.desc()).first()
+            
+            if not transaction:
+                return jsonify({
+                    'success': False,
+                    'message': '❌ ไม่พบรายการ'
+                })
+            
+            cat_name = transaction.category.name_th if transaction.category else 'ไม่ระบุ'
+            amount = transaction.amount / 100
+            
+            transaction.deleted_at = datetime.utcnow()
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f"🗑️ ลบรายการสำเร็จ!\n\n"
+                          f"📁 {cat_name}: {amount:,.0f} บาท\n"
+                          f"📝 {transaction.note or '-'}"
+            })
+        
+        # ========================
         # GENERAL / UNKNOWN
         # ========================
         else:
@@ -2429,9 +2519,9 @@ def smart_message():
                 'intent': intent,
                 'entities': entities,
                 'message': f"สวัสดีค่ะ! ฉันช่วยอะไรได้บ้าง?\n\n"
-                          f"📝 บันทึกรายการ: \"กินข้าว 350 บาท\"\n"
-                          f"🔄 รายการประจำ: \"รายการประจำ\"\n"
-                          f"🎯 เป้าหมาย: \"เป้าหมายออมเงิน\"\n"
+                          f"📝 ดูรายการ: \"รายการเดือนนี้\"\n"
+                          f"💰 บันทึก: \"กินข้าว 350 บาท\"\n"
+                          f"🔄 ประจำ: \"รายการประจำ\"\n"
                           f"📁 หมวดหมู่: \"หมวดหมู่ทั้งหมด\"\n"
                           f"📊 สรุป: \"สรุปวันนี้\""
             })

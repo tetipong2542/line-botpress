@@ -199,13 +199,37 @@ class GeminiNLPService:
             else:
                 result['intent'] = 'get_goals'
         
-        # Check for transaction
-        elif re.search(r'(\d+(?:,\d+)?)\s*บาท', message):
+        # Check for transactions list (ดูรายการ, แสดงรายการ, รายการเดือนนี้)
+        elif any(x in message_lower for x in ['แสดงรายการ', 'ดูรายการ', 'รายการทั้งหมด', 'รายการล่าสุด', 'รายการวันนี้', 'รายการเดือน', 'มีรายการอะไร', 'รายการการเงิน']):
+            result['intent'] = 'get_transactions'
+            if 'วันนี้' in message_lower:
+                result['entities']['period'] = 'today'
+            elif 'สัปดาห์' in message_lower:
+                result['entities']['period'] = 'this_week'
+            else:
+                result['entities']['period'] = 'this_month'
+        
+        # Check for delete transaction (ลบรายการ but not ลบรายการประจำ)
+        elif any(x in message_lower for x in ['ลบรายการ']) and 'ประจำ' not in message_lower:
+            result['intent'] = 'delete_transaction'
+            # Extract keyword after ลบรายการ
+            words = message.split()
+            for i, w in enumerate(words):
+                if 'ลบ' in w and i + 1 < len(words):
+                    result['entities']['keyword'] = words[i + 1]
+                    break
+        
+        # Check for transaction creation (มี บาท แต่ไม่ใช่คำถาม)
+        elif re.search(r'(\d+(?:,\d+)?)\s*บาท', message) and 'อะไร' not in message_lower:
             result['intent'] = 'create_transaction'
             amount_match = re.search(r'(\d+(?:,\d+)?)\s*บาท', message)
             if amount_match:
                 result['entities']['amount'] = float(amount_match.group(1).replace(',', ''))
             result['entities']['type'] = 'income' if any(x in message_lower for x in ['รับ', 'เงินเดือน', 'ได้']) else 'expense'
+            # Extract note (words before บาท)
+            note_match = re.match(r'^(.+?)\s*\d+', message)
+            if note_match:
+                result['entities']['note'] = note_match.group(1).strip()
         
         return result
     
