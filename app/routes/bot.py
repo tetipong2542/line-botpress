@@ -24,17 +24,22 @@ def resolve_context():
     """
     data = request.json
     line_user_id = data.get('line_user_id')
+    botpress_user_id = data.get('botpress_user_id')
 
-    if not line_user_id:
+    if not line_user_id and not botpress_user_id:
         return jsonify({
             'error': {
                 'code': 'BAD_REQUEST',
-                'message': 'line_user_id is required'
+                'message': 'line_user_id or botpress_user_id is required'
             }
         }), 400
 
-    # Find user
-    user = User.query.filter_by(line_user_id=line_user_id).first()
+    # Try to find user by multiple methods
+    user = None
+    if line_user_id:
+        user = User.query.filter_by(line_user_id=line_user_id).first()
+    if not user and botpress_user_id:
+        user = User.query.filter_by(botpress_user_id=botpress_user_id).first()
 
     if not user:
         return jsonify({
@@ -61,18 +66,68 @@ def resolve_context():
     })
 
 
+@bp.route('/link', methods=['POST'])
+@require_bot_auth()
+def link_botpress_account():
+    """
+    Link Botpress user ID to LINE user ID
+    Called when user types "เชื่อมต่อ" or "link" in chat
+    """
+    data = request.json
+    botpress_user_id = data.get('botpress_user_id')
+    line_user_id = data.get('line_user_id')  # From LINE Login session
+    link_code = data.get('link_code')  # Optional: 6-digit code from web
+
+    if not botpress_user_id:
+        return jsonify({
+            'error': {
+                'code': 'BAD_REQUEST',
+                'message': 'botpress_user_id is required'
+            }
+        }), 400
+
+    # Check if botpress_user_id already linked
+    existing = User.query.filter_by(botpress_user_id=botpress_user_id).first()
+    if existing:
+        return jsonify({
+            'success': True,
+            'message': 'บัญชีเชื่อมต่อแล้ว!',
+            'user': existing.to_dict()
+        })
+
+    # If line_user_id provided, link directly
+    if line_user_id:
+        user = User.query.filter_by(line_user_id=line_user_id).first()
+        if user:
+            user.botpress_user_id = botpress_user_id
+            db.session.commit()
+            return jsonify({
+                'success': True,
+                'message': 'เชื่อมต่อบัญชีสำเร็จ! สามารถบันทึกรายรับรายจ่ายได้แล้ว',
+                'user': user.to_dict()
+            })
+
+    # No existing link - provide instructions
+    return jsonify({
+        'success': False,
+        'message': 'กรุณาเข้าเว็บ https://line-botpress-production.up.railway.app แล้วล็อกอินด้วย LINE เดียวกัน จากนั้นไปที่หน้าโปรไฟล์แล้วกด "เชื่อมต่อ Chatbot"',
+        'link_url': 'https://line-botpress-production.up.railway.app/profile'
+    })
+
+
 @bp.route('/transactions/create', methods=['POST'])
 @require_bot_auth(require_idempotency=True)
 def create_transaction():
     """
     Create transaction via bot (with idempotency)
     Supports both category_id and category_name
+    Supports botpress_user_id with auto-mapping to LINE user
     """
     from app.models.category import Category
     
     data = request.json
 
-    line_user_id = data.get('line_user_id')
+    line_user_id = data.get('line_user_id')  # Can be LINE ID or Botpress ID
     type = data.get('type')
     category_id = data.get('category_id')
     category_name = data.get('category_name')  # Support category name
@@ -80,14 +135,26 @@ def create_transaction():
     note = data.get('note')
     occurred_at = data.get('occurred_at')
 
-    # Find user first (needed for category lookup)
-    user = User.query.filter_by(line_user_id=line_user_id).first()
+    # Find user - try multiple methods
+    user = None
+    
+    # Method 1: Try as LINE user ID first
+    if line_user_id:
+        user = User.query.filter_by(line_user_id=line_user_id).first()
+    
+    # Method 2: Try as Botpress user ID
+    if not user and line_user_id:
+        user = User.query.filter_by(botpress_user_id=line_user_id).first()
+    
+    # Method 3: If user found by LINE ID but no botpress mapping, auto-update
+    # (This handles future cases where we know the LINE ID)
 
     if not user or not user.current_project_id:
+        # Provide helpful error message with link instructions
         return jsonify({
             'error': {
                 'code': 'USER_NO_PROJECT',
-                'message': 'User has no active project. Please login via web first.'
+                'message': 'ยังไม่ได้เชื่อมต่อบัญชี กรุณาเข้าเว็บแล้วพิมพ์ "เชื่อมต่อ" หรือ "link" ในแชทนี้'
             }
         }), 400
 

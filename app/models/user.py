@@ -13,6 +13,7 @@ class User(db.Model):
 
     id = db.Column(db.String(50), primary_key=True)
     line_user_id = db.Column(db.String(100), unique=True, nullable=False, index=True)
+    botpress_user_id = db.Column(db.String(100), unique=True, nullable=True, index=True)  # Botpress user mapping
     display_name = db.Column(db.String(200), nullable=False)
     picture_url = db.Column(db.Text, nullable=True)
     email = db.Column(db.String(200), nullable=True)
@@ -36,6 +37,7 @@ class User(db.Model):
         return {
             'id': self.id,
             'line_user_id': self.line_user_id,
+            'botpress_user_id': self.botpress_user_id,
             'display_name': self.display_name,
             'picture_url': self.picture_url,
             'email': self.email,
