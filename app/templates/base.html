@@ -1,25 +1,50 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}จดรายรับรายจ่าย{% endblock %}</title>
-    
+
+    <!-- Prevent White Flash - Apply theme IMMEDIATELY -->
+    <script>
+        (function () {
+            var theme = localStorage.getItem('promptjod-theme');
+            if (!theme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                theme = 'dark';
+            }
+            if (theme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <!-- Dark Mode Background - Prevent flash -->
+    <style>
+        html[data-theme="dark"] {
+            background-color: #111827 !important;
+        }
+
+        html[data-theme="dark"] body {
+            background-color: #0f172a !important;
+        }
+    </style>
+
     <!-- DNS Prefetch for faster CDN loading -->
     <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
     <link rel="dns-prefetch" href="https://unpkg.com">
-    
+
     <!-- Preconnect to CDN -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://unpkg.com" crossorigin>
-    
+
     <!-- Preload critical resources -->
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" as="script">
     <link rel="preload" href="https://unpkg.com/lucide@latest" as="script">
-    
+
     <!-- Main Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    
+
     <!-- Critical Inline Styles for Loading States -->
     <style>
         /* Skeleton Loader Animations */
@@ -27,89 +52,92 @@
             0% {
                 background-position: -468px 0;
             }
+
             100% {
                 background-position: 468px 0;
             }
         }
-        
+
         @keyframes pulse {
-            0%, 100% {
+
+            0%,
+            100% {
                 opacity: 1;
             }
+
             50% {
                 opacity: 0.5;
             }
         }
-        
+
         @keyframes fadeIn {
             from {
                 opacity: 0;
                 transform: translateY(10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
-        
+
         /* Skeleton Base */
         .skeleton {
-            background: linear-gradient(
-                90deg,
-                #f0f0f0 0%,
-                #f8f8f8 50%,
-                #f0f0f0 100%
-            );
+            background: linear-gradient(90deg,
+                    #f0f0f0 0%,
+                    #f8f8f8 50%,
+                    #f0f0f0 100%);
             background-size: 468px 100%;
             animation: shimmer 1.2s ease-in-out infinite;
             border-radius: 4px;
         }
-        
+
         .skeleton-text {
             height: 1rem;
             margin-bottom: 0.5rem;
         }
-        
+
         .skeleton-title {
             height: 1.5rem;
             width: 60%;
             margin-bottom: 0.75rem;
         }
-        
+
         .skeleton-card {
             background: white;
             border-radius: 12px;
             padding: 1rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             margin-bottom: 1rem;
         }
-        
+
         .skeleton-circle {
             border-radius: 50%;
             width: 40px;
             height: 40px;
         }
-        
+
         .skeleton-button {
             height: 44px;
             border-radius: 8px;
         }
-        
+
         /* Fade In Animation */
         .fade-in {
             animation: fadeIn 0.3s ease-out;
         }
-        
+
         /* Page loading state (prevent FOUC) */
         .page-loading {
             opacity: 0;
         }
-        
+
         /* Hide class */
         .hidden {
             display: none !important;
         }
-        
+
         /* Loading spinner */
         .spinner {
             border: 2px solid #f3f3f3;
@@ -120,15 +148,39 @@
             animation: spin 1s linear infinite;
             display: inline-block;
         }
-        
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Dark Mode Skeleton Styles */
+        html[data-theme="dark"] .skeleton {
+            background: linear-gradient(90deg,
+                    #374151 0%,
+                    #4b5563 50%,
+                    #374151 100%) !important;
+        }
+
+        html[data-theme="dark"] .skeleton-card {
+            background: #1f2937 !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        html[data-theme="dark"] .spinner {
+            border-color: #374151 !important;
+            border-top-color: #10b981 !important;
         }
     </style>
-    
+
     {% block extra_css %}{% endblock %}
 </head>
+
 <body>
     {% block content %}{% endblock %}
 
@@ -159,7 +211,7 @@
 
     <!-- Dark Mode Toggle -->
     <script>
-        (function() {
+        (function () {
             // Theme management
             const THEME_KEY = 'promptjod-theme';
             const DARK_THEME = 'dark';
@@ -186,7 +238,7 @@
                     document.documentElement.removeAttribute('data-theme');
                 }
                 localStorage.setItem(THEME_KEY, theme);
-                
+
                 // Update all toggle switches if they exist
                 document.querySelectorAll('.dark-mode-toggle').forEach(toggle => {
                     toggle.checked = theme === DARK_THEME;
@@ -198,7 +250,7 @@
                 const currentTheme = getSavedTheme();
                 const newTheme = currentTheme === DARK_THEME ? LIGHT_THEME : DARK_THEME;
                 applyTheme(newTheme);
-                
+
                 // Show feedback
                 if (window.showToast) {
                     showToast(newTheme === DARK_THEME ? '🌙 เปิดโหมดมืด' : '☀️ ปิดโหมดมืด', 'success');
@@ -227,4 +279,5 @@
 
     {% block extra_js %}{% endblock %}
 </body>
+
 </html>
