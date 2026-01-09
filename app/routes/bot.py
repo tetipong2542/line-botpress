@@ -2435,7 +2435,7 @@ def smart_message():
                 ).all()
                 
                 for r in recurring_rules:
-                    if r.rule_type == 'expense':
+                    if r.type == 'expense':
                         recurring_expense += r.amount / 100
                     else:
                         recurring_income += r.amount / 100
