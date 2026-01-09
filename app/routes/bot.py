@@ -1981,7 +1981,7 @@ def smart_message():
             income_total = 0
             expense_total = 0
             
-            for rule in recurring_rules:
+            for idx, rule in enumerate(recurring_rules, 1):
                 amount = rule.amount / 100
                 icon = "💰" if rule.type == 'income' else "💸"
                 cat_name = rule.category.name_th if rule.category else "ไม่ระบุ"
@@ -1992,12 +1992,15 @@ def smart_message():
                     expense_total += amount
                 
                 freq_text = f'วันที่ {rule.day_of_month}' if rule.freq == 'monthly' else rule.freq
-                lines.append(f"{icon} {cat_name}: {amount:,.0f}฿ ({freq_text})")
+                status = "⏸️" if not rule.is_active else ""
+                lines.append(f"#{idx} {icon} {cat_name}: {amount:,.0f}฿ ({freq_text}) {status}")
                 if rule.note:
-                    lines.append(f"   📝 {rule.note}")
+                    lines.append(f"    📝 {rule.note}")
             
             lines.append("")
             lines.append(f"📊 รวม: +{income_total:,.0f}฿ | -{expense_total:,.0f}฿/เดือน")
+            lines.append("")
+            lines.append("💡 \"ลบรายการประจำที่ 1\" หรือ \"หยุด Netflix\"")
             
             return jsonify({
                 'success': True,
@@ -2010,12 +2013,97 @@ def smart_message():
         # ========================
         elif intent == 'delete_recurring':
             keyword = entities.get('keyword')
+            index = entities.get('index')
+            delete_all = entities.get('delete_all', False)
+            
+            # Get all recurring rules
+            recurring_rules = RecurringRule.query.filter(
+                RecurringRule.project_id == project_id,
+                RecurringRule.is_active == True
+            ).order_by(RecurringRule.next_run_date).all()
+            
+            if not recurring_rules:
+                return jsonify({
+                    'success': False,
+                    'message': '❌ ไม่มีรายการประจำให้ลบ'
+                })
+            
+            # Delete all (need confirmation)
+            if delete_all:
+                count = len(recurring_rules)
+                for rule in recurring_rules:
+                    rule.is_active = False
+                db.session.commit()
+                
+                return jsonify({
+                    'success': True,
+                    'message': f"🗑️ ลบรายการประจำทั้งหมด {count} รายการสำเร็จ!"
+                })
+            
+            rule = None
+            
+            # Delete by index
+            if index:
+                if 1 <= index <= len(recurring_rules):
+                    rule = recurring_rules[index - 1]
+                else:
+                    return jsonify({
+                        'success': False,
+                        'message': f'❌ ไม่พบรายการประจำที่ {index}\n\nมีรายการ 1-{len(recurring_rules)} เท่านั้น'
+                    })
+            
+            # Delete by keyword
+            elif keyword:
+                for r in recurring_rules:
+                    cat_name = r.category.name_th if r.category else ""
+                    if (r.note and keyword.lower() in r.note.lower()) or keyword.lower() in cat_name.lower():
+                        rule = r
+                        break
+                if not rule:
+                    return jsonify({
+                        'success': False,
+                        'message': f'ไม่พบรายการประจำ "{keyword}"'
+                    })
+            
+            # No criteria - show list
+            else:
+                lines = ["❓ ต้องการลบรายการประจำไหนคะ?", ""]
+                for idx, r in enumerate(recurring_rules[:5], 1):
+                    cat_name = r.category.name_th if r.category else 'ไม่ระบุ'
+                    amount = r.amount / 100
+                    lines.append(f"#{idx} {cat_name}: {amount:,.0f}฿")
+                lines.append("")
+                lines.append("พิมพ์ \"ลบรายการประจำที่ 1\"")
+                
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': '\n'.join(lines)
+                })
+            
+            # Execute delete
+            cat_name = rule.category.name_th if rule.category else "ไม่ระบุ"
+            amount = rule.amount / 100
+            
+            rule.is_active = False
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f"🗑️ ลบรายการประจำสำเร็จ!\n\n{cat_name}: {amount:,.0f}฿{' - ' + rule.note if rule.note else ''}"
+            })
+        
+        # ========================
+        # PAUSE RECURRING
+        # ========================
+        elif intent == 'pause_recurring':
+            keyword = entities.get('keyword')
             
             if not keyword:
                 return jsonify({
                     'success': True,
                     'need_more_info': True,
-                    'message': '❓ ต้องการลบรายการประจำชื่ออะไรคะ?'
+                    'message': '❓ ต้องการหยุดรายการประจำชื่ออะไรคะ?'
                 })
             
             rule = RecurringRule.query.filter(
@@ -2037,12 +2125,13 @@ def smart_message():
             cat_name = rule.category.name_th if rule.category else "ไม่ระบุ"
             amount = rule.amount / 100
             
+            # Pause by setting is_active to False
             rule.is_active = False
             db.session.commit()
             
             return jsonify({
                 'success': True,
-                'message': f"🗑️ ลบรายการประจำสำเร็จ!\n\n{cat_name}: {amount:,.0f}฿{' - ' + rule.note if rule.note else ''}\n\nต้องการทำอะไรต่อไหมคะ?"
+                'message': f"⏸️ หยุดรายการประจำชั่วคราว!\n\n{cat_name}: {amount:,.0f}฿\n\nพิมพ์ \"เปิด {keyword}\" เพื่อเปิดใช้งานอีกครั้ง"
             })
         
         # ========================
@@ -2301,35 +2390,108 @@ def smart_message():
             
             if period == 'today':
                 start_date = datetime(today.year, today.month, today.day)
+                period_text = 'วันนี้'
             elif period == 'this_week':
                 start_date = today - timedelta(days=today.weekday())
-            else:
+                period_text = 'สัปดาห์นี้'
+            elif period == 'this_year':
+                start_date = datetime(today.year, 1, 1)
+                period_text = 'ปีนี้'
+            elif period == 'last_month':
+                if today.month == 1:
+                    start_date = datetime(today.year - 1, 12, 1)
+                    end_date = datetime(today.year, 1, 1)
+                else:
+                    start_date = datetime(today.year, today.month - 1, 1)
+                    end_date = datetime(today.year, today.month, 1)
+                period_text = 'เดือนที่แล้ว'
+            else:  # this_month
                 start_date = datetime(today.year, today.month, 1)
+                period_text = 'เดือนนี้'
             
             # Get transactions
-            transactions = Transaction.query.filter(
+            query = Transaction.query.filter(
                 Transaction.project_id == project_id,
                 Transaction.occurred_at >= start_date,
                 Transaction.deleted_at.is_(None)
-            ).all()
+            )
+            if period == 'last_month':
+                query = query.filter(Transaction.occurred_at < end_date)
+            
+            transactions = query.all()
             
             income = sum(t.amount for t in transactions if t.type == 'income') / 100
             expense = sum(t.amount for t in transactions if t.type == 'expense') / 100
-            balance = income - expense
             
-            period_text = {
-                'today': 'วันนี้',
-                'this_week': 'สัปดาห์นี้',
-                'this_month': 'เดือนนี้'
-            }.get(period, 'เดือนนี้')
+            # Get recurring (monthly expense for this_month/this_year)
+            recurring_expense = 0
+            recurring_income = 0
+            recurring_count = 0
+            
+            if period in ['this_month', 'this_year', 'last_month']:
+                recurring_rules = RecurringRule.query.filter_by(
+                    project_id=project_id,
+                    is_active=True
+                ).all()
+                
+                for r in recurring_rules:
+                    if r.rule_type == 'expense':
+                        recurring_expense += r.amount / 100
+                    else:
+                        recurring_income += r.amount / 100
+                    recurring_count += 1
+            
+            total_income = income + recurring_income
+            total_expense = expense + recurring_expense
+            balance = total_income - total_expense
+            
+            # Build message
+            lines = [f"📊 สรุป{period_text}", ""]
+            lines.append(f"💰 รายรับ: {income:,.0f} บาท")
+            lines.append(f"💸 รายจ่าย: {expense:,.0f} บาท")
+            
+            if recurring_count > 0:
+                lines.append("")
+                lines.append(f"🔄 รายการประจำ ({recurring_count}):")
+                if recurring_income > 0:
+                    lines.append(f"   💰 รายรับประจำ: +{recurring_income:,.0f}฿")
+                if recurring_expense > 0:
+                    lines.append(f"   💸 รายจ่ายประจำ: -{recurring_expense:,.0f}฿")
+            
+            lines.append("")
+            balance_icon = '💚' if balance >= 0 else '❤️'
+            lines.append(f"{balance_icon} คงเหลือสุทธิ: {balance:+,.0f} บาท")
+            lines.append(f"📝 รายการทั่วไป: {len(transactions)} รายการ")
+            
+            # Compare with last month (if this_month)
+            if period == 'this_month':
+                if today.month == 1:
+                    last_start = datetime(today.year - 1, 12, 1)
+                    last_end = datetime(today.year, 1, 1)
+                else:
+                    last_start = datetime(today.year, today.month - 1, 1)
+                    last_end = datetime(today.year, today.month, 1)
+                
+                last_trans = Transaction.query.filter(
+                    Transaction.project_id == project_id,
+                    Transaction.occurred_at >= last_start,
+                    Transaction.occurred_at < last_end,
+                    Transaction.deleted_at.is_(None)
+                ).all()
+                
+                last_expense = sum(t.amount for t in last_trans if t.type == 'expense') / 100
+                
+                if last_expense > 0:
+                    diff = expense - last_expense
+                    diff_pct = (diff / last_expense) * 100
+                    if diff > 0:
+                        lines.append(f"📈 vs เดือนก่อน: +{diff:,.0f}฿ ({diff_pct:+.0f}%)")
+                    else:
+                        lines.append(f"📉 vs เดือนก่อน: {diff:,.0f}฿ ({diff_pct:+.0f}%)")
             
             return jsonify({
                 'success': True,
-                'message': f"📊 สรุป{period_text}\n\n"
-                          f"💰 รายรับ: {income:,.0f} บาท\n"
-                          f"💸 รายจ่าย: {expense:,.0f} บาท\n"
-                          f"{'💚' if balance >= 0 else '❤️'} คงเหลือ: {balance:+,.0f} บาท\n"
-                          f"📝 รายการ: {len(transactions)} รายการ"
+                'message': '\n'.join(lines)
             })
         
         # ========================
@@ -2716,6 +2878,65 @@ def smart_message():
                           f"👤 Profile:\nhttps://{base_url}/profile\n\n"
                           f"📈 Analytics:\nhttps://{base_url}/analytics\n\n"
                           f"คลิกลิงก์เพื่อดูรายละเอียดเพิ่มเติมได้เลยค่ะ! 💜"
+            })
+        
+        # ========================
+        # DELETE ALL CONFIRM
+        # ========================
+        elif intent == 'delete_all_confirm':
+            # Get counts
+            today = datetime.utcnow()
+            start_date = datetime(today.year, today.month, 1)
+            
+            trans_count = Transaction.query.filter(
+                Transaction.project_id == project_id,
+                Transaction.occurred_at >= start_date,
+                Transaction.deleted_at.is_(None)
+            ).count()
+            
+            recurring_count = RecurringRule.query.filter_by(
+                project_id=project_id,
+                is_active=True
+            ).count()
+            
+            return jsonify({
+                'success': True,
+                'need_more_info': True,
+                'message': f"❓ ต้องการลบรายการทั้งหมดแบบไหนคะ?\n\n"
+                          f"📝 รายการปกติเดือนนี้: {trans_count} รายการ\n"
+                          f"   พิมพ์: \"ลบรายการทั้งหมดเดือนนี้\"\n\n"
+                          f"🔄 รายการประจำ: {recurring_count} รายการ\n"
+                          f"   พิมพ์: \"ลบรายการประจำทั้งหมด\"\n\n"
+                          f"⚠️ การลบไม่สามารถกู้คืนได้!"
+            })
+        
+        # ========================
+        # DELETE ALL TRANSACTIONS
+        # ========================
+        elif intent == 'delete_all_transactions':
+            today = datetime.utcnow()
+            start_date = datetime(today.year, today.month, 1)
+            
+            transactions = Transaction.query.filter(
+                Transaction.project_id == project_id,
+                Transaction.occurred_at >= start_date,
+                Transaction.deleted_at.is_(None)
+            ).all()
+            
+            if not transactions:
+                return jsonify({
+                    'success': False,
+                    'message': '❌ ไม่มีรายการเดือนนี้ให้ลบ'
+                })
+            
+            count = len(transactions)
+            for t in transactions:
+                t.deleted_at = datetime.utcnow()
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f"🗑️ ลบรายการเดือนนี้ทั้งหมด {count} รายการสำเร็จ!"
             })
         
         # ========================

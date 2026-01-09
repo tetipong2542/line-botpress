@@ -118,8 +118,29 @@ class GeminiNLPService:
             'confidence': 0.5
         }
         
+        # Check for pause recurring (หยุด/พัก Netflix) - before recurring check
+        if any(x in message_lower for x in ['หยุด', 'พัก', 'pause']) and 'ประจำ' not in message_lower:
+            result['intent'] = 'pause_recurring'
+            words = message.split()
+            for i, w in enumerate(words):
+                if any(kw in w for kw in ['หยุด', 'พัก', 'pause']) and i + 1 < len(words):
+                    result['entities']['keyword'] = words[i + 1]
+                    break
+            return result
+        
+        # Check for delete all (need clarification: recurring or regular?)
+        if 'ลบรายการทั้งหมด' in message_lower or ('ลบ' in message_lower and 'ทั้งหมด' in message_lower):
+            if 'ประจำ' in message_lower:
+                result['intent'] = 'delete_recurring'
+                result['entities']['delete_all'] = True
+            elif 'เดือน' in message_lower:
+                result['intent'] = 'delete_all_transactions'
+            else:
+                result['intent'] = 'delete_all_confirm'
+            return result
+        
         # Check for recurring patterns
-        if 'รายการประจำ' in message:
+        if 'รายการประจำ' in message or 'ประจำ' in message_lower:
             if any(x in message_lower for x in ['เพิ่ม', 'สร้าง', 'ตั้ง']):
                 result['intent'] = 'create_recurring'
                 # Extract amount
@@ -141,10 +162,31 @@ class GeminiNLPService:
                     
             elif any(x in message_lower for x in ['ลบ', 'ยกเลิก']):
                 result['intent'] = 'delete_recurring'
+                
+                # Check for index (ลบรายการประจำที่ 1)
+                num_match = re.search(r'ที่\s*(\d+)|ประจำ\s*(\d+)', message)
+                if num_match:
+                    result['entities']['index'] = int(num_match.group(1) or num_match.group(2))
+                
+                # Check for "ทั้งหมด"
+                if 'ทั้งหมด' in message_lower:
+                    result['entities']['delete_all'] = True
+                
+                # Extract keyword
+                if 'index' not in result['entities'] and 'delete_all' not in result['entities']:
+                    words = message.split()
+                    for i, w in enumerate(words):
+                        if 'ประจำ' in w and i + 1 < len(words):
+                            next_word = words[i + 1]
+                            if not next_word.isdigit() and next_word not in ['ที่', 'ทั้งหมด']:
+                                result['entities']['keyword'] = next_word
+                                break
+            elif any(x in message_lower for x in ['หยุด', 'pause', 'พัก']):
+                result['intent'] = 'pause_recurring'
                 # Extract keyword
                 words = message.split()
                 for i, w in enumerate(words):
-                    if 'ประจำ' in w and i + 1 < len(words):
+                    if any(kw in w for kw in ['หยุด', 'พัก']) and i + 1 < len(words):
                         result['entities']['keyword'] = words[i + 1]
                         break
             elif any(x in message_lower for x in ['แก้ไข', 'เปลี่ยน', 'อัพเดท']):
@@ -159,6 +201,12 @@ class GeminiNLPService:
                 result['entities']['period'] = 'today'
             elif 'สัปดาห์' in message_lower:
                 result['entities']['period'] = 'this_week'
+            elif 'ปี' in message_lower or 'year' in message_lower:
+                result['entities']['period'] = 'this_year'
+            elif 'เดือนที่แล้ว' in message_lower or 'เดือนก่อน' in message_lower:
+                result['entities']['period'] = 'last_month'
+            else:
+                result['entities']['period'] = 'this_month'
         
         # Check for categories
         elif any(x in message_lower for x in ['หมวดหมู่', 'category', 'categories']):
