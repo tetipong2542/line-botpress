@@ -160,6 +160,19 @@ class GeminiNLPService:
             elif 'สัปดาห์' in message_lower:
                 result['entities']['period'] = 'this_week'
         
+        # Check for categories
+        elif any(x in message_lower for x in ['หมวดหมู่', 'category', 'categories']):
+            if any(x in message_lower for x in ['สร้าง', 'เพิ่ม']):
+                result['intent'] = 'create_category'
+                # Try to extract category name
+                words = message.split()
+                for i, w in enumerate(words):
+                    if 'หมวดหมู่' in w and i + 1 < len(words):
+                        result['entities']['category_name'] = words[i + 1]
+                        break
+            else:
+                result['intent'] = 'get_categories'
+        
         # Check for goals
         elif any(x in message_lower for x in ['เป้าหมาย', 'ออม']):
             if any(x in message_lower for x in ['ตั้ง', 'สร้าง']):

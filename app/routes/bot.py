@@ -2184,6 +2184,153 @@ def smart_message():
             })
         
         # ========================
+        # GET CATEGORIES
+        # ========================
+        elif intent == 'get_categories':
+            categories = Category.query.filter_by(project_id=project_id).order_by(Category.type, Category.name_th).all()
+            
+            if not categories:
+                return jsonify({
+                    'success': True,
+                    'message': '📁 ยังไม่มีหมวดหมู่\n\nพิมพ์ "สร้างหมวดหมู่ [ชื่อ]" เพื่อสร้างใหม่'
+                })
+            
+            income_cats = [c for c in categories if c.type == 'income']
+            expense_cats = [c for c in categories if c.type == 'expense']
+            
+            lines = ["📁 หมวดหมู่ของคุณ:", ""]
+            
+            if income_cats:
+                lines.append("💰 **รายรับ:**")
+                for cat in income_cats:
+                    lines.append(f"  • {cat.name_th}")
+            
+            if expense_cats:
+                lines.append("\n💸 **รายจ่าย:**")
+                for cat in expense_cats:
+                    lines.append(f"  • {cat.name_th}")
+            
+            lines.append(f"\n📊 รวม {len(categories)} หมวดหมู่")
+            
+            return jsonify({
+                'success': True,
+                'count': len(categories),
+                'message': '\n'.join(lines)
+            })
+        
+        # ========================
+        # CREATE CATEGORY
+        # ========================
+        elif intent == 'create_category':
+            category_name = entities.get('category_name')
+            category_type = entities.get('type', 'expense')
+            
+            if not category_name:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': '❓ ต้องการสร้างหมวดหมู่ชื่ออะไรคะ?'
+                })
+            
+            # Check if exists
+            existing = Category.query.filter(
+                Category.project_id == project_id,
+                Category.name_th.ilike(f'%{category_name}%')
+            ).first()
+            
+            if existing:
+                return jsonify({
+                    'success': False,
+                    'message': f'❌ หมวดหมู่ "{category_name}" มีอยู่แล้ว'
+                })
+            
+            new_category = Category(
+                project_id=project_id,
+                name_th=category_name,
+                name_en=category_name,
+                icon='📁',
+                type=category_type
+            )
+            
+            db.session.add(new_category)
+            db.session.commit()
+            
+            type_text = 'รายรับ' if category_type == 'income' else 'รายจ่าย'
+            
+            return jsonify({
+                'success': True,
+                'message': f"✅ สร้างหมวดหมู่สำเร็จ!\n\n"
+                          f"📁 {category_name}\n"
+                          f"💰 ประเภท: {type_text}\n\n"
+                          f"ต้องการทำอะไรต่อไหมคะ?"
+            })
+        
+        # ========================
+        # CREATE TRANSACTION
+        # ========================
+        elif intent == 'create_transaction':
+            amount = entities.get('amount')
+            trans_type = entities.get('type', 'expense')
+            category_name = entities.get('category_name', '')
+            note = entities.get('note', '')
+            
+            if not amount:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': '💰 กรุณาระบุจำนวนเงินค่ะ'
+                })
+            
+            # Convert to satang
+            if amount < 1000000:
+                amount = int(amount * 100)
+            
+            # Find category
+            category = None
+            if category_name:
+                category = Category.query.filter(
+                    Category.project_id == project_id,
+                    Category.name_th.ilike(f'%{category_name}%'),
+                    Category.type == trans_type
+                ).first()
+            
+            if not category:
+                category = Category.query.filter(
+                    Category.project_id == project_id,
+                    Category.type == trans_type
+                ).first()
+            
+            if not category:
+                return jsonify({
+                    'success': False,
+                    'message': f'ไม่พบหมวดหมู่สำหรับ {trans_type}'
+                })
+            
+            transaction = Transaction(
+                project_id=project_id,
+                type=trans_type,
+                category_id=category.id,
+                amount=amount,
+                note=note or category_name,
+                occurred_at=datetime.utcnow()
+            )
+            
+            db.session.add(transaction)
+            db.session.commit()
+            
+            amount_baht = amount / 100
+            icon = '💰' if trans_type == 'income' else '💸'
+            
+            return jsonify({
+                'success': True,
+                'message': f"{icon} บันทึกสำเร็จ!\n\n"
+                          f"📁 {category.name_th}\n"
+                          f"💵 {amount_baht:,.0f} บาท\n"
+                          f"📝 {note or '-'}\n\n"
+                          f"ต้องการบันทึกรายการเพิ่มไหมคะ?"
+            })
+        
+        # ========================
         # GENERAL / UNKNOWN
         # ========================
         else:
@@ -2195,6 +2342,7 @@ def smart_message():
                           f"📝 บันทึกรายการ: \"กินข้าว 350 บาท\"\n"
                           f"🔄 รายการประจำ: \"รายการประจำ\"\n"
                           f"🎯 เป้าหมาย: \"เป้าหมายออมเงิน\"\n"
+                          f"📁 หมวดหมู่: \"หมวดหมู่ทั้งหมด\"\n"
                           f"📊 สรุป: \"สรุปวันนี้\""
             })
     
