@@ -53,8 +53,15 @@ class TransactionService:
             raise ValueError(f"Category type mismatch: category is {category.type}, transaction is {type}")
 
         # Convert amount to satang if needed
-        if isinstance(amount, float):
-            amount = baht_to_satang(amount)
+        # Bot API sends amount in baht (e.g., 200 for 200 baht)
+        # Web API sends amount in baht as float (e.g., 200.0)
+        # We need to convert to satang (multiply by 100)
+        if isinstance(amount, (int, float)):
+            # If amount looks like baht (reasonable user input), convert to satang
+            # Amounts < 1000000 are assumed to be in baht
+            # This handles both "200" (int) and "200.0" (float) from different sources
+            if amount < 1000000:  # Less than 10,000 baht in satang would be < 1,000,000
+                amount = baht_to_satang(amount)
         amount = validate_amount(amount)
 
         # Parse occurred_at
@@ -170,7 +177,7 @@ class TransactionService:
         # Update fields
         if 'amount' in updates:
             amount = updates['amount']
-            if isinstance(amount, float):
+            if isinstance(amount, (int, float)) and amount < 1000000:
                 amount = baht_to_satang(amount)
             transaction.amount = validate_amount(amount)
 
