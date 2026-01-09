@@ -1809,3 +1809,380 @@ def analyze_finances():
             'success': False,
             'message': f'เกิดข้อผิดพลาด: {str(e)}'
         }), 500
+
+
+@bp.route('/smart', methods=['POST'])
+@require_bot_auth
+def smart_message():
+    """
+    Smart NLP endpoint - Universal message handler using Gemini AI
+    
+    This is the ONLY action Botpress needs to call.
+    It understands natural language and routes to appropriate functions.
+    
+    Request: { botpress_user_id, message, context (optional) }
+    Response: { success, message, need_more_info, question }
+    """
+    from app.services.gemini_nlp_service import gemini_nlp
+    from app.models.recurring import RecurringRule
+    from app.models.category import Category
+    from app.models.savings_goal import SavingsGoal
+    from datetime import date
+    
+    data = request.json
+    botpress_user_id = data.get('botpress_user_id') or data.get('line_user_id')
+    message = data.get('message', '').strip()
+    context = data.get('context', {})  # For multi-turn conversations
+    
+    if not botpress_user_id:
+        return jsonify({
+            'success': False,
+            'message': 'botpress_user_id is required'
+        }), 400
+    
+    if not message:
+        return jsonify({
+            'success': False,
+            'message': 'message is required'
+        }), 400
+    
+    # Find user
+    user = User.query.filter_by(botpress_user_id=botpress_user_id).first()
+    if not user:
+        user = User.query.filter_by(line_user_id=botpress_user_id).first()
+    
+    if not user or not user.current_project_id:
+        return jsonify({
+            'success': False,
+            'message': 'ยังไม่ได้เชื่อมต่อบัญชี กรุณาพิมพ์ \"เชื่อมต่อ\" เพื่อลงทะเบียน'
+        })
+    
+    project_id = user.current_project_id
+    
+    # Parse message using Gemini NLP
+    parsed = gemini_nlp.parse_message(message)
+    intent = parsed.get('intent', 'general')
+    entities = parsed.get('entities', {})
+    missing_fields = parsed.get('missing_fields', [])
+    fallback_question = parsed.get('fallback_question')
+    
+    # Check for missing required fields
+    if missing_fields and fallback_question:
+        return jsonify({
+            'success': True,
+            'need_more_info': True,
+            'missing_fields': missing_fields,
+            'message': f"📝 {fallback_question}"
+        })
+    
+    # Route based on intent
+    try:
+        # ========================
+        # CREATE RECURRING
+        # ========================
+        if intent == 'create_recurring':
+            amount = entities.get('amount')
+            day_of_month = entities.get('day_of_month', 1)
+            note = entities.get('note', '')
+            category_name = entities.get('category_name', '')
+            trans_type = entities.get('type', 'expense')
+            
+            if not amount:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': '💰 กรุณาระบุจำนวนเงินด้วยค่ะ'
+                })
+            
+            # Convert to satang
+            if amount < 1000000:
+                amount = int(amount * 100)
+            
+            # Find or create category
+            category = None
+            if category_name:
+                category = Category.query.filter(
+                    Category.project_id == project_id,
+                    Category.name_th.ilike(f'%{category_name}%'),
+                    Category.type == trans_type
+                ).first()
+            
+            if not category:
+                category = Category.query.filter(
+                    Category.project_id == project_id,
+                    Category.type == trans_type
+                ).first()
+            
+            if not category:
+                return jsonify({
+                    'success': False,
+                    'message': f'ไม่พบหมวดหมู่สำหรับ {trans_type}'
+                })
+            
+            recurring = RecurringRule(
+                project_id=project_id,
+                type=trans_type,
+                category_id=category.id,
+                amount=amount,
+                freq='monthly',
+                start_date=date.today(),
+                day_of_month=day_of_month,
+                note=note or category_name
+            )
+            
+            db.session.add(recurring)
+            db.session.commit()
+            
+            amount_baht = amount / 100
+            return jsonify({
+                'success': True,
+                'message': f"✅ สร้างรายการประจำสำเร็จ!\n\n"
+                          f"📌 {category.name_th}{' - ' + (note or category_name) if (note or category_name) else ''}\n"
+                          f"💰 {amount_baht:,.0f} บาท\n"
+                          f"📅 ทุกวันที่ {day_of_month} ของเดือน\n"
+                          f"🗓️ ครั้งถัดไป: {recurring.next_run_date.strftime('%d/%m/%Y')}\n\n"
+                          f"ต้องการทำอะไรต่อไหมคะ?"
+            })
+        
+        # ========================
+        # GET RECURRING
+        # ========================
+        elif intent == 'get_recurring':
+            recurring_rules = RecurringRule.query.filter(
+                RecurringRule.project_id == project_id,
+                RecurringRule.is_active == True
+            ).order_by(RecurringRule.next_run_date).all()
+            
+            if not recurring_rules:
+                return jsonify({
+                    'success': True,
+                    'message': '🔄 ยังไม่มีรายการประจำ\n\nพิมพ์ "เพิ่มรายการประจำ [ชื่อ] [จำนวน] บาททุกวันที่ [วัน]"'
+                })
+            
+            lines = ["🔄 รายการประจำของคุณ:", ""]
+            income_total = 0
+            expense_total = 0
+            
+            for rule in recurring_rules:
+                amount = rule.amount / 100
+                icon = "💰" if rule.type == 'income' else "💸"
+                cat_name = rule.category.name_th if rule.category else "ไม่ระบุ"
+                
+                if rule.type == 'income':
+                    income_total += amount
+                else:
+                    expense_total += amount
+                
+                freq_text = f'วันที่ {rule.day_of_month}' if rule.freq == 'monthly' else rule.freq
+                lines.append(f"{icon} {cat_name}: {amount:,.0f}฿ ({freq_text})")
+                if rule.note:
+                    lines.append(f"   📝 {rule.note}")
+            
+            lines.append("")
+            lines.append(f"📊 รวม: +{income_total:,.0f}฿ | -{expense_total:,.0f}฿/เดือน")
+            
+            return jsonify({
+                'success': True,
+                'count': len(recurring_rules),
+                'message': '\n'.join(lines)
+            })
+        
+        # ========================
+        # DELETE RECURRING
+        # ========================
+        elif intent == 'delete_recurring':
+            keyword = entities.get('keyword')
+            
+            if not keyword:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': '❓ ต้องการลบรายการประจำชื่ออะไรคะ?'
+                })
+            
+            rule = RecurringRule.query.filter(
+                RecurringRule.project_id == project_id,
+                RecurringRule.is_active == True
+            ).join(Category, RecurringRule.category_id == Category.id).filter(
+                db.or_(
+                    RecurringRule.note.ilike(f'%{keyword}%'),
+                    Category.name_th.ilike(f'%{keyword}%')
+                )
+            ).first()
+            
+            if not rule:
+                return jsonify({
+                    'success': False,
+                    'message': f'ไม่พบรายการประจำ "{keyword}"'
+                })
+            
+            cat_name = rule.category.name_th if rule.category else "ไม่ระบุ"
+            amount = rule.amount / 100
+            
+            rule.is_active = False
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f"🗑️ ลบรายการประจำสำเร็จ!\n\n{cat_name}: {amount:,.0f}฿{' - ' + rule.note if rule.note else ''}\n\nต้องการทำอะไรต่อไหมคะ?"
+            })
+        
+        # ========================
+        # UPDATE RECURRING
+        # ========================
+        elif intent == 'update_recurring':
+            keyword = entities.get('keyword')
+            
+            if not keyword:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': '❓ ต้องการแก้ไขรายการประจำชื่ออะไรคะ?'
+                })
+            
+            rule = RecurringRule.query.filter(
+                RecurringRule.project_id == project_id,
+                RecurringRule.is_active == True
+            ).join(Category, RecurringRule.category_id == Category.id).filter(
+                db.or_(
+                    RecurringRule.note.ilike(f'%{keyword}%'),
+                    Category.name_th.ilike(f'%{keyword}%')
+                )
+            ).first()
+            
+            if not rule:
+                return jsonify({
+                    'success': False,
+                    'message': f'ไม่พบรายการประจำ "{keyword}"'
+                })
+            
+            changes = []
+            
+            if 'day_of_month' in entities and entities['day_of_month']:
+                old_day = rule.day_of_month
+                rule.day_of_month = int(entities['day_of_month'])
+                rule.next_run_date = rule._calculate_next_run(date.today())
+                changes.append(f"วันที่: {old_day} → {rule.day_of_month}")
+            
+            if 'amount' in entities and entities['amount']:
+                old_amount = rule.amount / 100
+                new_amount = entities['amount']
+                if new_amount < 1000000:
+                    new_amount = int(new_amount * 100)
+                rule.amount = new_amount
+                changes.append(f"จำนวนเงิน: {old_amount:,.0f}฿ → {new_amount/100:,.0f}฿")
+            
+            if not changes:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': '❓ ต้องการแก้ไขอะไรคะ?\n• วันที่ (เช่น วันที่ 15)\n• จำนวนเงิน (เช่น 500 บาท)'
+                })
+            
+            db.session.commit()
+            cat_name = rule.category.name_th if rule.category else "ไม่ระบุ"
+            
+            return jsonify({
+                'success': True,
+                'message': f"✅ แก้ไขรายการประจำสำเร็จ!\n\n"
+                          f"📌 {cat_name}{' - ' + rule.note if rule.note else ''}\n"
+                          f"📝 เปลี่ยนแปลง:\n" + '\n'.join([f"  • {c}" for c in changes]) + "\n\n"
+                          f"🗓️ ครั้งถัดไป: {rule.next_run_date.strftime('%d/%m/%Y')}"
+            })
+        
+        # ========================
+        # GET GOALS
+        # ========================
+        elif intent == 'get_goals':
+            goals = SavingsGoal.query.filter_by(project_id=project_id, is_active=True).all()
+            
+            if not goals:
+                return jsonify({
+                    'success': True,
+                    'message': '🎯 ยังไม่มีเป้าหมายออมเงิน\n\nพิมพ์ "ตั้งเป้าออม [ชื่อ] [จำนวน] บาทใน [X] เดือน"'
+                })
+            
+            lines = ["🎯 เป้าหมายออมเงินของคุณ:", ""]
+            
+            for goal in goals:
+                target = goal.target_amount / 100
+                current = (goal.current_amount or 0) / 100
+                progress = goal.progress_percentage or 0
+                status = "✅" if goal.is_completed else "🎯"
+                
+                lines.append(f"{status} {goal.name}")
+                lines.append(f"   💰 {current:,.0f}/{target:,.0f}฿ ({progress:.0f}%)")
+                
+                if goal.days_remaining is not None and not goal.is_completed:
+                    lines.append(f"   📅 เหลือ {goal.days_remaining} วัน")
+                lines.append("")
+            
+            return jsonify({
+                'success': True,
+                'goals_count': len(goals),
+                'message': '\n'.join(lines)
+            })
+        
+        # ========================
+        # GET SUMMARY
+        # ========================
+        elif intent == 'get_summary':
+            from app.services.ai_analytics_service import AIAnalyticsService
+            
+            period = entities.get('period', 'this_month')
+            today = datetime.utcnow()
+            
+            if period == 'today':
+                start_date = datetime(today.year, today.month, today.day)
+            elif period == 'this_week':
+                start_date = today - timedelta(days=today.weekday())
+            else:
+                start_date = datetime(today.year, today.month, 1)
+            
+            # Get transactions
+            transactions = Transaction.query.filter(
+                Transaction.project_id == project_id,
+                Transaction.occurred_at >= start_date,
+                Transaction.deleted_at.is_(None)
+            ).all()
+            
+            income = sum(t.amount for t in transactions if t.type == 'income') / 100
+            expense = sum(t.amount for t in transactions if t.type == 'expense') / 100
+            balance = income - expense
+            
+            period_text = {
+                'today': 'วันนี้',
+                'this_week': 'สัปดาห์นี้',
+                'this_month': 'เดือนนี้'
+            }.get(period, 'เดือนนี้')
+            
+            return jsonify({
+                'success': True,
+                'message': f"📊 สรุป{period_text}\n\n"
+                          f"💰 รายรับ: {income:,.0f} บาท\n"
+                          f"💸 รายจ่าย: {expense:,.0f} บาท\n"
+                          f"{'💚' if balance >= 0 else '❤️'} คงเหลือ: {balance:+,.0f} บาท\n"
+                          f"📝 รายการ: {len(transactions)} รายการ"
+            })
+        
+        # ========================
+        # GENERAL / UNKNOWN
+        # ========================
+        else:
+            return jsonify({
+                'success': True,
+                'intent': intent,
+                'entities': entities,
+                'message': f"สวัสดีค่ะ! ฉันช่วยอะไรได้บ้าง?\n\n"
+                          f"📝 บันทึกรายการ: \"กินข้าว 350 บาท\"\n"
+                          f"🔄 รายการประจำ: \"รายการประจำ\"\n"
+                          f"🎯 เป้าหมาย: \"เป้าหมายออมเงิน\"\n"
+                          f"📊 สรุป: \"สรุปวันนี้\""
+            })
+    
+    except Exception as e:
+        current_app.logger.error(f"Smart endpoint error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'เกิดข้อผิดพลาด: {str(e)}'
+        }), 500
