@@ -1,0 +1,525 @@
+{% extends "base.html" %}
+
+{% block title %}เป้าหมายออมเงิน - จดรายรับรายจ่าย{% endblock %}
+
+{% block content %}
+<div class="mobile-container page-loading">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1>
+                <i data-lucide="target"></i>
+                เป้าหมายออมเงิน{% if user %} - {{ user.display_name }}{% endif %}
+            </h1>
+            <p class="subtitle">ตั้งเป้าหมายและติดตามความคืบหน้า</p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="goals-stats">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i data-lucide="target"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="goals-count">0</div>
+                <div class="stat-label">เป้าหมาย</div>
+            </div>
+        </div>
+
+        <div class="stat-card income">
+            <div class="stat-icon">
+                <i data-lucide="piggy-bank"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="total-saved">฿0</div>
+                <div class="stat-label">ออมแล้ว</div>
+            </div>
+        </div>
+
+        <div class="stat-card expense">
+            <div class="stat-icon">
+                <i data-lucide="flag"></i>
+            </div>
+            <div class="stat-content">
+                <div class="stat-value" id="avg-progress">0%</div>
+                <div class="stat-label">เฉลี่ย</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Goals List -->
+    <div class="section">
+        <div class="goals-list">
+            <!-- Empty State -->
+            <div class="empty-state">
+                <i data-lucide="target"></i>
+                <p>ยังไม่มีเป้าหมายออมเงิน</p>
+                <p class="empty-subtitle">ตั้งเป้าหมายเพื่อเริ่มออมเงิน</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-spacing"></div>
+</div>
+
+<!-- Floating Action Button -->
+<div class="floating-action">
+    <button class="btn-fab" id="add-goal-btn">
+        <i data-lucide="plus"></i>
+    </button>
+</div>
+
+<!-- Modal: Add/Edit Goal -->
+<div class="modal" id="goal-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content modal-large">
+        <div class="modal-header income">
+            <h2>เป้าหมายออมเงิน</h2>
+            <button class="modal-close">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <form class="modal-body" id="goal-form">
+            <!-- ชื่อเป้าหมาย -->
+            <div class="form-group">
+                <label class="form-label">ชื่อเป้าหมาย</label>
+                <input type="text" class="form-input" id="goal-name" placeholder="เช่น ซื้อ iPhone, ท่องเที่ยว"
+                    required>
+            </div>
+
+            <!-- จำนวนเงินเป้าหมาย -->
+            <div class="form-group">
+                <label class="form-label">จำนวนเงินเป้าหมาย (THB)</label>
+                <div class="amount-input-wrapper">
+                    <span class="currency">฿</span>
+                    <input type="number" class="form-input amount-input" id="goal-amount" placeholder="50000" required>
+                </div>
+            </div>
+
+            <!-- ระยะเวลา -->
+            <div class="form-group">
+                <label class="form-label">ระยะเวลา (เดือน)</label>
+                <select class="form-select" id="goal-months">
+                    <option value="1">1 เดือน</option>
+                    <option value="3">3 เดือน</option>
+                    <option value="6" selected>6 เดือน</option>
+                    <option value="12">1 ปี</option>
+                    <option value="24">2 ปี</option>
+                </select>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn-primary">
+                <i data-lucide="check"></i>
+                <span>บันทึก</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Add Contribution -->
+<div class="modal" id="contribute-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header income">
+            <h2>เพิ่มเงินออม</h2>
+            <button class="modal-close">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <form class="modal-body" id="contribute-form">
+            <input type="hidden" id="contribute-goal-id">
+            <div class="form-group">
+                <label class="form-label">จำนวนเงิน (THB)</label>
+                <div class="amount-input-wrapper">
+                    <span class="currency">฿</span>
+                    <input type="number" class="form-input amount-input" id="contribute-amount" placeholder="5000"
+                        required>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary">
+                <i data-lucide="plus"></i>
+                <span>เพิ่มเงินออม</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Footer Menu -->
+{% set current_page = 'goals' %}
+{% include 'components/footer_menu.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Modal controls
+    const goalModal = document.getElementById('goal-modal');
+    const contributeModal = document.getElementById('contribute-modal');
+    const addBtn = document.getElementById('add-goal-btn');
+
+    function openModal(modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    addBtn.addEventListener('click', () => openModal(goalModal));
+
+    document.querySelectorAll('.modal-close, .modal-overlay').forEach(el => {
+        el.addEventListener('click', (e) => {
+            const modal = e.target.closest('.modal');
+            if (modal) closeModal(modal);
+        });
+    });
+
+    // Load goals
+    async function loadGoals() {
+        try {
+            const result = await API.get(buildApiUrl('savings-goals'));
+            const goalsList = document.querySelector('.goals-list');
+
+            if (result.savings_goals && result.savings_goals.length > 0) {
+                renderGoals(result.savings_goals);
+            } else {
+                goalsList.innerHTML = `
+                <div class="empty-state">
+                    <i data-lucide="target"></i>
+                    <p>ยังไม่มีเป้าหมายออมเงิน</p>
+                    <p class="empty-subtitle">ตั้งเป้าหมายเพื่อเริ่มออมเงิน</p>
+                    <button class="btn-primary" onclick="openModal(goalModal)">
+                        <i data-lucide="plus"></i> เพิ่มเป้าหมายแรก
+                    </button>
+                </div>
+            `;
+                lucide.createIcons();
+            }
+        } catch (error) {
+            console.error('Error loading goals:', error);
+        }
+    }
+
+    function renderGoals(goals) {
+        const goalsList = document.querySelector('.goals-list');
+
+        // Update stats
+        let totalSaved = 0;
+        let totalProgress = 0;
+
+        goals.forEach(goal => {
+            totalSaved += goal.current_amount || 0;
+            totalProgress += goal.progress_percentage || 0;
+        });
+
+        document.getElementById('goals-count').textContent = goals.length;
+        document.getElementById('total-saved').textContent = '฿' + (totalSaved / 100).toLocaleString('th-TH');
+        document.getElementById('avg-progress').textContent = Math.round(totalProgress / goals.length) + '%';
+
+        // Render cards
+        goalsList.innerHTML = goals.map(goal => {
+            const current = (goal.current_amount || 0) / 100;
+            const target = goal.target_amount / 100;
+            const progress = goal.progress_percentage || 0;
+            const isCompleted = goal.is_completed;
+            const isOverdue = goal.is_overdue;
+
+            return `
+            <div class="goal-card ${isCompleted ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}" data-id="${goal.id}">
+                <div class="goal-header">
+                    <div class="goal-icon">
+                        <i data-lucide="${isCompleted ? 'check-circle' : 'target'}"></i>
+                    </div>
+                    <div class="goal-info">
+                        <h3 class="goal-name">${goal.name}</h3>
+                        <p class="goal-target">เป้าหมาย: ฿${target.toLocaleString('th-TH')}</p>
+                    </div>
+                    <div class="goal-actions">
+                        ${!isCompleted ? `
+                            <button class="btn-icon" onclick="openContribute('${goal.id}')" title="เพิ่มเงิน">
+                                <i data-lucide="plus-circle"></i>
+                            </button>
+                        ` : ''}
+                        <button class="btn-icon delete" onclick="deleteGoal('${goal.id}')" title="ลบ">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="goal-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill ${isCompleted ? 'complete' : ''}" style="width: ${Math.min(progress, 100)}%"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span>฿${current.toLocaleString('th-TH')} / ฿${target.toLocaleString('th-TH')}</span>
+                        <span>${progress.toFixed(0)}%</span>
+                    </div>
+                </div>
+                
+                ${goal.days_remaining !== null && !isCompleted ? `
+                    <div class="goal-footer">
+                        <span class="days-remaining ${isOverdue ? 'overdue' : ''}">
+                            <i data-lucide="calendar"></i>
+                            ${isOverdue ? 'เกินกำหนด' : `เหลืออีก ${goal.days_remaining} วัน`}
+                        </span>
+                    </div>
+                ` : ''}
+                
+                ${isCompleted ? `
+                    <div class="goal-footer completed">
+                        <span class="completed-badge">
+                            <i data-lucide="trophy"></i>
+                            บรรลุเป้าหมายแล้ว!
+                        </span>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+        }).join('');
+
+        lucide.createIcons();
+    }
+
+    // Open contribute modal
+    function openContribute(goalId) {
+        document.getElementById('contribute-goal-id').value = goalId;
+        document.getElementById('contribute-amount').value = '';
+        openModal(contributeModal);
+    }
+
+    // Create goal
+    document.getElementById('goal-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+
+        const payload = {
+            name: document.getElementById('goal-name').value,
+            target_amount: Math.round(parseFloat(document.getElementById('goal-amount').value) * 100),
+            months: parseInt(document.getElementById('goal-months').value)
+        };
+
+        try {
+            await API.post(buildApiUrl('savings-goals'), payload);
+            showToast('สร้างเป้าหมายสำเร็จ!', 'success');
+            closeModal(goalModal);
+            document.getElementById('goal-form').reset();
+            await loadGoals();
+        } catch (error) {
+            showToast(error.message || 'เกิดข้อผิดพลาด', 'error');
+        } finally {
+            submitBtn.disabled = false;
+        }
+    });
+
+    // Add contribution
+    document.getElementById('contribute-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+
+        const goalId = document.getElementById('contribute-goal-id').value;
+        const amount = Math.round(parseFloat(document.getElementById('contribute-amount').value) * 100);
+
+        try {
+            await API.post(buildApiUrl('savings-goals', goalId, 'contribute'), { amount });
+            showToast('เพิ่มเงินออมสำเร็จ!', 'success');
+            closeModal(contributeModal);
+            await loadGoals();
+        } catch (error) {
+            showToast(error.message || 'เกิดข้อผิดพลาด', 'error');
+        } finally {
+            submitBtn.disabled = false;
+        }
+    });
+
+    // Delete goal
+    async function deleteGoal(goalId) {
+        if (!confirm('ต้องการลบเป้าหมายนี้หรือไม่?')) return;
+
+        try {
+            await API.delete(buildApiUrl('savings-goals', goalId));
+            showToast('ลบเป้าหมายสำเร็จ!', 'success');
+            await loadGoals();
+        } catch (error) {
+            showToast(error.message || 'เกิดข้อผิดพลาด', 'error');
+        }
+    }
+
+    // Load on page ready
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadGoals();
+
+        const container = document.querySelector('.mobile-container');
+        if (container) {
+            container.classList.remove('page-loading');
+            container.classList.add('fade-in');
+        }
+
+        lucide.createIcons();
+    });
+</script>
+
+<style>
+    /* Goals Stats */
+    .goals-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        padding: 0 1rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Goal Card */
+    .goal-card {
+        background: var(--card-bg);
+        border-radius: 16px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .goal-card.completed {
+        border-color: var(--income-color);
+        background: color-mix(in srgb, var(--income-color) 5%, var(--card-bg));
+    }
+
+    .goal-card.overdue {
+        border-color: var(--expense-color);
+    }
+
+    .goal-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .goal-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--income-color);
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .goal-card.completed .goal-icon {
+        background: var(--income-color);
+    }
+
+    .goal-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .goal-name {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0 0 0.25rem;
+        color: var(--text-primary);
+    }
+
+    .goal-target {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    .goal-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: none;
+        background: var(--bg-secondary);
+        color: var(--text-secondary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .btn-icon:hover {
+        background: var(--income-color);
+        color: white;
+    }
+
+    .btn-icon.delete:hover {
+        background: var(--expense-color);
+        color: white;
+    }
+
+    /* Progress */
+    .goal-progress {
+        margin-bottom: 0.75rem;
+    }
+
+    .progress-bar {
+        height: 8px;
+        background: var(--bg-secondary);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--income-color), #34d399);
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+
+    .progress-fill.complete {
+        background: var(--income-color);
+    }
+
+    .progress-text {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    /* Footer */
+    .goal-footer {
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .days-remaining {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    .days-remaining.overdue {
+        color: var(--expense-color);
+    }
+
+    .completed-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--income-color);
+        font-weight: 600;
+    }
+
+    .goal-footer.completed {
+        text-align: center;
+    }
+</style>
+{% endblock %}

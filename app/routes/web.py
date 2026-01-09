@@ -200,3 +200,13 @@ def help():
     user_id = session.get('user_id')
     user = User.query.get(user_id)
     return render_template('help.html', user=user)
+
+
+@bp.route('/goals')
+@require_login
+def goals():
+    """Savings goals page"""
+    user_id = session.get('user_id')
+    user = User.query.get(user_id)
+    project = get_user_project(user_id)
+    return render_template('goals.html', user=user, project=project)

@@ -780,6 +780,57 @@ def universal_query():
         })
     
     # ============================================
+    # QUERY TYPE: recurring
+    # ============================================
+    elif query_type == 'recurring':
+        from app.models.recurring import RecurringRule
+        
+        recurring_rules = RecurringRule.query.filter(
+            RecurringRule.project_id == project_id,
+            RecurringRule.is_active == True
+        ).order_by(RecurringRule.next_run_date).all()
+        
+        if not recurring_rules:
+            return jsonify({
+                'success': True,
+                'message': '🔄 ยังไม่มีรายการประจำ\n\nพิมพ์ "เพิ่มรายการประจำ [ชื่อ] [จำนวน] บาททุกวันที่ [วัน]"'
+            })
+        
+        lines = ["🔄 รายการประจำของคุณ:", ""]
+        
+        income_total = 0
+        expense_total = 0
+        
+        for rule in recurring_rules:
+            amount = rule.amount / 100
+            icon = "💰" if rule.type == 'income' else "💸"
+            cat_name = rule.category.name_th if rule.category else "ไม่ระบุ"
+            
+            if rule.type == 'income':
+                income_total += amount
+            else:
+                expense_total += amount
+            
+            freq_text = {
+                'daily': 'รายวัน',
+                'weekly': 'รายสัปดาห์',
+                'monthly': f'วันที่ {rule.day_of_month}'
+            }.get(rule.freq, rule.freq)
+            
+            lines.append(f"{icon} {cat_name}: {amount:,.0f}฿ ({freq_text})")
+            if rule.note:
+                lines.append(f"   📝 {rule.note}")
+        
+        lines.append("")
+        lines.append(f"📊 รวม: +{income_total:,.0f}฿ | -{expense_total:,.0f}฿/เดือน")
+        
+        return jsonify({
+            'success': True,
+            'count': len(recurring_rules),
+            'message': '\n'.join(lines)
+        })
+    
+    # ============================================
     # QUERY TYPE: summary (default)
     # ============================================
     else:
@@ -1270,11 +1321,197 @@ def universal_action():
             'message': '\n'.join(lines)
         })
     
+    # ============================================
+    # ACTION: create_recurring
+    # ============================================
+    elif action_type == 'create_recurring':
+        from app.models.recurring import RecurringRule
+        from app.models.category import Category
+        from datetime import date
+        
+        # Get params
+        category_name = params.get('category_name')
+        amount = params.get('amount')
+        day_of_month = params.get('day_of_month', 1)
+        note = params.get('note', '')
+        trans_type = params.get('type', 'expense')
+        freq = params.get('freq', 'monthly')
+        
+        if not amount:
+            return jsonify({
+                'success': False,
+                'message': 'กรุณาระบุจำนวนเงิน เช่น "เพิ่มรายการประจำ Netflix 300 บาททุกวันที่ 1"'
+            })
+        
+        # Convert to satang
+        if amount < 1000000:
+            amount = int(amount * 100)
+        
+        # Find category
+        category = None
+        if category_name:
+            category = Category.query.filter(
+                Category.project_id == project_id,
+                Category.name_th.ilike(f'%{category_name}%'),
+                Category.type == trans_type
+            ).first()
+        
+        if not category:
+            # Find first category of that type
+            category = Category.query.filter(
+                Category.project_id == project_id,
+                Category.type == trans_type
+            ).first()
+        
+        if not category:
+            return jsonify({
+                'success': False,
+                'message': f'ไม่พบหมวดหมู่สำหรับ {trans_type}'
+            })
+        
+        # Create recurring rule
+        recurring = RecurringRule(
+            project_id=project_id,
+            type=trans_type,
+            category_id=category.id,
+            amount=amount,
+            freq=freq,
+            start_date=date.today(),
+            day_of_month=day_of_month,
+            note=note
+        )
+        
+        db.session.add(recurring)
+        db.session.commit()
+        
+        amount_baht = amount / 100
+        freq_text = {
+            'daily': 'ทุกวัน',
+            'weekly': 'ทุกสัปดาห์',
+            'monthly': f'ทุกวันที่ {day_of_month} ของเดือน'
+        }.get(freq, freq)
+        
+        return jsonify({
+            'success': True,
+            'message': f"✅ สร้างรายการประจำสำเร็จ!\n\n"
+                      f"📌 {category.name_th}{' - ' + note if note else ''}\n"
+                      f"💰 {amount_baht:,.0f} บาท\n"
+                      f"📅 {freq_text}\n"
+                      f"🗓️ ครั้งถัดไป: {recurring.next_run_date.strftime('%d/%m/%Y')}"
+        })
+    
+    # ============================================
+    # ACTION: get_recurring
+    # ============================================
+    elif action_type == 'get_recurring':
+        from app.models.recurring import RecurringRule
+        
+        recurring_rules = RecurringRule.query.filter(
+            RecurringRule.project_id == project_id,
+            RecurringRule.is_active == True
+        ).order_by(RecurringRule.next_run_date).all()
+        
+        if not recurring_rules:
+            return jsonify({
+                'success': True,
+                'message': '🔄 ยังไม่มีรายการประจำ\n\nพิมพ์ "เพิ่มรายการประจำ [ชื่อ] [จำนวน] บาททุกวันที่ [วัน]"'
+            })
+        
+        lines = ["🔄 รายการประจำของคุณ:", ""]
+        
+        income_total = 0
+        expense_total = 0
+        
+        for rule in recurring_rules:
+            amount = rule.amount / 100
+            icon = "💰" if rule.type == 'income' else "💸"
+            cat_name = rule.category.name_th if rule.category else "ไม่ระบุ"
+            
+            if rule.type == 'income':
+                income_total += amount
+            else:
+                expense_total += amount
+            
+            freq_text = {
+                'daily': 'รายวัน',
+                'weekly': 'รายสัปดาห์',
+                'monthly': f'วันที่ {rule.day_of_month}'
+            }.get(rule.freq, rule.freq)
+            
+            lines.append(f"{icon} {cat_name}: {amount:,.0f}฿ ({freq_text})")
+            if rule.note:
+                lines.append(f"   📝 {rule.note}")
+        
+        lines.append("")
+        lines.append(f"📊 รวม: รายรับ {income_total:,.0f}฿ | รายจ่าย {expense_total:,.0f}฿/เดือน")
+        
+        return jsonify({
+            'success': True,
+            'count': len(recurring_rules),
+            'message': '\n'.join(lines)
+        })
+    
+    # ============================================
+    # ACTION: delete_recurring
+    # ============================================
+    elif action_type == 'delete_recurring':
+        from app.models.recurring import RecurringRule
+        
+        keyword = params.get('keyword')
+        delete_all = params.get('delete_all', False)
+        
+        if delete_all:
+            # Delete all recurring rules
+            count = RecurringRule.query.filter(
+                RecurringRule.project_id == project_id,
+                RecurringRule.is_active == True
+            ).update({'is_active': False})
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f"🗑️ ลบรายการประจำทั้งหมด {count} รายการ"
+            })
+        
+        if not keyword:
+            return jsonify({
+                'success': False,
+                'message': 'กรุณาระบุรายการที่ต้องการลบ เช่น "ลบรายการประจำ Netflix"'
+            })
+        
+        # Find by note or category name
+        rule = RecurringRule.query.filter(
+            RecurringRule.project_id == project_id,
+            RecurringRule.is_active == True
+        ).join(Category, RecurringRule.category_id == Category.id).filter(
+            db.or_(
+                RecurringRule.note.ilike(f'%{keyword}%'),
+                Category.name_th.ilike(f'%{keyword}%')
+            )
+        ).first()
+        
+        if not rule:
+            return jsonify({
+                'success': False,
+                'message': f'ไม่พบรายการประจำ "{keyword}"'
+            })
+        
+        cat_name = rule.category.name_th if rule.category else "ไม่ระบุ"
+        amount = rule.amount / 100
+        
+        rule.is_active = False
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f"🗑️ ลบรายการประจำสำเร็จ!\n\n{cat_name}: {amount:,.0f}฿{' - ' + rule.note if rule.note else ''}"
+        })
+    
     # Unknown action
     else:
         return jsonify({
             'success': False,
-            'message': f'ไม่รู้จัก action_type: {action_type}\n\nรองรับ: update_transaction, delete_transaction, create_category, delete_category, create_goal, contribute_goal, get_goals'
+            'message': f'ไม่รู้จัก action_type: {action_type}\n\nรองรับ: update_transaction, delete_transaction, create_category, delete_category, create_goal, contribute_goal, get_goals, create_recurring, get_recurring, delete_recurring'
         })
 
 
