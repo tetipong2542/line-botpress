@@ -2765,13 +2765,42 @@ def smart_message():
             amount_baht = amount / 100
             icon = '💰' if trans_type == 'income' else '💸'
             
+            # Smart Suggestion: Check budget warning for expenses
+            budget_warning = ""
+            if trans_type == 'expense':
+                today = datetime.utcnow()
+                month_yyyymm = today.strftime('%Y-%m')
+                start_date = datetime(today.year, today.month, 1)
+                
+                budget = Budget.query.filter_by(
+                    project_id=project_id,
+                    category_id=category.id,
+                    month_yyyymm=month_yyyymm
+                ).first()
+                
+                if budget:
+                    spent = db.session.query(db.func.sum(Transaction.amount)).filter(
+                        Transaction.project_id == project_id,
+                        Transaction.category_id == category.id,
+                        Transaction.occurred_at >= start_date,
+                        Transaction.deleted_at.is_(None),
+                        Transaction.type == 'expense'
+                    ).scalar() or 0
+                    spent = spent / 100
+                    limit = budget.limit_amount / 100
+                    pct = (spent / limit * 100) if limit > 0 else 0
+                    
+                    if pct >= 100:
+                        budget_warning = f"\n⚠️ **เกินงบ!** {category.name_th}: {spent:,.0f}/{limit:,.0f}฿ ({pct:.0f}%)"
+                    elif pct >= 80:
+                        budget_warning = f"\n🟡 ใช้ไปแล้ว {pct:.0f}% ของงบ {category.name_th}"
+            
             return jsonify({
                 'success': True,
                 'message': f"{icon} บันทึกสำเร็จ!\n\n"
                           f"📁 {category.name_th}\n"
                           f"💵 {amount_baht:,.0f} บาท\n"
-                          f"📝 {note or '-'}\n\n"
-                          f"ต้องการบันทึกรายการเพิ่มไหมคะ?"
+                          f"📝 {note or '-'}{budget_warning}"
             })
         
         # ========================
@@ -3126,6 +3155,133 @@ def smart_message():
             })
         
         # ========================
+        # SET BUDGET
+        # ========================
+        elif intent == 'set_budget':
+            category_name = entities.get('category_name')
+            amount = entities.get('amount')
+            
+            if not category_name:
+                # Show categories list
+                categories = Category.query.filter_by(
+                    project_id=project_id,
+                    type='expense'
+                ).order_by(Category.name_th).all()
+                
+                lines = ["❓ ต้องการตั้งงบหมวดไหนคะ?", ""]
+                for c in categories[:8]:
+                    lines.append(f"📁 {c.name_th}")
+                lines.append("")
+                lines.append("พิมพ์: \"ตั้งงบอาหาร 5000 บาท\"")
+                
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': '\n'.join(lines)
+                })
+            
+            # Find category
+            category = Category.query.filter(
+                Category.project_id == project_id,
+                Category.name_th.ilike(f'%{category_name}%')
+            ).first()
+            
+            if not category:
+                return jsonify({
+                    'success': False,
+                    'message': f'❌ ไม่พบหมวดหมู่ "{category_name}"'
+                })
+            
+            if not amount:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': f"📁 {category.name_th}\n\nพิมพ์จำนวนงบ เช่น \"5000 บาท\""
+                })
+            
+            # Create or update budget
+            today = datetime.utcnow()
+            month_yyyymm = today.strftime('%Y-%m')
+            
+            budget = Budget.query.filter_by(
+                project_id=project_id,
+                category_id=category.id,
+                month_yyyymm=month_yyyymm
+            ).first()
+            
+            if budget:
+                budget.limit_amount = int(amount * 100)
+            else:
+                budget = Budget(
+                    project_id=project_id,
+                    category_id=category.id,
+                    month_yyyymm=month_yyyymm,
+                    limit_amount=int(amount * 100)
+                )
+                db.session.add(budget)
+            
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f"✅ ตั้งงบสำเร็จ!\n\n"
+                          f"📁 {category.name_th}\n"
+                          f"💰 งบ: {amount:,.0f} บาท/เดือน"
+            })
+        
+        # ========================
+        # GET BUDGET
+        # ========================
+        elif intent == 'get_budget':
+            today = datetime.utcnow()
+            month_yyyymm = today.strftime('%Y-%m')
+            start_date = datetime(today.year, today.month, 1)
+            
+            budgets = Budget.query.filter_by(
+                project_id=project_id,
+                month_yyyymm=month_yyyymm
+            ).all()
+            
+            if not budgets:
+                return jsonify({
+                    'success': True,
+                    'message': "💰 ยังไม่ได้ตั้งงบเดือนนี้\n\nพิมพ์ \"ตั้งงบอาหาร 5000 บาท\""
+                })
+            
+            lines = ["💰 งบประมาณเดือนนี้:", ""]
+            
+            for b in budgets:
+                cat_name = b.category.name_th if b.category else 'ไม่ระบุ'
+                limit = b.limit_amount / 100
+                
+                # Get spent amount
+                spent = db.session.query(db.func.sum(Transaction.amount)).filter(
+                    Transaction.project_id == project_id,
+                    Transaction.category_id == b.category_id,
+                    Transaction.occurred_at >= start_date,
+                    Transaction.deleted_at.is_(None),
+                    Transaction.type == 'expense'
+                ).scalar() or 0
+                spent = spent / 100
+                
+                remaining = limit - spent
+                pct = (spent / limit * 100) if limit > 0 else 0
+                
+                if pct >= 100:
+                    icon = "🔴"
+                elif pct >= 80:
+                    icon = "🟡"
+                else:
+                    icon = "🟢"
+                
+                lines.append(f"{icon} {cat_name}: {spent:,.0f}/{limit:,.0f}฿ ({pct:.0f}%)")
+            
+            return jsonify({
+                'success': True,
+                'message': '\n'.join(lines)
+            })
+        
+        # ========================
         # GET HELP
         # ========================
         elif intent == 'get_help':
@@ -3139,16 +3295,15 @@ def smart_message():
                           f"• \"ลบรายการที่ 1\" - ลบ\n\n"
                           f"🔄 **รายการประจำ**\n"
                           f"• \"รายการประจำ\" - ดูทั้งหมด\n"
-                          f"• \"หยุด Netflix\" - หยุดชั่วคราว\n"
-                          f"• \"เปิด Netflix\" - เปิดใช้งาน\n\n"
+                          f"• \"หยุด/เปิด Netflix\"\n\n"
                           f"🎯 **เป้าหมายออม**\n"
                           f"• \"ตั้งเป้าออม iPhone 45000 บาท\"\n"
-                          f"• \"เติมเงิน iPhone 5000 บาท\"\n"
-                          f"• \"ถอน iPhone 1000 บาท\"\n\n"
-                          f"📊 **สรุป**\n"
-                          f"• \"สรุปเดือนนี้\" / \"สรุปปีนี้\"\n\n"
-                          f"🌐 **อื่นๆ**\n"
-                          f"• \"หมวดหมู่\" / \"ขอลิงก์เว็บ\""
+                          f"• \"เติม/ถอน iPhone 5000 บาท\"\n\n"
+                          f"💰 **งบประมาณ**\n"
+                          f"• \"ตั้งงบอาหาร 5000 บาท\"\n"
+                          f"• \"ดูงบ\"\n\n"
+                          f"📊 **สรุป**: \"สรุปเดือนนี้\"\n"
+                          f"🌐 **อื่นๆ**: \"หมวดหมู่\" / \"ขอลิงก์เว็บ\""
             })
         
         # ========================

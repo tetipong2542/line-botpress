@@ -118,6 +118,24 @@ class GeminiNLPService:
             'confidence': 0.5
         }
         
+        # Check for budget management (ตั้งงบ/งบประมาณ)
+        if any(x in message_lower for x in ['ตั้งงบ', 'งบประมาณ', 'budget', 'งบ']):
+            if any(x in message_lower for x in ['ดู', 'แสดง', 'เท่าไหร่']):
+                result['intent'] = 'get_budget'
+            else:
+                result['intent'] = 'set_budget'
+                # Extract amount first
+                amount_match = re.search(r'(\d+(?:,\d+)?)\s*บาท', message)
+                if amount_match:
+                    result['entities']['amount'] = float(amount_match.group(1).replace(',', ''))
+                # Extract category (word after ตั้งงบ or งบ, excluding numbers)
+                cat_match = re.search(r'(?:ตั้งงบ|งบ)\s*(\S+)', message)
+                if cat_match:
+                    cat_name = cat_match.group(1)
+                    if not cat_name.isdigit() and 'บาท' not in cat_name:
+                        result['entities']['category_name'] = cat_name
+            return result
+        
         # Check for help command
         if any(x in message_lower for x in ['ช่วยเหลือ', 'help', 'คำสั่ง', 'ทำอะไรได้']):
             result['intent'] = 'get_help'
