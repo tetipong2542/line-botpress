@@ -71,12 +71,14 @@ def resolve_context():
 def link_botpress_account():
     """
     Link Botpress user ID to LINE user ID
-    Called when user types "เชื่อมต่อ" or "link" in chat
+    Supports: link_code from web profile page
     """
+    from flask import current_app
+    import time
+    
     data = request.json
     botpress_user_id = data.get('botpress_user_id')
-    line_user_id = data.get('line_user_id')  # From LINE Login session
-    link_code = data.get('link_code')  # Optional: 6-digit code from web
+    link_code = data.get('link_code')  # 6-digit code from web
 
     if not botpress_user_id:
         return jsonify({
@@ -91,28 +93,52 @@ def link_botpress_account():
     if existing:
         return jsonify({
             'success': True,
-            'message': 'บัญชีเชื่อมต่อแล้ว!',
+            'message': f'บัญชีเชื่อมต่อแล้ว! สวัสดี {existing.display_name}',
             'user': existing.to_dict()
         })
 
-    # If line_user_id provided, link directly
-    if line_user_id:
-        user = User.query.filter_by(line_user_id=line_user_id).first()
-        if user:
-            user.botpress_user_id = botpress_user_id
-            db.session.commit()
+    # If link_code provided, verify and link
+    if link_code:
+        # Get link code from app config/cache
+        link_codes = getattr(current_app, '_link_codes', {})
+        code_data = link_codes.get(link_code.upper())
+        
+        if code_data:
+            # Check expiry (5 minutes)
+            if time.time() - code_data['created_at'] < 300:
+                user = User.query.get(code_data['user_id'])
+                if user:
+                    user.botpress_user_id = botpress_user_id
+                    db.session.commit()
+                    
+                    # Remove used code
+                    del link_codes[link_code.upper()]
+                    
+                    return jsonify({
+                        'success': True,
+                        'message': f'🎉 เชื่อมต่อบัญชีสำเร็จ! สวัสดี {user.display_name} สามารถบันทึกรายรับรายจ่ายได้แล้วครับ',
+                        'user': user.to_dict()
+                    })
+            else:
+                # Code expired
+                del link_codes[link_code.upper()]
+                return jsonify({
+                    'success': False,
+                    'message': 'รหัสหมดอายุแล้ว กรุณาสร้างรหัสใหม่ที่หน้าเว็บ'
+                })
+        else:
             return jsonify({
-                'success': True,
-                'message': 'เชื่อมต่อบัญชีสำเร็จ! สามารถบันทึกรายรับรายจ่ายได้แล้ว',
-                'user': user.to_dict()
+                'success': False,
+                'message': 'รหัสไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง'
             })
 
-    # No existing link - provide instructions
+    # No link_code - provide instructions
     return jsonify({
         'success': False,
-        'message': 'กรุณาเข้าเว็บ https://line-botpress-production.up.railway.app แล้วล็อกอินด้วย LINE เดียวกัน จากนั้นไปที่หน้าโปรไฟล์แล้วกด "เชื่อมต่อ Chatbot"',
+        'message': 'กรุณา:\n1. เข้าเว็บ https://line-botpress-production.up.railway.app\n2. ล็อกอินด้วย LINE\n3. ไปหน้าโปรไฟล์ กดปุ่ม "สร้างรหัสเชื่อมต่อ"\n4. พิมพ์ "เชื่อมต่อ [รหัส 6 ตัว]" ในแชทนี้',
         'link_url': 'https://line-botpress-production.up.railway.app/profile'
     })
+
 
 
 @bp.route('/transactions/create', methods=['POST'])

@@ -997,6 +997,72 @@ def accept_invite(token):
         }), 400
 
 
+# User Link Code for Chatbot
+@bp.route('/user/link-code', methods=['POST'])
+def generate_link_code():
+    """Generate link code for connecting Chatbot with LINE account"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    
+    # Check if user already has botpress_user_id linked
+    if user.botpress_user_id:
+        return jsonify({
+            'success': True,
+            'already_linked': True,
+            'message': 'บัญชีเชื่อมต่อกับ Chatbot แล้ว!'
+        })
+    
+    import random
+    import string
+    import time
+    from flask import current_app
+    
+    # Generate 6-character alphanumeric code
+    code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    
+    # Store code in app-level cache (simple in-memory storage)
+    if not hasattr(current_app, '_link_codes'):
+        current_app._link_codes = {}
+    
+    # Clean up expired codes (older than 5 minutes)
+    current_time = time.time()
+    expired_codes = [c for c, data in current_app._link_codes.items() 
+                     if current_time - data['created_at'] > 300]
+    for c in expired_codes:
+        del current_app._link_codes[c]
+    
+    # Store new code
+    current_app._link_codes[code] = {
+        'user_id': user.id,
+        'created_at': current_time
+    }
+    
+    return jsonify({
+        'success': True,
+        'code': code,
+        'expires_in': 300,  # 5 minutes
+        'message': f'รหัสเชื่อมต่อ: {code}\nพิมพ์ "เชื่อมต่อ {code}" ในแชท LINE'
+    })
+
+
+@bp.route('/user/link-status', methods=['GET'])
+def get_link_status():
+    """Check if user's account is linked with Chatbot"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    
+    return jsonify({
+        'is_linked': bool(user.botpress_user_id),
+        'botpress_user_id': user.botpress_user_id
+    })
+
+
 # ============================================================================
 # ANALYTICS ENDPOINTS
 # ============================================================================
