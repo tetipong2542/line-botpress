@@ -1519,11 +1519,97 @@ def universal_action():
             'message': f"🗑️ ลบรายการประจำสำเร็จ!\n\n{cat_name}: {amount:,.0f}฿{' - ' + rule.note if rule.note else ''}"
         })
     
+    # ============================================
+    # ACTION: update_recurring
+    # ============================================
+    elif action_type == 'update_recurring':
+        from app.models.recurring import RecurringRule
+        from app.models.category import Category
+        
+        keyword = params.get('keyword')
+        
+        if not keyword:
+            return jsonify({
+                'success': False,
+                'message': 'กรุณาระบุรายการที่ต้องการแก้ไข เช่น "แก้ไขรายการประจำ Netflix วันที่ 2"'
+            })
+        
+        # Find rule by keyword
+        rule = RecurringRule.query.filter(
+            RecurringRule.project_id == project_id,
+            RecurringRule.is_active == True
+        ).join(Category, RecurringRule.category_id == Category.id).filter(
+            db.or_(
+                RecurringRule.note.ilike(f'%{keyword}%'),
+                Category.name_th.ilike(f'%{keyword}%')
+            )
+        ).first()
+        
+        if not rule:
+            return jsonify({
+                'success': False,
+                'message': f'ไม่พบรายการประจำ "{keyword}"'
+            })
+        
+        # Track changes
+        changes = []
+        
+        # Update day_of_month
+        if 'day_of_month' in params:
+            old_day = rule.day_of_month
+            rule.day_of_month = int(params['day_of_month'])
+            # Recalculate next run
+            from datetime import date
+            rule.next_run_date = rule._calculate_next_run(date.today())
+            changes.append(f"วันที่: {old_day} → {rule.day_of_month}")
+        
+        # Update amount
+        if 'amount' in params:
+            old_amount = rule.amount / 100
+            new_amount = params['amount']
+            if new_amount < 1000000:
+                new_amount = int(new_amount * 100)
+            rule.amount = new_amount
+            changes.append(f"จำนวนเงิน: {old_amount:,.0f}฿ → {new_amount/100:,.0f}฿")
+        
+        # Update note
+        if 'note' in params:
+            rule.note = params['note']
+            changes.append(f"โน๊ต: {params['note']}")
+        
+        # Update category
+        if 'category_name' in params:
+            category = Category.query.filter(
+                Category.project_id == project_id,
+                Category.name_th.ilike(f'%{params["category_name"]}%')
+            ).first()
+            if category:
+                rule.category_id = category.id
+                changes.append(f"หมวดหมู่: {category.name_th}")
+        
+        if not changes:
+            return jsonify({
+                'success': False,
+                'message': 'กรุณาระบุสิ่งที่ต้องการแก้ไข เช่น วันที่, จำนวนเงิน, หมวดหมู่'
+            })
+        
+        db.session.commit()
+        
+        cat_name = rule.category.name_th if rule.category else "ไม่ระบุ"
+        
+        return jsonify({
+            'success': True,
+            'message': f"✅ แก้ไขรายการประจำสำเร็จ!\n\n"
+                      f"📌 {cat_name}{' - ' + rule.note if rule.note else ''}\n"
+                      f"📝 เปลี่ยนแปลง:\n" + '\n'.join([f"  • {c}" for c in changes]) + "\n\n"
+                      f"🗓️ ครั้งถัดไป: {rule.next_run_date.strftime('%d/%m/%Y')}"
+        })
+    
     # Unknown action
     else:
         return jsonify({
             'success': False,
-            'message': f'ไม่รู้จัก action_type: {action_type}\n\nรองรับ: update_transaction, delete_transaction, create_category, delete_category, create_goal, contribute_goal, get_goals, create_recurring, get_recurring, delete_recurring'
+            'message': f'ไม่รู้จัก action_type: {action_type}\n\nรองรับ: update_transaction, delete_transaction, create_category, delete_category, create_goal, contribute_goal, get_goals, create_recurring, get_recurring, delete_recurring, update_recurring'
         })
 
 
