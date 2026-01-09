@@ -31,21 +31,20 @@ def get_user_project(user_id):
     """Get user's default project (first project they own)
 
     Auto-creates project if user doesn't have one
+    Also ensures user.current_project_id is set
     """
     from app import db
     from app.models.category import Category
     from app.utils.helpers import generate_id
 
+    user = User.query.get(user_id)
+    if not user:
+        raise ValueError(f"User {user_id} not found in database")
+
     project = Project.query.filter_by(owner_user_id=user_id).first()
 
     # Auto-create project if user doesn't have one
     if not project:
-        user = User.query.get(user_id)
-        
-        # Safety check: user must exist
-        if not user:
-            raise ValueError(f"User {user_id} not found in database")
-
         # Create default project
         project = Project(
             name=f"บัญชี {user.display_name}",
@@ -79,6 +78,11 @@ def get_user_project(user_id):
             )
             db.session.add(category)
 
+        db.session.commit()
+
+    # Ensure user has current_project_id set (important for Bot API)
+    if not user.current_project_id:
+        user.current_project_id = project.id
         db.session.commit()
 
     return project

@@ -109,6 +109,11 @@ def link_botpress_account():
                 user = User.query.get(code_data['user_id'])
                 if user:
                     user.botpress_user_id = botpress_user_id
+                    
+                    # Ensure user has a project and current_project_id
+                    from app.routes.web import get_user_project
+                    project = get_user_project(user.id)
+                    
                     db.session.commit()
                     
                     # Remove used code
