@@ -11,6 +11,41 @@ db = SQLAlchemy()
 migrate = Migrate()
 
 
+def run_auto_migrations():
+    """
+    Run pending migrations automatically on app start
+    This ensures new columns are added without manual intervention
+    """
+    from sqlalchemy import inspect, text
+    
+    try:
+        inspector = inspect(db.engine)
+        columns = [col['name'] for col in inspector.get_columns('user')]
+        
+        # Migration: Add botpress_user_id if not exists
+        if 'botpress_user_id' not in columns:
+            print("📝 Auto-migration: Adding 'botpress_user_id' column...")
+            # SQLite doesn't support UNIQUE in ALTER TABLE, add column without it
+            db.session.execute(text(
+                "ALTER TABLE user ADD COLUMN botpress_user_id VARCHAR(100)"
+            ))
+            db.session.commit()
+            print("✅ Auto-migration: 'botpress_user_id' column added!")
+            
+            # Create unique index (this enforces uniqueness)
+            try:
+                db.session.execute(text(
+                    "CREATE UNIQUE INDEX idx_user_botpress_user_id ON user(botpress_user_id)"
+                ))
+                db.session.commit()
+                print("✅ Auto-migration: Unique index created")
+            except Exception:
+                pass  # Index may already exist
+                
+    except Exception as e:
+        print(f"⚠️ Auto-migration check: {e}")
+
+
 def create_app(config_name=None):
     """
     Create and configure the Flask application
@@ -43,6 +78,9 @@ def create_app(config_name=None):
     # Import models (for migrations to work)
     with app.app_context():
         from app.models import user, project, category, transaction, budget, recurring
+        
+        # Auto-run pending migrations
+        run_auto_migrations()
 
     # Register blueprints
     from app.routes import auth, api, bot, line as line_routes, web
