@@ -130,6 +130,56 @@
         </div>
     </div>
 
+    <!-- LINE Chatbot Connection -->
+    <div class="section">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="message-square"></i>
+                เชื่อมต่อ LINE Chatbot
+            </h2>
+        </div>
+
+        <div class="settings-list">
+            <!-- Connection Status -->
+            <div class="setting-item" id="chatbot-status-item">
+                <div class="setting-icon" style="background: linear-gradient(135deg, #06D6A0 0%, #10B981 100%);">
+                    <i data-lucide="bot"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title" id="chatbot-status-title">กำลังตรวจสอบ...</div>
+                    <div class="setting-desc" id="chatbot-status-desc">ตรวจสอบสถานะการเชื่อมต่อ</div>
+                </div>
+            </div>
+
+            <!-- Generate Link Code Button -->
+            <div class="setting-item" id="generate-link-code-btn" style="cursor: pointer;">
+                <div class="setting-icon" style="background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);">
+                    <i data-lucide="key"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">สร้างรหัสเชื่อมต่อ</div>
+                    <div class="setting-desc">สร้างรหัส 6 ตัวเพื่อเชื่อมต่อกับ LINE Chatbot</div>
+                </div>
+                <div class="setting-chevron">
+                    <i data-lucide="chevron-right"></i>
+                </div>
+            </div>
+
+            <!-- Generated Code Display (hidden by default) -->
+            <div class="setting-item" id="link-code-display" style="display: none; cursor: pointer;"
+                onclick="copyLinkCode()">
+                <div class="setting-icon" style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);">
+                    <i data-lucide="copy"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title" id="link-code-text"
+                        style="font-family: monospace; font-size: 18px; letter-spacing: 2px;">เชื่อมต่อ ABC123</div>
+                    <div class="setting-desc">👆 แตะเพื่อคัดลอก แล้วไปวางในแชท LINE</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Available Features (Export) -->
     <div class="section">
         <div class="section-header">
@@ -451,5 +501,101 @@
             }
         });
     });
+
+    // ========================================
+    // LINE Chatbot Connection
+    // ========================================
+    let currentLinkCode = null;
+
+    // Check chatbot connection status on page load
+    async function checkChatbotStatus() {
+        try {
+            const response = await fetch('/api/v1/user/link-status');
+            if (response.ok) {
+                const data = await response.json();
+                const statusTitle = document.getElementById('chatbot-status-title');
+                const statusDesc = document.getElementById('chatbot-status-desc');
+                const generateBtn = document.getElementById('generate-link-code-btn');
+                const statusIcon = document.querySelector('#chatbot-status-item .setting-icon');
+
+                if (data.is_linked) {
+                    statusTitle.textContent = '✅ เชื่อมต่อแล้ว';
+                    statusDesc.textContent = 'บัญชีเชื่อมต่อกับ LINE Chatbot แล้ว สามารถบันทึกรายรับรายจ่ายผ่านแชทได้';
+                    statusIcon.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
+                    generateBtn.style.display = 'none';
+                } else {
+                    statusTitle.textContent = '⚠️ ยังไม่ได้เชื่อมต่อ';
+                    statusDesc.textContent = 'กดปุ่มด้านล่างเพื่อสร้างรหัสเชื่อมต่อ';
+                    statusIcon.style.background = 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)';
+                    generateBtn.style.display = 'flex';
+                }
+            }
+        } catch (error) {
+            console.error('Error checking chatbot status:', error);
+        }
+    }
+
+    // Generate Link Code
+    document.getElementById('generate-link-code-btn').addEventListener('click', async () => {
+        try {
+            const response = await fetch('/api/v1/user/link-code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+
+                if (data.already_linked) {
+                    showToast('✅ บัญชีเชื่อมต่อแล้ว!', 'success');
+                    checkChatbotStatus();
+                    return;
+                }
+
+                currentLinkCode = data.code;
+                const linkText = `เชื่อมต่อ ${currentLinkCode}`;
+
+                // Show the code display
+                document.getElementById('link-code-text').textContent = linkText;
+                document.getElementById('link-code-display').style.display = 'flex';
+
+                // Reinitialize lucide icons
+                if (window.lucide) lucide.createIcons();
+
+                showToast(`🔑 รหัสเชื่อมต่อ: ${currentLinkCode}\n\nรหัสจะหมดอายุใน 5 นาที\nแตะเพื่อคัดลอก`, 'success');
+            } else {
+                showToast('❌ ไม่สามารถสร้างรหัสได้ กรุณาลองอีกครั้ง', 'error');
+            }
+        } catch (error) {
+            console.error('Error generating link code:', error);
+            showToast('❌ เกิดข้อผิดพลาด กรุณาลองอีกครั้ง', 'error');
+        }
+    });
+
+    // Copy Link Code to Clipboard
+    function copyLinkCode() {
+        if (!currentLinkCode) return;
+
+        const linkText = `เชื่อมต่อ ${currentLinkCode}`;
+
+        navigator.clipboard.writeText(linkText).then(() => {
+            showToast('📋 คัดลอกแล้ว!', 'success');
+            alert('✅ คัดลอกรหัสแล้ว!\n\n📱 ไปที่แชท LINE Chatbot\n📝 วางข้อความ "' + linkText + '"\n🚀 ส่งเพื่อเชื่อมต่อบัญชี');
+        }).catch(err => {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = linkText;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+
+            showToast('📋 คัดลอกแล้ว!', 'success');
+            alert('✅ คัดลอกรหัสแล้ว!\n\n📱 ไปที่แชท LINE Chatbot\n📝 วางข้อความ "' + linkText + '"\n🚀 ส่งเพื่อเชื่อมต่อบัญชี');
+        });
+    }
+
+    // Check status on page load
+    checkChatbotStatus();
 </script>
 {% endblock %}
