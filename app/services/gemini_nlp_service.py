@@ -118,6 +118,21 @@ class GeminiNLPService:
             'confidence': 0.5
         }
         
+        # Check for help command
+        if any(x in message_lower for x in ['ช่วยเหลือ', 'help', 'คำสั่ง', 'ทำอะไรได้']):
+            result['intent'] = 'get_help'
+            return result
+        
+        # Check for resume recurring (เปิด Netflix) - before recurring check
+        if any(x in message_lower for x in ['เปิด', 'resume', 'เริ่ม']) and 'ประจำ' not in message_lower and 'เว็บ' not in message_lower:
+            result['intent'] = 'resume_recurring'
+            words = message.split()
+            for i, w in enumerate(words):
+                if any(kw in w for kw in ['เปิด', 'resume', 'เริ่ม']) and i + 1 < len(words):
+                    result['entities']['keyword'] = words[i + 1]
+                    break
+            return result
+        
         # Check for pause recurring (หยุด/พัก Netflix) - before recurring check
         if any(x in message_lower for x in ['หยุด', 'พัก', 'pause']) and 'ประจำ' not in message_lower:
             result['intent'] = 'pause_recurring'
@@ -126,6 +141,34 @@ class GeminiNLPService:
                 if any(kw in w for kw in ['หยุด', 'พัก', 'pause']) and i + 1 < len(words):
                     result['entities']['keyword'] = words[i + 1]
                     break
+            return result
+        
+        # Check for withdraw goal (ถอนเงิน xxx บาท)
+        if any(x in message_lower for x in ['ถอนเงิน', 'ถอน', 'withdraw']) and 'ออม' not in message_lower:
+            result['intent'] = 'withdraw_goal'
+            # Extract goal name
+            words = message.split()
+            for i, w in enumerate(words):
+                if any(kw in w for kw in ['ถอน', 'จาก']) and i + 1 < len(words):
+                    result['entities']['goal_name'] = words[i + 1]
+                    break
+            # Extract amount
+            amount_match = re.search(r'(\d+(?:,\d+)?)\s*บาท', message)
+            if amount_match:
+                result['entities']['amount'] = float(amount_match.group(1).replace(',', ''))
+            return result
+        
+        # Check for update transaction (แก้ไขรายการที่ 1)
+        if any(x in message_lower for x in ['แก้ไขรายการ', 'แก้รายการ', 'เปลี่ยนรายการ']) and 'ประจำ' not in message_lower:
+            result['intent'] = 'update_transaction'
+            # Check for index
+            num_match = re.search(r'ที่\s*(\d+)|รายการ\s*(\d+)', message)
+            if num_match:
+                result['entities']['index'] = int(num_match.group(1) or num_match.group(2))
+            # Extract amount
+            amount_match = re.search(r'(\d+(?:,\d+)?)\s*บาท', message)
+            if amount_match:
+                result['entities']['amount'] = float(amount_match.group(1).replace(',', ''))
             return result
         
         # Check for delete all (need clarification: recurring or regular?)

@@ -2135,6 +2135,49 @@ def smart_message():
             })
         
         # ========================
+        # RESUME RECURRING
+        # ========================
+        elif intent == 'resume_recurring':
+            keyword = entities.get('keyword')
+            
+            if not keyword:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': '❓ ต้องการเปิดรายการประจำชื่ออะไรคะ?'
+                })
+            
+            # Find paused recurring
+            rule = RecurringRule.query.filter(
+                RecurringRule.project_id == project_id,
+                RecurringRule.is_active == False
+            ).join(Category, RecurringRule.category_id == Category.id).filter(
+                db.or_(
+                    RecurringRule.note.ilike(f'%{keyword}%'),
+                    Category.name_th.ilike(f'%{keyword}%')
+                )
+            ).first()
+            
+            if not rule:
+                return jsonify({
+                    'success': False,
+                    'message': f'ไม่พบรายการประจำที่หยุดไว้ "{keyword}"'
+                })
+            
+            cat_name = rule.category.name_th if rule.category else "ไม่ระบุ"
+            amount = rule.amount / 100
+            
+            # Resume by setting is_active to True
+            rule.is_active = True
+            rule.next_run_date = rule._calculate_next_run(date.today())
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f"▶️ เปิดรายการประจำแล้ว!\n\n{cat_name}: {amount:,.0f}฿\n🗓️ ครั้งถัดไป: {rule.next_run_date.strftime('%d/%m/%Y')}"
+            })
+        
+        # ========================
         # UPDATE RECURRING
         # ========================
         elif intent == 'update_recurring':
@@ -2940,6 +2983,175 @@ def smart_message():
             })
         
         # ========================
+        # UPDATE TRANSACTION
+        # ========================
+        elif intent == 'update_transaction':
+            index = entities.get('index')
+            new_amount = entities.get('amount')
+            
+            # Get transactions
+            today = datetime.utcnow()
+            start_date = datetime(today.year, today.month, 1)
+            
+            transactions = Transaction.query.filter(
+                Transaction.project_id == project_id,
+                Transaction.occurred_at >= start_date,
+                Transaction.deleted_at.is_(None)
+            ).order_by(Transaction.occurred_at.desc()).limit(10).all()
+            
+            if not transactions:
+                return jsonify({
+                    'success': False,
+                    'message': '❌ ไม่มีรายการให้แก้ไข'
+                })
+            
+            if not index:
+                # Show list
+                lines = ["❓ ต้องการแก้ไขรายการไหนคะ?", ""]
+                for idx, t in enumerate(transactions[:5], 1):
+                    icon = '💰' if t.type == 'income' else '💸'
+                    cat_name = t.category.name_th if t.category else 'ไม่ระบุ'
+                    amount = t.amount / 100
+                    lines.append(f"#{idx} {icon} {cat_name}: {amount:,.0f}฿")
+                lines.append("")
+                lines.append("พิมพ์ \"แก้ไขรายการที่ 1 เป็น 500 บาท\"")
+                
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': '\n'.join(lines)
+                })
+            
+            if index < 1 or index > len(transactions):
+                return jsonify({
+                    'success': False,
+                    'message': f'❌ ไม่พบรายการที่ {index}\n\nมีรายการ 1-{len(transactions)} เท่านั้น'
+                })
+            
+            transaction = transactions[index - 1]
+            old_amount = transaction.amount / 100
+            cat_name = transaction.category.name_th if transaction.category else 'ไม่ระบุ'
+            
+            if not new_amount:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': f"✏️ รายการที่ {index}: {cat_name} {old_amount:,.0f}฿\n\nพิมพ์จำนวนเงินใหม่ เช่น \"500 บาท\""
+                })
+            
+            # Update amount
+            transaction.amount = int(new_amount * 100)
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f"✅ แก้ไขรายการสำเร็จ!\n\n"
+                          f"📁 {cat_name}\n"
+                          f"💵 {old_amount:,.0f} → {new_amount:,.0f} บาท"
+            })
+        
+        # ========================
+        # WITHDRAW GOAL
+        # ========================
+        elif intent == 'withdraw_goal':
+            goal_name = entities.get('goal_name')
+            amount = entities.get('amount')
+            
+            if not goal_name:
+                # Show goals list
+                goals = SavingsGoal.query.filter_by(
+                    project_id=project_id,
+                    is_active=True
+                ).all()
+                
+                if not goals:
+                    return jsonify({
+                        'success': False,
+                        'message': '❌ ยังไม่มีเป้าหมายออมเงิน'
+                    })
+                
+                lines = ["❓ ต้องการถอนเงินจากเป้าหมายไหนคะ?", ""]
+                for g in goals:
+                    current = g.current_amount / 100
+                    lines.append(f"🎯 {g.name}: {current:,.0f}฿")
+                lines.append("")
+                lines.append("พิมพ์: \"ถอน iPhone 1000 บาท\"")
+                
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': '\n'.join(lines)
+                })
+            
+            # Find goal
+            goal = SavingsGoal.query.filter(
+                SavingsGoal.project_id == project_id,
+                SavingsGoal.is_active == True,
+                SavingsGoal.name.ilike(f'%{goal_name}%')
+            ).first()
+            
+            if not goal:
+                return jsonify({
+                    'success': False,
+                    'message': f'❌ ไม่พบเป้าหมาย "{goal_name}"'
+                })
+            
+            if not amount:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': f"🎯 {goal.name}\n💰 มี: {goal.current_amount/100:,.0f}฿\n\nพิมพ์จำนวนที่ต้องการถอน เช่น \"1000 บาท\""
+                })
+            
+            amount_satang = int(amount * 100)
+            
+            if amount_satang > goal.current_amount:
+                return jsonify({
+                    'success': False,
+                    'message': f'❌ ยอดเงินไม่พอ\n\n🎯 {goal.name}\n💰 มี: {goal.current_amount/100:,.0f}฿\n🔻 ถอน: {amount:,.0f}฿'
+                })
+            
+            goal.current_amount -= amount_satang
+            db.session.commit()
+            
+            remaining = goal.current_amount / 100
+            target = goal.target_amount / 100
+            
+            return jsonify({
+                'success': True,
+                'message': f"💸 ถอนเงินสำเร็จ!\n\n"
+                          f"🎯 {goal.name}\n"
+                          f"🔻 ถอน: {amount:,.0f}฿\n"
+                          f"💰 คงเหลือ: {remaining:,.0f}/{target:,.0f}฿"
+            })
+        
+        # ========================
+        # GET HELP
+        # ========================
+        elif intent == 'get_help':
+            return jsonify({
+                'success': True,
+                'message': f"📚 คำสั่งทั้งหมด:\n\n"
+                          f"📝 **รายการธุรกรรม**\n"
+                          f"• \"กินข้าว 350 บาท\" - บันทึก\n"
+                          f"• \"รายการเดือนนี้\" - ดูรายการ\n"
+                          f"• \"แก้ไขรายการที่ 1\" - แก้ไข\n"
+                          f"• \"ลบรายการที่ 1\" - ลบ\n\n"
+                          f"🔄 **รายการประจำ**\n"
+                          f"• \"รายการประจำ\" - ดูทั้งหมด\n"
+                          f"• \"หยุด Netflix\" - หยุดชั่วคราว\n"
+                          f"• \"เปิด Netflix\" - เปิดใช้งาน\n\n"
+                          f"🎯 **เป้าหมายออม**\n"
+                          f"• \"ตั้งเป้าออม iPhone 45000 บาท\"\n"
+                          f"• \"เติมเงิน iPhone 5000 บาท\"\n"
+                          f"• \"ถอน iPhone 1000 บาท\"\n\n"
+                          f"📊 **สรุป**\n"
+                          f"• \"สรุปเดือนนี้\" / \"สรุปปีนี้\"\n\n"
+                          f"🌐 **อื่นๆ**\n"
+                          f"• \"หมวดหมู่\" / \"ขอลิงก์เว็บ\""
+            })
+        
+        # ========================
         # GENERAL / UNKNOWN
         # ========================
         else:
@@ -2948,13 +3160,10 @@ def smart_message():
                 'intent': intent,
                 'entities': entities,
                 'message': f"สวัสดีค่ะ! ฉันช่วยอะไรได้บ้าง?\n\n"
-                          f"📝 รายการ: \"รายการเดือนนี้\"\n"
-                          f"💰 บันทึก: \"กินข้าว 350 บาท\"\n"
-                          f"🔄 ประจำ: \"รายการประจำ\"\n"
-                          f"🎯 ออมเงิน: \"ตั้งเป้าออม iPhone 45000 บาท\"\n"
-                          f"📁 หมวดหมู่: \"หมวดหมู่\"\n"
-                          f"🌐 เว็บไซต์: \"ขอลิงก์เว็บ\"\n"
-                          f"📊 สรุป: \"สรุปวันนี้\""
+                          f"พิมพ์ \"ช่วยเหลือ\" เพื่อดูคำสั่งทั้งหมด\n\n"
+                          f"📝 \"กินข้าว 350 บาท\"\n"
+                          f"📊 \"สรุปเดือนนี้\"\n"
+                          f"🎯 \"เป้าหมาย\""
             })
     
     except Exception as e:
