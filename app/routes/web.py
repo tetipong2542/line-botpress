@@ -141,6 +141,16 @@ def analytics():
     return render_template('analytics.html', user=user, project=project)
 
 
+@bp.route('/analytics/advanced')
+@require_login
+def analytics_advanced():
+    """Advanced analytics page"""
+    user_id = session.get('user_id')
+    user = User.query.get(user_id)
+    project = get_user_project(user_id)
+    return render_template('analytics_advanced.html', user=user, project=project)
+
+
 @bp.route('/budgets')
 @require_login
 def budgets():

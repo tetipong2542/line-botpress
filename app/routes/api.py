@@ -8,10 +8,17 @@ from app.services.transaction_service import TransactionService
 from app.services.analytics_service import AnalyticsService
 from app.services.budget_service import BudgetService
 from app.services.insights_service import InsightsService
+from app.services.prediction_service import PredictionService
+from app.services.aggregation_service import AggregationService
 from app.models.user import User
 from app.models.project import Project, ProjectMember, ProjectInvite, ProjectSettings
 from app.models.category import Category
 from app.models.budget import Budget
+from app.models.savings_goal import SavingsGoal
+from app.models.analytics_cache import AnalyticsCache
+from app.models.report_template import ReportTemplate
+from app.models.scheduled_report import ScheduledReport
+from app.models.share_link import ShareLink
 from app import db
 from app.utils.helpers import generate_id, baht_to_satang
 
@@ -1837,3 +1844,497 @@ def export_json():
     filename = ExportService.generate_filename(project.name, 'json', month_yyyymm)
 
     return ExportService.create_json_response(json_data, filename)
+
+
+# ============================================================================
+# ADVANCED ANALYTICS ENDPOINTS
+# ============================================================================
+
+@bp.route('/projects/<project_id>/analytics/daily-averages', methods=['GET'])
+def get_daily_averages(project_id):
+    """Get daily average spending/income"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+
+        if not start_date or not end_date:
+            from datetime import timedelta
+            end_date = datetime.now()
+            start_date = (end_date - timedelta(days=30)).strftime('%Y-%m-%d')
+
+        data = AnalyticsService.get_daily_averages(project_id, start_date, end_date)
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/analytics/spending-velocity', methods=['GET'])
+def get_spending_velocity(project_id):
+    """Get spending velocity"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        days = int(request.args.get('days', 30))
+        data = AnalyticsService.get_spending_velocity(project_id, days)
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/analytics/savings-rate', methods=['GET'])
+def get_savings_rate(project_id):
+    """Get savings rate"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        months = int(request.args.get('months', 6))
+        data = AnalyticsService.get_savings_rate(project_id, months)
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/analytics/financial-health', methods=['GET'])
+def get_financial_health(project_id):
+    """Get financial health score"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        months = int(request.args.get('months', 3))
+        data = AnalyticsService.get_financial_health_score(project_id, months)
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/analytics/category-growth', methods=['GET'])
+def get_category_growth(project_id):
+    """Get category growth rates"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        months = int(request.args.get('months', 6))
+        data = AnalyticsService.get_category_growth_rates(project_id, months)
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/analytics/seasonal-patterns', methods=['GET'])
+def get_seasonal_patterns(project_id):
+    """Get seasonal spending patterns"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        years = int(request.args.get('years', 2))
+        data = AnalyticsService.get_seasonal_patterns(project_id, years)
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/analytics/heatmap', methods=['GET'])
+def get_heatmap_data(project_id):
+    """Get spending heatmap data"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        days = int(request.args.get('days', 30))
+        data = AnalyticsService.get_heatmap_data(project_id, days)
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/analytics/scatter', methods=['GET'])
+def get_scatter_data(project_id):
+    """Get scatter plot data"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        days = int(request.args.get('days', 30))
+        data = AnalyticsService.get_scatter_data(project_id, days)
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/analytics/compare', methods=['GET'])
+def compare_periods(project_id):
+    """Compare two date ranges"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        period1_start = request.args.get('period1_start')
+        period1_end = request.args.get('period1_end')
+        period2_start = request.args.get('period2_start')
+        period2_end = request.args.get('period2_end')
+
+        if not all([period1_start, period1_end, period2_start, period2_end]):
+            return jsonify({
+                "error": {"message": "All period parameters are required"}
+            }), 400
+
+        data = AnalyticsService.compare_periods(
+            project_id, period1_start, period1_end,
+            period2_start, period2_end
+        )
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+# ============================================================================
+# PREDICTION ENDPOINTS
+# ============================================================================
+
+@bp.route('/projects/<project_id>/predictions/forecast', methods=['GET'])
+def get_spending_forecast(project_id):
+    """Get spending forecast"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        days = int(request.args.get('days', 30))
+        data = PredictionService.get_spending_forecast(project_id, days)
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/predictions/budget-projection', methods=['GET'])
+def get_budget_projection(project_id):
+    """Get budget projection"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        month = request.args.get('month')
+        if not month:
+            month = datetime.now().strftime('%Y-%m')
+
+        data = PredictionService.get_budget_projection(project_id, month)
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/predictions/savings-goal', methods=['GET'])
+def get_savings_goal_tracking(project_id):
+    """Get savings goal tracking"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        data = PredictionService.get_savings_goal_tracking(project_id)
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/predictions/recurring', methods=['GET'])
+def get_recurring_predictions(project_id):
+    """Get recurring expense predictions"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        data = PredictionService.get_recurring_predictions(project_id)
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/predictions/income-trend', methods=['GET'])
+def get_income_trend(project_id):
+    """Get income trend projection"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        months = int(request.args.get('months', 6))
+        data = PredictionService.get_income_trend_projection(project_id, months)
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+# ============================================================================
+# SAVINGS GOALS ENDPOINTS
+# ============================================================================
+
+@bp.route('/projects/<project_id>/savings-goals', methods=['GET'])
+def get_savings_goals(project_id):
+    """Get all savings goals"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        goals = SavingsGoal.get_active_goals(project_id)
+        return jsonify({
+            'goals': [g.to_dict() for g in goals]
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/savings-goals', methods=['POST'])
+def create_savings_goal(project_id):
+    """Create new savings goal"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    data = request.json
+
+    try:
+        from datetime import datetime
+
+        goal = SavingsGoal(
+            project_id=project_id,
+            name=data.get('name'),
+            target_amount=int(data.get('target_amount') * 100),  # Convert baht to satang
+            target_date=datetime.strptime(data['target_date'], '%Y-%m-%d').date() if data.get('target_date') else None,
+            category_id=data.get('category_id'),
+            is_active=True
+        )
+        db.session.add(goal)
+        db.session.commit()
+
+        return jsonify({
+            'goal': goal.to_dict()
+        }), 201
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 400
+
+
+@bp.route('/projects/<project_id>/savings-goals/<goal_id>', methods=['PUT'])
+def update_savings_goal(project_id, goal_id):
+    """Update savings goal"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    user = get_current_user()
+    data = request.json
+
+    try:
+        goal = SavingsGoal.get_goal(goal_id, project_id)
+        if not goal:
+            return jsonify({
+                "error": {"message": "Goal not found"}
+            }), 404
+
+        if 'name' in data:
+            goal.name = data['name']
+        if 'target_amount' in data:
+            goal.target_amount = int(data['target_amount'] * 100)
+        if 'target_date' in data:
+            from datetime import datetime
+            goal.target_date = datetime.strptime(data['target_date'], '%Y-%m-%d').date()
+        if 'category_id' in data:
+            goal.category_id = data['category_id']
+        if 'is_active' in data:
+            goal.is_active = data['is_active']
+
+        goal.updated_at = datetime.utcnow()
+        db.session.commit()
+
+        return jsonify({
+            'goal': goal.to_dict()
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 400
+
+
+@bp.route('/projects/<project_id>/savings-goals/<goal_id>', methods=['DELETE'])
+def delete_savings_goal(project_id, goal_id):
+    """Delete savings goal"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        goal = SavingsGoal.get_goal(goal_id, project_id)
+        if not goal:
+            return jsonify({
+                "error": {"message": "Goal not found"}
+            }), 404
+
+        goal.is_active = False
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'ลบเป้าหมายการออมเงินเรียบร้อยแล้ว'
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+# ============================================================================
+# AGGREGATION ENDPOINTS
+# ============================================================================
+
+@bp.route('/projects/<project_id>/aggregations/weekly', methods=['GET'])
+def get_weekly_aggregations(project_id):
+    """Get weekly summaries"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        weeks = int(request.args.get('weeks', 12))
+        data = AggregationService.get_weekly_summaries(project_id, weeks)
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/aggregations/quarterly', methods=['GET'])
+def get_quarterly_aggregations(project_id):
+    """Get quarterly summaries"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        quarters = int(request.args.get('quarters', 4))
+        data = AggregationService.get_quarterly_summaries(project_id, quarters)
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/aggregations/yearly', methods=['GET'])
+def get_yearly_aggregations(project_id):
+    """Get yearly summaries"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        years = int(request.args.get('years', 3))
+        data = AggregationService.get_yearly_summaries(project_id, years)
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/aggregations/custom', methods=['POST'])
+def get_custom_aggregation(project_id):
+    """Get custom period aggregation"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        data = request.json
+        period_name = data.get('period_name', 'Custom Period')
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+
+        if not start_date or not end_date:
+            return jsonify({
+                "error": {"message": "start_date and end_date are required"}
+            }), 400
+
+        result = AggregationService.get_custom_period_aggregation(
+            project_id, period_name, start_date, end_date
+        )
+        return jsonify(result), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500

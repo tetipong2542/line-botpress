@@ -10,6 +10,11 @@ from app.models.recurring import RecurringRule
 from app.models.security import BotNonce, IdempotencyKey
 from app.models.insight import Insight
 from app.models.notification import Notification, NotificationPreference
+from app.models.analytics_cache import AnalyticsCache
+from app.models.report_template import ReportTemplate
+from app.models.scheduled_report import ScheduledReport
+from app.models.share_link import ShareLink
+from app.models.savings_goal import SavingsGoal
 
 __all__ = [
     'User',
@@ -26,5 +31,10 @@ __all__ = [
     'IdempotencyKey',
     'Insight',
     'Notification',
-    'NotificationPreference'
+    'NotificationPreference',
+    'AnalyticsCache',
+    'ReportTemplate',
+    'ScheduledReport',
+    'ShareLink',
+    'SavingsGoal'
 ]

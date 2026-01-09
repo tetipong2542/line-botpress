@@ -1038,7 +1038,7 @@ h2 i[data-lucide] {
 }
 
 .modal-header.insights {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
     color: white;
     border-bottom: none;
 }
@@ -1052,7 +1052,7 @@ h2 i[data-lucide] {
 }
 
 .modal-header.insights .modal-close:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .modal-body {
@@ -2356,7 +2356,7 @@ input:checked+.slider:before {
 
 /* ===== QUICK ADD BUTTON ===== */
 .quick-add-btn {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
     color: white;
     border: none;
     border-radius: 12px;
@@ -2369,12 +2369,12 @@ input:checked+.slider:before {
     gap: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .quick-add-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
 }
 
 .quick-add-btn i {
@@ -5906,4 +5906,46 @@ a:focus-visible {
 [data-theme="dark"] .feature-icon {
     background: #374151 !important;
     border-color: #4b5563 !important;
+}
+
+/* Quick Add Button - Dark Mode */
+[data-theme="dark"] .quick-add-btn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+}
+
+[data-theme="dark"] .quick-add-btn:hover {
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4) !important;
+}
+
+/* Modal Header Insights - Dark Mode */
+[data-theme="dark"] .modal-header.insights {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+
+/* Period Select - Dark Mode */
+[data-theme="dark"] .period-select {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .period-select:focus {
+    border-color: #10b981 !important;
+}
+
+/* Date Input - Dark Mode */
+[data-theme="dark"] .date-input {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+    color: #f9fafb !important;
+}
+
+/* Custom Date Range - Dark Mode */
+[data-theme="dark"] .custom-date-range {
+    background: #1f2937 !important;
+}
+
+[data-theme="dark"] .custom-date-range label {
+    color: #9ca3af !important;
 }
