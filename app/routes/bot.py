@@ -1812,7 +1812,6 @@ def analyze_finances():
 
 
 @bp.route('/smart', methods=['POST'])
-@require_bot_auth()
 def smart_message():
     """
     Smart NLP endpoint - Universal message handler using Gemini AI
@@ -1823,11 +1822,22 @@ def smart_message():
     Request: { botpress_user_id, message, context (optional) }
     Response: { success, message, need_more_info, question }
     """
+    import os
     from app.services.gemini_nlp_service import gemini_nlp
     from app.models.recurring import RecurringRule
     from app.models.category import Category
     from app.models.savings_goal import SavingsGoal
     from datetime import date
+    
+    # Simple API key authentication
+    api_key = request.headers.get('X-Bot-Signature') or request.headers.get('X-API-Key')
+    expected_key = os.environ.get('BOT_SECRET') or current_app.config.get('BOT_HMAC_SECRET')
+    
+    if not api_key or api_key != expected_key:
+        return jsonify({
+            'success': False,
+            'message': 'Unauthorized: Invalid API Key'
+        }), 401
     
     data = request.json
     botpress_user_id = data.get('botpress_user_id') or data.get('line_user_id')
