@@ -1370,19 +1370,30 @@ def universal_action():
             })
         
         # Create recurring rule
-        recurring = RecurringRule(
-            project_id=project_id,
-            type=trans_type,
-            category_id=category.id,
-            amount=amount,
-            freq=freq,
-            start_date=date.today(),
-            day_of_month=day_of_month,
-            note=note
-        )
-        
-        db.session.add(recurring)
-        db.session.commit()
+        try:
+            recurring = RecurringRule(
+                project_id=project_id,
+                type=trans_type,
+                category_id=category.id,
+                amount=amount,
+                freq=freq,
+                start_date=date.today(),
+                day_of_month=day_of_month,
+                note=note
+            )
+            
+            db.session.add(recurring)
+            db.session.commit()
+            
+            current_app.logger.info(f"✅ Created recurring rule: {recurring.id} for project {project_id}")
+            
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"❌ Error creating recurring: {str(e)}")
+            return jsonify({
+                'success': False,
+                'message': f'เกิดข้อผิดพลาด: {str(e)}'
+            })
         
         amount_baht = amount / 100
         freq_text = {
@@ -1393,6 +1404,7 @@ def universal_action():
         
         return jsonify({
             'success': True,
+            'recurring_id': recurring.id,
             'message': f"✅ สร้างรายการประจำสำเร็จ!\n\n"
                       f"📌 {category.name_th}{' - ' + note if note else ''}\n"
                       f"💰 {amount_baht:,.0f} บาท\n"
