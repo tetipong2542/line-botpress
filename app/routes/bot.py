@@ -2142,6 +2142,155 @@ def smart_message():
             })
         
         # ========================
+        # CREATE GOAL
+        # ========================
+        elif intent == 'create_goal':
+            goal_name = entities.get('goal_name')
+            target_amount = entities.get('target_amount')
+            months = entities.get('months', 12)
+            
+            if not goal_name:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': '🎯 ต้องการตั้งเป้าออมชื่ออะไรคะ?\n\nตัวอย่าง: "ตั้งเป้าออม iPhone 45000 บาท"'
+                })
+            
+            if not target_amount:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': f'💰 เป้าหมาย "{goal_name}" ต้องออมเท่าไหร่คะ?'
+                })
+            
+            # Convert to satang
+            target_satang = int(target_amount * 100) if target_amount < 1000000 else int(target_amount)
+            
+            # Calculate target date
+            from dateutil.relativedelta import relativedelta
+            target_date = date.today() + relativedelta(months=int(months))
+            
+            new_goal = SavingsGoal(
+                project_id=project_id,
+                name=goal_name,
+                target_amount=target_satang,
+                current_amount=0,
+                target_date=target_date,
+                is_active=True
+            )
+            
+            db.session.add(new_goal)
+            db.session.commit()
+            
+            monthly_save = target_amount / months
+            
+            return jsonify({
+                'success': True,
+                'message': f"🎯 สร้างเป้าหมายสำเร็จ!\n\n"
+                          f"📌 {goal_name}\n"
+                          f"💰 เป้าหมาย: {target_amount:,.0f} บาท\n"
+                          f"📅 กำหนด: {months} เดือน\n"
+                          f"💡 ควรออมเดือนละ: {monthly_save:,.0f} บาท\n\n"
+                          f"พิมพ์ \"เติมเงิน {goal_name} [จำนวน] บาท\" เพื่อเพิ่มเงิน"
+            })
+        
+        # ========================
+        # CONTRIBUTE TO GOAL
+        # ========================
+        elif intent == 'contribute_goal':
+            goal_name = entities.get('goal_name')
+            amount = entities.get('amount')
+            
+            if not goal_name and not amount:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': '💰 ต้องการเติมเงินเข้าเป้าหมายไหนคะ?\n\nตัวอย่าง: "เติมเงิน iPhone 5000 บาท"'
+                })
+            
+            # Find goal
+            query = SavingsGoal.query.filter_by(project_id=project_id, is_active=True)
+            
+            if goal_name:
+                goal = query.filter(SavingsGoal.name.ilike(f'%{goal_name}%')).first()
+            else:
+                goal = query.first()
+            
+            if not goal:
+                return jsonify({
+                    'success': False,
+                    'message': f'❌ ไม่พบเป้าหมาย "{goal_name or ""}"\n\nพิมพ์ "เป้าหมาย" เพื่อดูรายการ'
+                })
+            
+            if not amount:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': f'💰 ต้องการเติมเงินเข้า "{goal.name}" เท่าไหร่คะ?'
+                })
+            
+            # Convert to satang
+            amount_satang = int(amount * 100) if amount < 1000000 else int(amount)
+            
+            old_amount = goal.current_amount / 100
+            goal.current_amount = (goal.current_amount or 0) + amount_satang
+            new_amount = goal.current_amount / 100
+            target = goal.target_amount / 100
+            progress = goal.progress_percentage
+            
+            db.session.commit()
+            
+            status = "🎉 ยินดีด้วย! บรรลุเป้าหมายแล้ว!" if goal.is_completed else f"📊 Progress: {progress:.0f}%"
+            
+            return jsonify({
+                'success': True,
+                'message': f"💰 เติมเงินสำเร็จ!\n\n"
+                          f"🎯 {goal.name}\n"
+                          f"➕ เติม: {amount:,.0f} บาท\n"
+                          f"💵 รวม: {new_amount:,.0f}/{target:,.0f} บาท\n\n"
+                          f"{status}"
+            })
+        
+        # ========================
+        # DELETE GOAL
+        # ========================
+        elif intent == 'delete_goal':
+            goal_name = entities.get('goal_name')
+            
+            if not goal_name:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': '❓ ต้องการลบเป้าหมายไหนคะ?\n\nพิมพ์ "เป้าหมาย" เพื่อดูรายการ'
+                })
+            
+            goal = SavingsGoal.query.filter(
+                SavingsGoal.project_id == project_id,
+                SavingsGoal.name.ilike(f'%{goal_name}%'),
+                SavingsGoal.is_active == True
+            ).first()
+            
+            if not goal:
+                return jsonify({
+                    'success': False,
+                    'message': f'❌ ไม่พบเป้าหมาย "{goal_name}"'
+                })
+            
+            goal_name_saved = goal.name
+            current = goal.current_amount / 100
+            
+            goal.is_active = False
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f"🗑️ ลบเป้าหมายสำเร็จ!\n\n"
+                          f"📌 {goal_name_saved}\n"
+                          f"💰 ยอดสะสม: {current:,.0f} บาท\n\n"
+                          f"พิมพ์ \"เป้าหมาย\" เพื่อดูเป้าหมายที่เหลือ"
+            })
+        
+        # ========================
         # GET SUMMARY
         # ========================
         elif intent == 'get_summary':
@@ -2511,6 +2660,22 @@ def smart_message():
             })
         
         # ========================
+        # GET WEB LINK
+        # ========================
+        elif intent == 'get_web_link':
+            # Generate web link for user
+            base_url = os.environ.get('RAILWAY_PUBLIC_DOMAIN', 'line-botpress-production.up.railway.app')
+            
+            return jsonify({
+                'success': True,
+                'message': f"🌐 ลิงก์เว็บไซต์ของคุณ:\n\n"
+                          f"📊 Dashboard:\nhttps://{base_url}/\n\n"
+                          f"👤 Profile:\nhttps://{base_url}/profile\n\n"
+                          f"📈 Analytics:\nhttps://{base_url}/analytics\n\n"
+                          f"คลิกลิงก์เพื่อดูรายละเอียดเพิ่มเติมได้เลยค่ะ! 💜"
+            })
+        
+        # ========================
         # GENERAL / UNKNOWN
         # ========================
         else:
@@ -2519,10 +2684,12 @@ def smart_message():
                 'intent': intent,
                 'entities': entities,
                 'message': f"สวัสดีค่ะ! ฉันช่วยอะไรได้บ้าง?\n\n"
-                          f"📝 ดูรายการ: \"รายการเดือนนี้\"\n"
+                          f"📝 รายการ: \"รายการเดือนนี้\"\n"
                           f"💰 บันทึก: \"กินข้าว 350 บาท\"\n"
                           f"🔄 ประจำ: \"รายการประจำ\"\n"
-                          f"📁 หมวดหมู่: \"หมวดหมู่ทั้งหมด\"\n"
+                          f"🎯 ออมเงิน: \"ตั้งเป้าออม iPhone 45000 บาท\"\n"
+                          f"📁 หมวดหมู่: \"หมวดหมู่\"\n"
+                          f"🌐 เว็บไซต์: \"ขอลิงก์เว็บ\"\n"
                           f"📊 สรุป: \"สรุปวันนี้\""
             })
     

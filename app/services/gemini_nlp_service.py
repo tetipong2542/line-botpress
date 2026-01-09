@@ -191,13 +191,49 @@ class GeminiNLPService:
                 result['intent'] = 'get_categories'
         
         # Check for goals
-        elif any(x in message_lower for x in ['เป้าหมาย', 'ออม']):
-            if any(x in message_lower for x in ['ตั้ง', 'สร้าง']):
+        elif any(x in message_lower for x in ['เป้าหมาย', 'ออม', 'goal']):
+            if any(x in message_lower for x in ['ลบ', 'ยกเลิก', 'delete']):
+                result['intent'] = 'delete_goal'
+                # Extract goal name
+                words = message.split()
+                for i, w in enumerate(words):
+                    if any(kw in w for kw in ['เป้าหมาย', 'ออม', 'ลบ']) and i + 1 < len(words):
+                        result['entities']['goal_name'] = words[i + 1]
+                        break
+            elif any(x in message_lower for x in ['ตั้ง', 'สร้าง', 'create']):
                 result['intent'] = 'create_goal'
-            elif any(x in message_lower for x in ['เพิ่ม']):
+                # Extract goal name and amount
+                words = message.split()
+                for i, w in enumerate(words):
+                    if any(kw in w for kw in ['ออม', 'เป้า', 'ตั้ง']) and i + 1 < len(words):
+                        result['entities']['goal_name'] = words[i + 1]
+                        break
+                # Extract amount
+                amount_match = re.search(r'(\d+(?:,\d+)?)\s*บาท', message)
+                if amount_match:
+                    result['entities']['target_amount'] = float(amount_match.group(1).replace(',', ''))
+                # Extract months
+                months_match = re.search(r'(\d+)\s*เดือน', message)
+                if months_match:
+                    result['entities']['months'] = int(months_match.group(1))
+            elif any(x in message_lower for x in ['เติม', 'เพิ่ม', 'add']):
                 result['intent'] = 'contribute_goal'
+                # Extract goal name
+                words = message.split()
+                for i, w in enumerate(words):
+                    if any(kw in w for kw in ['เติม', 'เพิ่ม']) and i + 1 < len(words):
+                        result['entities']['goal_name'] = words[i + 1]
+                        break
+                # Extract amount
+                amount_match = re.search(r'(\d+(?:,\d+)?)\s*บาท', message)
+                if amount_match:
+                    result['entities']['amount'] = float(amount_match.group(1).replace(',', ''))
             else:
                 result['intent'] = 'get_goals'
+        
+        # Check for web link / profile
+        elif any(x in message_lower for x in ['เว็บ', 'website', 'ลิงก์', 'link', 'profile', 'โปรไฟล์', 'dashboard', 'หน้าเว็บ']):
+            result['intent'] = 'get_web_link'
         
         # Check for transactions list (ดูรายการ, แสดงรายการ, รายการเดือนนี้)
         elif any(x in message_lower for x in ['แสดงรายการ', 'ดูรายการ', 'รายการทั้งหมด', 'รายการล่าสุด', 'รายการวันนี้', 'รายการเดือน', 'มีรายการอะไร', 'รายการการเงิน']):
@@ -219,8 +255,22 @@ class GeminiNLPService:
                     result['entities']['keyword'] = words[i + 1]
                     break
         
-        # Check for transaction creation (มี บาท แต่ไม่ใช่คำถาม)
-        elif re.search(r'(\d+(?:,\d+)?)\s*บาท', message) and 'อะไร' not in message_lower:
+        # Check for contribute goal (เติมเงิน xxx บาท)
+        elif any(x in message_lower for x in ['เติมเงิน', 'เพิ่มเงิน']) and re.search(r'\d+\s*บาท', message):
+            result['intent'] = 'contribute_goal'
+            # Extract goal name
+            words = message.split()
+            for i, w in enumerate(words):
+                if any(kw in w for kw in ['เติมเงิน', 'เพิ่มเงิน']) and i + 1 < len(words):
+                    result['entities']['goal_name'] = words[i + 1]
+                    break
+            # Extract amount
+            amount_match = re.search(r'(\d+(?:,\d+)?)\s*บาท', message)
+            if amount_match:
+                result['entities']['amount'] = float(amount_match.group(1).replace(',', ''))
+        
+        # Check for transaction creation (มี บาท แต่ไม่ใช่คำถาม และไม่ใช่ออม/เติม)
+        elif re.search(r'(\d+(?:,\d+)?)\s*บาท', message) and 'อะไร' not in message_lower and 'ออม' not in message_lower:
             result['intent'] = 'create_transaction'
             amount_match = re.search(r'(\d+(?:,\d+)?)\s*บาท', message)
             if amount_match:
