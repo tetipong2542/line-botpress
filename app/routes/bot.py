@@ -1,7 +1,7 @@
 """
 Botpress integration routes - Bot API endpoints with HMAC security
 """
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, request, jsonify, g, current_app
 from app import db
 from app.models.user import User
 from app.models.project import Project, ProjectSettings
