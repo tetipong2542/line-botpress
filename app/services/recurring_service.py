@@ -116,7 +116,7 @@ class RecurringService:
             raise PermissionError("User doesn't have access to this project")
 
         query = RecurringRule.query.filter_by(project_id=project_id).options(
-            joinedload('category')  # Eager load category data
+            joinedload(RecurringRule.category)  # Eager load category data
         )
 
         if active_only:
