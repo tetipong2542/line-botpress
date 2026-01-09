@@ -413,3 +413,155 @@ def _check_budget_status(project_id, category_id, occurred_at):
         'percentage': round(percentage, 2),
         'is_over_budget': remaining < 0
     }
+
+
+@bp.route('/summary', methods=['POST'])
+@require_bot_auth()
+def get_summary():
+    """
+    Get transaction summary for user
+    Used by Botpress getSummary action
+    
+    Supports periods: today, this_week, this_month, last_month, custom
+    """
+    from app.models.category import Category
+    from datetime import date
+    
+    data = request.json
+    botpress_user_id = data.get('botpress_user_id') or data.get('line_user_id')
+    period = data.get('period', 'this_month')  # today, this_week, this_month, last_month
+    
+    if not botpress_user_id:
+        return jsonify({
+            'error': {
+                'code': 'BAD_REQUEST',
+                'message': 'botpress_user_id is required'
+            }
+        }), 400
+    
+    # Find user
+    user = User.query.filter_by(botpress_user_id=botpress_user_id).first()
+    if not user:
+        user = User.query.filter_by(line_user_id=botpress_user_id).first()
+    
+    if not user or not user.current_project_id:
+        return jsonify({
+            'success': False,
+            'message': 'ยังไม่ได้เชื่อมต่อบัญชี กรุณาพิมพ์ "เชื่อมต่อ" เพื่อลงทะเบียน'
+        }), 400
+    
+    # Calculate date range based on period
+    today = date.today()
+    
+    if period == 'today':
+        start_date = datetime(today.year, today.month, today.day)
+        end_date = start_date + timedelta(days=1)
+        period_name = 'วันนี้'
+    elif period == 'this_week':
+        start_date = datetime(today.year, today.month, today.day) - timedelta(days=today.weekday())
+        end_date = start_date + timedelta(days=7)
+        period_name = 'สัปดาห์นี้'
+    elif period == 'this_month':
+        start_date = datetime(today.year, today.month, 1)
+        if today.month == 12:
+            end_date = datetime(today.year + 1, 1, 1)
+        else:
+            end_date = datetime(today.year, today.month + 1, 1)
+        period_name = 'เดือนนี้'
+    elif period == 'last_month':
+        if today.month == 1:
+            start_date = datetime(today.year - 1, 12, 1)
+            end_date = datetime(today.year, 1, 1)
+        else:
+            start_date = datetime(today.year, today.month - 1, 1)
+            end_date = datetime(today.year, today.month, 1)
+        period_name = 'เดือนที่แล้ว'
+    else:
+        # Default to this month
+        start_date = datetime(today.year, today.month, 1)
+        if today.month == 12:
+            end_date = datetime(today.year + 1, 1, 1)
+        else:
+            end_date = datetime(today.year, today.month + 1, 1)
+        period_name = 'เดือนนี้'
+    
+    project_id = user.current_project_id
+    
+    # Get income summary
+    income_total = db.session.query(db.func.sum(Transaction.amount)).filter(
+        Transaction.project_id == project_id,
+        Transaction.type == 'income',
+        Transaction.occurred_at >= start_date,
+        Transaction.occurred_at < end_date,
+        Transaction.deleted_at.is_(None)
+    ).scalar() or 0
+    
+    # Get expense summary
+    expense_total = db.session.query(db.func.sum(Transaction.amount)).filter(
+        Transaction.project_id == project_id,
+        Transaction.type == 'expense',
+        Transaction.occurred_at >= start_date,
+        Transaction.occurred_at < end_date,
+        Transaction.deleted_at.is_(None)
+    ).scalar() or 0
+    
+    # Get top expense categories
+    top_categories = db.session.query(
+        Category.name_th,
+        db.func.sum(Transaction.amount).label('total')
+    ).join(Transaction, Transaction.category_id == Category.id).filter(
+        Transaction.project_id == project_id,
+        Transaction.type == 'expense',
+        Transaction.occurred_at >= start_date,
+        Transaction.occurred_at < end_date,
+        Transaction.deleted_at.is_(None)
+    ).group_by(Category.id).order_by(db.desc('total')).limit(5).all()
+    
+    # Get transaction count
+    transaction_count = Transaction.query.filter(
+        Transaction.project_id == project_id,
+        Transaction.occurred_at >= start_date,
+        Transaction.occurred_at < end_date,
+        Transaction.deleted_at.is_(None)
+    ).count()
+    
+    # Convert satang to baht
+    income_baht = income_total / 100
+    expense_baht = expense_total / 100
+    balance_baht = income_baht - expense_baht
+    
+    # Format top categories
+    top_categories_formatted = []
+    for cat_name, cat_total in top_categories:
+        top_categories_formatted.append({
+            'name': cat_name,
+            'amount': cat_total / 100
+        })
+    
+    # Build human-readable message
+    message_lines = [
+        f"📊 สรุป{period_name}:",
+        f"",
+        f"💰 รายรับ: {income_baht:,.2f} บาท",
+        f"💸 รายจ่าย: {expense_baht:,.2f} บาท",
+        f"📈 คงเหลือ: {balance_baht:,.2f} บาท",
+        f"📝 จำนวนรายการ: {transaction_count} รายการ"
+    ]
+    
+    if top_categories_formatted:
+        message_lines.append(f"")
+        message_lines.append(f"🏆 หมวดหมู่ที่ใช้จ่ายมากที่สุด:")
+        for i, cat in enumerate(top_categories_formatted[:3], 1):
+            message_lines.append(f"   {i}. {cat['name']}: {cat['amount']:,.2f} บาท")
+    
+    return jsonify({
+        'success': True,
+        'period': period,
+        'period_name': period_name,
+        'income': income_baht,
+        'expense': expense_baht,
+        'balance': balance_baht,
+        'transaction_count': transaction_count,
+        'top_categories': top_categories_formatted,
+        'message': '\n'.join(message_lines)
+    })
