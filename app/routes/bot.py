@@ -2266,6 +2266,96 @@ def smart_message():
             })
         
         # ========================
+        # UPDATE CATEGORY (change type income/expense)
+        # ========================
+        elif intent == 'update_category':
+            category_name = entities.get('category_name')
+            new_type = entities.get('new_type')  # 'income' or 'expense'
+            
+            if not category_name:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': '❓ ต้องการแก้ไขหมวดหมู่ไหนคะ? กรุณาระบุชื่อ'
+                })
+            
+            # Find category
+            category = Category.query.filter(
+                Category.project_id == project_id,
+                Category.name_th.ilike(f'%{category_name}%')
+            ).first()
+            
+            if not category:
+                return jsonify({
+                    'success': False,
+                    'message': f'❌ ไม่พบหมวดหมู่ "{category_name}"'
+                })
+            
+            old_type = category.type
+            old_type_text = 'รายรับ' if old_type == 'income' else 'รายจ่าย'
+            
+            # Toggle type if not specified
+            if not new_type:
+                new_type = 'expense' if old_type == 'income' else 'income'
+            
+            new_type_text = 'รายรับ' if new_type == 'income' else 'รายจ่าย'
+            
+            category.type = new_type
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f"✅ แก้ไขหมวดหมู่สำเร็จ!\n\n"
+                          f"📁 {category.name_th}\n"
+                          f"🔄 เปลี่ยน: {old_type_text} → {new_type_text}\n\n"
+                          f"ต้องการทำอะไรต่อไหมคะ?"
+            })
+        
+        # ========================
+        # DELETE CATEGORY
+        # ========================
+        elif intent == 'delete_category':
+            category_name = entities.get('category_name')
+            
+            if not category_name:
+                return jsonify({
+                    'success': True,
+                    'need_more_info': True,
+                    'message': '❓ ต้องการลบหมวดหมู่ไหนคะ? กรุณาระบุชื่อ'
+                })
+            
+            # Find category
+            category = Category.query.filter(
+                Category.project_id == project_id,
+                Category.name_th.ilike(f'%{category_name}%')
+            ).first()
+            
+            if not category:
+                return jsonify({
+                    'success': False,
+                    'message': f'❌ ไม่พบหมวดหมู่ "{category_name}"'
+                })
+            
+            # Check if category has transactions
+            trans_count = Transaction.query.filter_by(category_id=category.id).count()
+            
+            if trans_count > 0:
+                return jsonify({
+                    'success': False,
+                    'message': f'❌ ไม่สามารถลบ "{category.name_th}" เพราะมี {trans_count} รายการใช้งานอยู่'
+                })
+            
+            cat_name = category.name_th
+            db.session.delete(category)
+            db.session.commit()
+            
+            return jsonify({
+                'success': True,
+                'message': f"🗑️ ลบหมวดหมู่ \"{cat_name}\" สำเร็จ!\n\n"
+                          f"พิมพ์ \"หมวดหมู่\" เพื่อดูหมวดหมู่ที่เหลือ"
+            })
+        
+        # ========================
         # CREATE TRANSACTION
         # ========================
         elif intent == 'create_transaction':

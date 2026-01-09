@@ -162,14 +162,31 @@ class GeminiNLPService:
         
         # Check for categories
         elif any(x in message_lower for x in ['หมวดหมู่', 'category', 'categories']):
-            if any(x in message_lower for x in ['สร้าง', 'เพิ่ม']):
-                result['intent'] = 'create_category'
-                # Try to extract category name
-                words = message.split()
+            # Extract category name helper
+            def extract_category_name(msg, keywords):
+                words = msg.split()
                 for i, w in enumerate(words):
-                    if 'หมวดหมู่' in w and i + 1 < len(words):
-                        result['entities']['category_name'] = words[i + 1]
-                        break
+                    if any(kw in w for kw in keywords) and i + 1 < len(words):
+                        return words[i + 1]
+                return None
+            
+            if any(x in message_lower for x in ['ลบ', 'delete']):
+                result['intent'] = 'delete_category'
+                result['entities']['category_name'] = extract_category_name(message, ['หมวดหมู่', 'ลบ'])
+            elif any(x in message_lower for x in ['แก้ไข', 'เปลี่ยน', 'update']):
+                result['intent'] = 'update_category'
+                result['entities']['category_name'] = extract_category_name(message, ['หมวดหมู่', 'แก้ไข', 'เปลี่ยน'])
+                # Check for type change
+                if 'รายรับ' in message_lower:
+                    result['entities']['new_type'] = 'income'
+                elif 'รายจ่าย' in message_lower:
+                    result['entities']['new_type'] = 'expense'
+            elif any(x in message_lower for x in ['สร้าง', 'เพิ่ม']):
+                result['intent'] = 'create_category'
+                result['entities']['category_name'] = extract_category_name(message, ['หมวดหมู่'])
+                # Check for type
+                if 'รายรับ' in message_lower:
+                    result['entities']['type'] = 'income'
             else:
                 result['intent'] = 'get_categories'
         
