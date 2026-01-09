@@ -12,24 +12,16 @@ Example: {% set current_page = 'home' %}
     </a>
     <a href="/recurring" class="menu-item {% if current_page == 'recurring' %}active{% endif %}">
         <i data-lucide="refresh-cw"></i>
-        <span class="menu-text-full">รายการประจำ</span>
-        <span class="menu-text-short" style="display: none;">ประจำ</span>
+        <span>ประจำ</span>
     </a>
-    <a href="/analytics" class="menu-item {% if current_page == 'analytics' %}active{% endif %}">
+    <a href="/analytics"
+        class="menu-item {% if current_page == 'analytics' or current_page == 'analytics_advanced' %}active{% endif %}">
         <i data-lucide="bar-chart-2"></i>
         <span>รายงาน</span>
-    </a>
-    <a href="/analytics/advanced" class="menu-item {% if current_page == 'analytics_advanced' %}active{% endif %}">
-        <i data-lucide="line-chart"></i>
-        <span>รายงานขั้นสูง</span>
     </a>
     <a href="/categories" class="menu-item {% if current_page == 'categories' %}active{% endif %}">
         <i data-lucide="folder"></i>
         <span>หมวดหมู่</span>
-    </a>
-    <a href="/members" class="menu-item {% if current_page == 'members' %}active{% endif %}">
-        <i data-lucide="users"></i>
-        <span>สมาชิก</span>
     </a>
     <a href="/profile" class="menu-item {% if current_page == 'profile' %}active{% endif %}">
         <i data-lucide="user"></i>

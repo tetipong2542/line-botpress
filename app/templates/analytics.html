@@ -13,10 +13,16 @@
             </h1>
             <p class="subtitle">วิเคราะห์รายรับรายจ่าย</p>
         </div>
-        <button class="btn-secondary" id="btn-export" style="margin-top: 0.5rem;">
-            <i data-lucide="download"></i>
-            <span>Export CSV</span>
-        </button>
+        <div style="display: flex; gap: 8px; margin-top: 0.5rem;">
+            <a href="/analytics/advanced" class="btn-secondary" style="text-decoration: none;">
+                <i data-lucide="line-chart"></i>
+                <span>ขั้นสูง</span>
+            </a>
+            <button class="btn-secondary" id="btn-export">
+                <i data-lucide="download"></i>
+                <span>Export</span>
+            </button>
+        </div>
     </div>
 
     <!-- Period Selector -->
