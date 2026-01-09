@@ -93,7 +93,7 @@ class Config:
 
     # LINE Messaging API
     LINE_CHANNEL_ACCESS_TOKEN = os.getenv('LINE_CHANNEL_ACCESS_TOKEN', '')
-    LINE_MESSAGING_CHANNEL_SECRET = os.getenv('LINE_CHANNEL_SECRET', '')
+    LINE_MESSAGING_CHANNEL_SECRET = os.getenv('LINE_MESSAGING_CHANNEL_SECRET', os.getenv('LINE_CHANNEL_SECRET', ''))
 
     # Botpress Integration
     BOTPRESS_WEBHOOK_URL = os.getenv(
