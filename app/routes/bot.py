@@ -1080,3 +1080,201 @@ def universal_action():
             'success': False,
             'message': f'ไม่รู้จัก action_type: {action_type}\n\nรองรับ: update_transaction, delete_transaction, create_category, delete_category'
         })
+
+
+@bp.route('/analyze', methods=['POST'])
+@require_bot_auth()
+def analyze_finances():
+    """
+    AI Analytics endpoint - Smart financial analysis and advice
+    Used by Botpress analyzeData action
+    
+    Supports analysis_types:
+    - spending_analysis: Analyze spending patterns
+    - prediction: Predict next month spending
+    - health_score: Calculate financial health
+    - advice: Get personalized advice
+    - full_report: Complete analysis
+    """
+    from app.services.ai_analytics_service import AIAnalyticsService
+    
+    data = request.json
+    botpress_user_id = data.get('botpress_user_id') or data.get('line_user_id')
+    analysis_type = data.get('analysis_type', 'full_report')
+    
+    if not botpress_user_id:
+        return jsonify({
+            'success': False,
+            'message': 'botpress_user_id is required'
+        }), 400
+    
+    # Find user
+    user = User.query.filter_by(botpress_user_id=botpress_user_id).first()
+    if not user:
+        user = User.query.filter_by(line_user_id=botpress_user_id).first()
+    
+    if not user or not user.current_project_id:
+        return jsonify({
+            'success': False,
+            'message': 'ยังไม่ได้เชื่อมต่อบัญชี กรุณาพิมพ์ "เชื่อมต่อ" เพื่อลงทะเบียน'
+        }), 400
+    
+    project_id = user.current_project_id
+    
+    try:
+        # ============================================
+        # Spending Analysis
+        # ============================================
+        if analysis_type == 'spending_analysis':
+            result = AIAnalyticsService.get_spending_analysis(project_id)
+            
+            lines = ["📊 วิเคราะห์รายจ่าย:", ""]
+            
+            # Monthly trend
+            if result['monthly_data']:
+                for m in result['monthly_data'][-3:]:
+                    lines.append(f"• {m['month']}: {m['total']:,.0f}฿")
+            
+            # Trend
+            trend_icon = "📈" if result['trend'] == 'increasing' else ("📉" if result['trend'] == 'decreasing' else "➡️")
+            trend_text = "เพิ่มขึ้น" if result['trend'] == 'increasing' else ("ลดลง" if result['trend'] == 'decreasing' else "คงที่")
+            lines.append(f"\n{trend_icon} แนวโน้ม: {trend_text} {abs(result['change_percent']):.0f}%")
+            
+            # Top categories
+            if result['category_breakdown']:
+                lines.append("\n🏆 หมวดที่ใช้มากที่สุด:")
+                for i, cat in enumerate(result['category_breakdown'][:3], 1):
+                    lines.append(f"   {i}. {cat['name']}: {cat['amount']:,.0f}฿ ({cat['percentage']}%)")
+            
+            return jsonify({
+                'success': True,
+                'data': result,
+                'message': '\n'.join(lines)
+            })
+        
+        # ============================================
+        # Prediction
+        # ============================================
+        elif analysis_type == 'prediction':
+            result = AIAnalyticsService.predict_next_month(project_id)
+            
+            if result['predicted_amount'] == 0:
+                return jsonify({
+                    'success': True,
+                    'message': '🔮 ยังไม่มีข้อมูลเพียงพอสำหรับพยากรณ์\n\nลองบันทึกรายการอย่างน้อย 1 เดือนก่อนนะครับ'
+                })
+            
+            confidence_text = {"high": "สูง ✅", "medium": "ปานกลาง", "low": "ต่ำ"}
+            
+            lines = [
+                "🔮 พยากรณ์รายจ่ายเดือนหน้า:",
+                "",
+                f"💰 คาดการณ์: {result['predicted_amount']:,.0f} บาท",
+                f"📊 ช่วง: {result['range_low']:,.0f} - {result['range_high']:,.0f} บาท",
+                f"📈 ความมั่นใจ: {confidence_text.get(result['confidence'], result['confidence'])}",
+                f"📅 อ้างอิงจาก: {result['based_on_months']} เดือนที่ผ่านมา"
+            ]
+            
+            return jsonify({
+                'success': True,
+                'data': result,
+                'message': '\n'.join(lines)
+            })
+        
+        # ============================================
+        # Health Score
+        # ============================================
+        elif analysis_type == 'health_score':
+            result = AIAnalyticsService.calculate_financial_health(project_id)
+            
+            lines = [
+                f"💯 คะแนนสุขภาพการเงิน: {result['score']}/100 ({result['grade_text']})",
+                ""
+            ]
+            
+            if result['strengths']:
+                lines.append("✅ จุดแข็ง:")
+                for s in result['strengths']:
+                    lines.append(f"   • {s}")
+            
+            if result['improvements']:
+                lines.append("\n⚠️ ควรปรับปรุง:")
+                for imp in result['improvements']:
+                    lines.append(f"   • {imp}")
+            
+            return jsonify({
+                'success': True,
+                'data': result,
+                'message': '\n'.join(lines)
+            })
+        
+        # ============================================
+        # Smart Advice
+        # ============================================
+        elif analysis_type == 'advice':
+            result = AIAnalyticsService.get_smart_advice(project_id)
+            
+            lines = [
+                f"💡 คำแนะนำทางการเงิน (คะแนน: {result['health_score']}/100)",
+                ""
+            ]
+            
+            for adv in result['advice']:
+                lines.append(f"{adv['title']}")
+                lines.append(f"   {adv['content']}")
+                lines.append("")
+            
+            return jsonify({
+                'success': True,
+                'data': result,
+                'message': '\n'.join(lines)
+            })
+        
+        # ============================================
+        # Full Report (default)
+        # ============================================
+        else:
+            health = AIAnalyticsService.calculate_financial_health(project_id)
+            spending = AIAnalyticsService.get_spending_analysis(project_id)
+            prediction = AIAnalyticsService.predict_next_month(project_id)
+            
+            trend_icon = "📈" if spending['trend'] == 'increasing' else ("📉" if spending['trend'] == 'decreasing' else "➡️")
+            trend_text = "เพิ่มขึ้น" if spending['trend'] == 'increasing' else ("ลดลง" if spending['trend'] == 'decreasing' else "คงที่")
+            
+            lines = [
+                "📊 รายงานวิเคราะห์การเงิน",
+                "═══════════════════",
+                "",
+                f"💯 สุขภาพการเงิน: {health['score']}/100 ({health['grade_text']})",
+                f"💰 รายรับเดือนนี้: {health['income']:,.0f}฿",
+                f"💸 รายจ่ายเดือนนี้: {health['expense']:,.0f}฿",
+                f"{trend_icon} แนวโน้ม: {trend_text} {abs(spending['change_percent']):.0f}%",
+            ]
+            
+            if prediction['predicted_amount'] > 0:
+                lines.append(f"🔮 คาดการณ์เดือนหน้า: {prediction['predicted_amount']:,.0f}฿")
+            
+            # Top category
+            if spending['category_breakdown']:
+                top = spending['category_breakdown'][0]
+                lines.append(f"\n🏆 หมวดใช้มากสุด: {top['name']} ({top['percentage']}%)")
+            
+            # Key advice
+            if health['improvements']:
+                lines.append(f"\n💡 แนะนำ: {health['improvements'][0]}")
+            
+            return jsonify({
+                'success': True,
+                'data': {
+                    'health': health,
+                    'spending': spending,
+                    'prediction': prediction
+                },
+                'message': '\n'.join(lines)
+            })
+    
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'เกิดข้อผิดพลาด: {str(e)}'
+        }), 500
