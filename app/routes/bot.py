@@ -565,3 +565,248 @@ def get_summary():
         'top_categories': top_categories_formatted,
         'message': '\n'.join(message_lines)
     })
+
+
+@bp.route('/query', methods=['POST'])
+@require_bot_auth()
+def universal_query():
+    """
+    Universal Query endpoint - One endpoint for all data queries
+    Used by Botpress queryData action
+    
+    Supports query_types:
+    - summary: Transaction summary (same as /summary)
+    - transactions: List recent transactions
+    - categories: List user's categories
+    - budgets: Budget status
+    """
+    from app.models.category import Category
+    from datetime import date
+    
+    data = request.json
+    botpress_user_id = data.get('botpress_user_id') or data.get('line_user_id')
+    query_type = data.get('query_type', 'summary')
+    params = data.get('params', {})
+    
+    if not botpress_user_id:
+        return jsonify({
+            'success': False,
+            'message': 'botpress_user_id is required'
+        }), 400
+    
+    # Find user
+    user = User.query.filter_by(botpress_user_id=botpress_user_id).first()
+    if not user:
+        user = User.query.filter_by(line_user_id=botpress_user_id).first()
+    
+    if not user or not user.current_project_id:
+        return jsonify({
+            'success': False,
+            'message': 'ยังไม่ได้เชื่อมต่อบัญชี กรุณาพิมพ์ "เชื่อมต่อ" เพื่อลงทะเบียน'
+        }), 400
+    
+    project_id = user.current_project_id
+    today = date.today()
+    
+    # ============================================
+    # QUERY TYPE: transactions
+    # ============================================
+    if query_type == 'transactions':
+        limit = params.get('limit', 10)
+        trans_type = params.get('type')  # 'income' or 'expense' or None
+        
+        query = Transaction.query.filter(
+            Transaction.project_id == project_id,
+            Transaction.deleted_at.is_(None)
+        )
+        
+        if trans_type:
+            query = query.filter(Transaction.type == trans_type)
+        
+        transactions = query.order_by(Transaction.occurred_at.desc()).limit(limit).all()
+        
+        if not transactions:
+            return jsonify({
+                'success': True,
+                'message': '📝 ยังไม่มีรายการ\n\nลองเพิ่มรายการโดยพิมพ์ เช่น "กินข้าว 350"'
+            })
+        
+        lines = [f"📝 รายการล่าสุด ({len(transactions)} รายการ):", ""]
+        
+        for t in transactions:
+            cat = Category.query.get(t.category_id)
+            cat_name = cat.name_th if cat else "ไม่ระบุ"
+            amount = t.amount / 100
+            icon = "💸" if t.type == 'expense' else "💰"
+            date_str = t.occurred_at.strftime("%d/%m") if t.occurred_at else ""
+            note = f" - {t.note}" if t.note else ""
+            lines.append(f"{icon} {cat_name}: {amount:,.2f}฿ ({date_str}){note}")
+        
+        return jsonify({
+            'success': True,
+            'count': len(transactions),
+            'message': '\n'.join(lines)
+        })
+    
+    # ============================================
+    # QUERY TYPE: categories
+    # ============================================
+    elif query_type == 'categories':
+        cat_type = params.get('type')  # 'income' or 'expense' or None
+        
+        query = Category.query.filter(
+            Category.project_id == project_id,
+            Category.is_active == True
+        )
+        
+        if cat_type:
+            query = query.filter(Category.type == cat_type)
+        
+        categories = query.order_by(Category.sort_order).all()
+        
+        expense_cats = [c for c in categories if c.type == 'expense']
+        income_cats = [c for c in categories if c.type == 'income']
+        
+        lines = ["📂 หมวดหมู่ของคุณ:", ""]
+        
+        if expense_cats:
+            lines.append("💸 รายจ่าย:")
+            for c in expense_cats:
+                lines.append(f"   • {c.name_th}")
+        
+        if income_cats:
+            lines.append("")
+            lines.append("💰 รายรับ:")
+            for c in income_cats:
+                lines.append(f"   • {c.name_th}")
+        
+        return jsonify({
+            'success': True,
+            'expense_count': len(expense_cats),
+            'income_count': len(income_cats),
+            'message': '\n'.join(lines)
+        })
+    
+    # ============================================
+    # QUERY TYPE: budgets
+    # ============================================
+    elif query_type == 'budgets':
+        month = params.get('month', today.strftime('%Y-%m'))
+        
+        budgets = Budget.query.filter_by(
+            project_id=project_id,
+            month_yyyymm=month
+        ).all()
+        
+        if not budgets:
+            return jsonify({
+                'success': True,
+                'message': '📊 ยังไม่ได้ตั้งงบประมาณ\n\nสามารถตั้งงบได้ที่เว็บ https://line-botpress-production.up.railway.app/budgets'
+            })
+        
+        lines = [f"📊 งบประมาณ {month}:", ""]
+        
+        for b in budgets:
+            cat = Category.query.get(b.category_id)
+            cat_name = cat.name_th if cat else "ไม่ระบุ"
+            limit_baht = b.limit_amount / 100
+            
+            # Calculate spent
+            month_start = datetime(today.year, int(month.split('-')[1]), 1)
+            spent = db.session.query(db.func.sum(Transaction.amount)).filter(
+                Transaction.project_id == project_id,
+                Transaction.category_id == b.category_id,
+                Transaction.type == 'expense',
+                Transaction.occurred_at >= month_start,
+                Transaction.deleted_at.is_(None)
+            ).scalar() or 0
+            
+            spent_baht = spent / 100
+            remaining = limit_baht - spent_baht
+            percent = (spent_baht / limit_baht * 100) if limit_baht > 0 else 0
+            
+            status = "✅" if remaining >= 0 else "❌"
+            lines.append(f"{status} {cat_name}: {spent_baht:,.0f}/{limit_baht:,.0f}฿ ({percent:.0f}%)")
+        
+        return jsonify({
+            'success': True,
+            'budget_count': len(budgets),
+            'message': '\n'.join(lines)
+        })
+    
+    # ============================================
+    # QUERY TYPE: summary (default)
+    # ============================================
+    else:
+        # Use the same logic as /summary endpoint
+        period = params.get('period', 'this_month')
+        
+        if period == 'today':
+            start_date = datetime(today.year, today.month, today.day)
+            end_date = start_date + timedelta(days=1)
+            period_name = 'วันนี้'
+        elif period == 'this_week':
+            start_date = datetime(today.year, today.month, today.day) - timedelta(days=today.weekday())
+            end_date = start_date + timedelta(days=7)
+            period_name = 'สัปดาห์นี้'
+        elif period == 'this_month':
+            start_date = datetime(today.year, today.month, 1)
+            end_date = datetime(today.year + 1, 1, 1) if today.month == 12 else datetime(today.year, today.month + 1, 1)
+            period_name = 'เดือนนี้'
+        elif period == 'last_month':
+            if today.month == 1:
+                start_date = datetime(today.year - 1, 12, 1)
+                end_date = datetime(today.year, 1, 1)
+            else:
+                start_date = datetime(today.year, today.month - 1, 1)
+                end_date = datetime(today.year, today.month, 1)
+            period_name = 'เดือนที่แล้ว'
+        else:
+            start_date = datetime(today.year, today.month, 1)
+            end_date = datetime(today.year + 1, 1, 1) if today.month == 12 else datetime(today.year, today.month + 1, 1)
+            period_name = 'เดือนนี้'
+        
+        income = db.session.query(db.func.sum(Transaction.amount)).filter(
+            Transaction.project_id == project_id,
+            Transaction.type == 'income',
+            Transaction.occurred_at >= start_date,
+            Transaction.occurred_at < end_date,
+            Transaction.deleted_at.is_(None)
+        ).scalar() or 0
+        
+        expense = db.session.query(db.func.sum(Transaction.amount)).filter(
+            Transaction.project_id == project_id,
+            Transaction.type == 'expense',
+            Transaction.occurred_at >= start_date,
+            Transaction.occurred_at < end_date,
+            Transaction.deleted_at.is_(None)
+        ).scalar() or 0
+        
+        count = Transaction.query.filter(
+            Transaction.project_id == project_id,
+            Transaction.occurred_at >= start_date,
+            Transaction.occurred_at < end_date,
+            Transaction.deleted_at.is_(None)
+        ).count()
+        
+        income_baht = income / 100
+        expense_baht = expense / 100
+        balance = income_baht - expense_baht
+        
+        lines = [
+            f"📊 สรุป{period_name}:",
+            "",
+            f"💰 รายรับ: {income_baht:,.2f} บาท",
+            f"💸 รายจ่าย: {expense_baht:,.2f} บาท",
+            f"📈 คงเหลือ: {balance:,.2f} บาท",
+            f"📝 จำนวนรายการ: {count} รายการ"
+        ]
+        
+        return jsonify({
+            'success': True,
+            'income': income_baht,
+            'expense': expense_baht,
+            'balance': balance,
+            'transaction_count': count,
+            'message': '\n'.join(lines)
+        })
