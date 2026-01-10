@@ -939,39 +939,55 @@
         }
     }
 
-    /* === Mobile Very Small Screen Fix === */
-    @media (max-width: 360px) {
+    /* === Mobile Screen Fix (< 480px) === */
+    @media (max-width: 480px) {
         .goals-stats {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, 1fr);
             gap: 0.5rem;
         }
 
         .stat-card {
-            flex-direction: row;
-            padding: 12px 16px;
+            padding: 10px 12px;
         }
 
         .stat-icon {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
         }
 
         .stat-value {
-            font-size: 18px;
+            font-size: 16px;
+        }
+
+        .stat-label {
+            font-size: 11px;
         }
     }
 
-    /* === Dropdown Overflow Fix === */
-    .dropdown-menu {
-        max-height: 70vh;
-        overflow-y: auto;
+    /* === Goals List Container Border === */
+    .goals-list {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 12px;
     }
 
-    /* Bottom position for dropdowns near bottom of screen */
-    .dropdown-menu.show-up {
-        top: auto;
-        bottom: 42px;
-        transform-origin: bottom right;
+    .goal-card {
+        border: 1.5px solid var(--border-color);
+    }
+
+    /* === Dropdown Fixed Position Fix === */
+    .dropdown-menu {
+        position: fixed;
+        max-height: 50vh;
+        overflow-y: auto;
+        z-index: 9999;
+    }
+
+    .dropdown-menu.show {
+        opacity: 1;
+        visibility: visible;
+        transform: scale(1);
     }
 </style>
 {% endblock %}
