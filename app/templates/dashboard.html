@@ -555,7 +555,7 @@ document.getElementById('transaction-form').addEventListener('submit', async (e)
     const payload = {
         type: type,
         category_id: categoryId,
-        amount: Math.round(amount * 100), // Convert baht to satang
+        amount: amount, // Backend will convert to satang
         occurred_at: occurred_at,
         note: document.getElementById('transaction-note').value || null
     };
@@ -901,22 +901,44 @@ function editTransaction(transactionId) {
         // Pre-fill form
         document.getElementById('transaction-type').value = tx.type;
         document.getElementById('transaction-category').value = tx.category_id;
-        
+
+        // Parse date properly
         const occuredDate = new Date(tx.occurred_at);
-        document.getElementById('transaction-date').valueAsDate = occuredDate;
-        document.getElementById('transaction-time').value = occuredDate.toTimeString().substr(0, 5);
+        const dateStr = occuredDate.toISOString().split('T')[0]; // YYYY-MM-DD
+        const timeStr = occuredDate.toTimeString().substr(0, 5); // HH:MM
+
+        document.getElementById('transaction-date').value = dateStr;
+        document.getElementById('transaction-time').value = timeStr;
         document.getElementById('transaction-note').value = tx.note || '';
         document.getElementById('transaction-amount').value = (tx.amount / 100).toFixed(2);
+
+        // Filter categories based on type
+        const expenseGroup = document.getElementById('expense-categories');
+        const incomeGroup = document.getElementById('income-categories');
+
+        if (tx.type === 'expense') {
+            if (expenseGroup) expenseGroup.style.display = '';
+            if (incomeGroup) incomeGroup.style.display = 'none';
+        } else {
+            if (expenseGroup) expenseGroup.style.display = 'none';
+            if (incomeGroup) incomeGroup.style.display = '';
+        }
 
         // Update modal header
         const modalHeader = document.getElementById('transaction-modal-header');
         const modalTitle = document.getElementById('transaction-modal-title');
         const submitBtnText = document.getElementById('transaction-submit-text');
-        
-        modalHeader.classList.remove('expense', 'income');
-        modalHeader.classList.add(tx.type);
-        modalTitle.textContent = `แก้ไข${tx.type === 'expense' ? 'รายจ่าย' : 'รายรับ'}`;
-        submitBtnText.textContent = 'อัพเดท';
+
+        if (modalHeader) {
+            modalHeader.classList.remove('expense', 'income');
+            modalHeader.classList.add(tx.type);
+        }
+        if (modalTitle) {
+            modalTitle.textContent = `แก้ไข${tx.type === 'expense' ? 'รายจ่าย' : 'รายรับ'}`;
+        }
+        if (submitBtnText) {
+            submitBtnText.textContent = 'อัพเดท';
+        }
 
         openModal();
     } catch (error) {

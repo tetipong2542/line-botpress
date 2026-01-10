@@ -295,7 +295,7 @@ document.getElementById('recurring-form').addEventListener('submit', async (e) =
     const payload = {
         type: document.getElementById('recurring-type').value,
         category_id: category_id,
-        amount: Math.round(amount * 100), // Convert baht to satang
+        amount: parseFloat(amount), // Backend will convert to satang
         freq: frequency,
         start_date: document.getElementById('recurring-start-date').value,
         remind_days: parseInt(document.getElementById('recurring-reminder').value) || 0,
