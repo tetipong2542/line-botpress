@@ -402,6 +402,9 @@
         editingBudgetId = null;
         document.getElementById('budget-form').reset();
         document.getElementById('modal-title').textContent = 'เพิ่มงบประมาณ';
+        // Re-enable fields for add mode
+        document.getElementById('budget-category').disabled = false;
+        document.getElementById('budget-month').disabled = false;
     }
 
     // ===== EVENT LISTENERS =====
@@ -410,6 +413,10 @@
         document.getElementById('btn-add-budget').addEventListener('click', () => {
             editingBudgetId = null;
             document.getElementById('modal-title').textContent = 'เพิ่มงบประมาณ';
+
+            // Enable fields for add mode
+            document.getElementById('budget-category').disabled = false;
+            document.getElementById('budget-month').disabled = false;
 
             // Set default month to current period
             const defaultMonth = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
@@ -520,6 +527,7 @@
             const budget = result.budget;
 
             editingBudgetId = budgetId;
+            console.log('Editing budget:', editingBudgetId, budget);
             document.getElementById('modal-title').textContent = 'แก้ไขงบประมาณ';
 
             // Fill form
@@ -527,6 +535,10 @@
             document.getElementById('budget-month').value = budget.month_yyyymm;
             document.getElementById('budget-amount').value = budget.limit_amount_formatted;
             document.getElementById('budget-rollover').value = budget.rollover_policy;
+
+            // Disable category and month in edit mode (they are the composite key)
+            document.getElementById('budget-category').disabled = true;
+            document.getElementById('budget-month').disabled = true;
 
             openModal();
 
