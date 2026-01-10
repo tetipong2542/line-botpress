@@ -32,10 +32,10 @@
     <div class="budgets-stats">
         <div class="stat-card">
             <div class="stat-icon">
-                <i data-lucide="target"></i>
+                <i data-lucide="wallet"></i>
             </div>
             <div class="stat-content">
-                <div class="stat-value" id="budget-count">0</div>
+                <div class="stat-value" id="total-budgeted">฿0</div>
                 <div class="stat-label">งบประมาณ</div>
             </div>
         </div>
@@ -216,18 +216,16 @@
     // ===== UPDATE SUMMARY CARDS =====
     function updateSummaryCards(summary, budgetCount = 0) {
         const formatMoney = (amount) => {
-            if (amount >= 1000) {
-                return (amount / 1000).toFixed(1) + 'k';
-            }
-            return amount.toLocaleString('th-TH');
+            return amount.toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
         };
 
-        // Update budget count
-        document.getElementById('budget-count').textContent = budgetCount;
+        // Update total budgeted
+        document.getElementById('total-budgeted').textContent = `฿${formatMoney(summary.total_budgeted_formatted)}`;
 
-        // Update spent and remaining
+        // Update spent
         document.getElementById('total-spent').textContent = `฿${formatMoney(summary.total_spent_formatted)}`;
 
+        // Update remaining
         const remainingEl = document.getElementById('total-remaining');
         remainingEl.textContent = `฿${formatMoney(summary.total_remaining_formatted)}`;
     }
@@ -647,26 +645,28 @@
         border-radius: 16px;
         padding: 16px;
         margin-bottom: 12px;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        border: 1.5px solid var(--border-color);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         transition: all 0.3s ease;
         animation: fadeInUp 0.3s ease;
     }
 
     .budget-card:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
         border-color: var(--primary-color);
         transform: translateY(-2px);
     }
 
     .budget-card.near-limit {
         border-color: #f59e0b;
-        background: linear-gradient(135deg, rgba(245, 158, 11, 0.03) 0%, var(--card-bg) 100%);
+        border-width: 2px;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, var(--card-bg) 100%);
     }
 
     .budget-card.over-budget {
         border-color: var(--expense-color);
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.03) 0%, var(--card-bg) 100%);
+        border-width: 2px;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, var(--card-bg) 100%);
     }
 
     /* Card Header */
@@ -923,31 +923,31 @@
 
     /* Progress Section */
     .budget-progress-section {
-        margin-top: 12px;
+        margin-top: 14px;
     }
 
     .progress-bar-large {
-        height: 36px;
+        height: 32px;
         background: var(--bg-secondary);
-        border-radius: 18px;
-        overflow: visible;
+        border-radius: 16px;
+        overflow: hidden;
         position: relative;
-        border: 1px solid var(--border-color);
+        border: 1.5px solid var(--border-color);
     }
 
     .progress-fill-large {
         height: 100%;
-        border-radius: 18px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
-        overflow: hidden;
+        min-width: 50px;
     }
 
     .progress-fill-large.normal {
-        background: linear-gradient(90deg, #10b981, #34d399);
+        background: linear-gradient(90deg, #22c55e, #4ade80);
     }
 
     .progress-fill-large.warning {
@@ -955,15 +955,16 @@
     }
 
     .progress-fill-large.over {
-        background: linear-gradient(90deg, var(--expense-color), #f87171);
+        background: linear-gradient(90deg, #ef4444, #f87171);
     }
 
     .progress-percentage {
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 700;
         color: white;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
         z-index: 1;
+        white-space: nowrap;
     }
 
     /* Period Selector */
