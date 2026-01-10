@@ -645,9 +645,9 @@ def get_category_usage(project_id, category_id):
 
     try:
         from app.models.transaction import Transaction
-        from app.models.recurring_transaction import RecurringTransaction
+        from app.models.recurring import RecurringRule
         from app.models.budget import Budget
-        from app.models.goal import Goal
+        from app.models.savings_goal import SavingsGoal
 
         # Verify category exists and belongs to project
         category = Category.query.filter_by(
@@ -670,7 +670,7 @@ def get_category_usage(project_id, category_id):
         ).filter(Transaction.deleted_at.is_(None)).count()
 
         # Count recurring transactions
-        recurring_count = RecurringTransaction.query.filter_by(
+        recurring_count = RecurringRule.query.filter_by(
             project_id=project_id,
             category_id=category_id,
             is_active=True
@@ -682,16 +682,16 @@ def get_category_usage(project_id, category_id):
             category_id=category_id
         ).count()
 
-        # Count goals (if Goal model exists)
+        # Count goals (savings goals)
         goals_count = 0
         try:
-            goals_count = Goal.query.filter_by(
+            goals_count = SavingsGoal.query.filter_by(
                 project_id=project_id,
                 category_id=category_id,
                 is_active=True
             ).count()
         except:
-            pass  # Goal table might not exist
+            pass  # SavingsGoal table might not have category_id
 
         return jsonify({
             'category': category.to_dict(),
