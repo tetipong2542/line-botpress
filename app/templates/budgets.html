@@ -28,41 +28,48 @@
         </button>
     </div>
 
-    <!-- Budget Stats (matching goals-stats design) -->
-    <div class="budgets-stats">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i data-lucide="wallet"></i>
+    <!-- Budget Summary -->
+    <div class="summary-section">
+        <div class="summary-card">
+            <div class="summary-icon">
+                <i data-lucide="target"></i>
             </div>
-            <div class="stat-content">
-                <div class="stat-value" id="total-budgeted">฿0</div>
-                <div class="stat-label">งบประมาณ</div>
+            <div class="summary-content">
+                <div class="summary-label">งบประมาณทั้งหมด</div>
+                <div class="summary-amount" id="total-budgeted">฿0.00</div>
             </div>
         </div>
 
-        <div class="stat-card expense">
-            <div class="stat-icon">
+        <div class="summary-card">
+            <div class="summary-icon">
                 <i data-lucide="trending-down"></i>
             </div>
-            <div class="stat-content">
-                <div class="stat-value" id="total-spent">฿0</div>
-                <div class="stat-label">ใช้ไปแล้ว</div>
+            <div class="summary-content">
+                <div class="summary-label">ใช้ไปแล้ว</div>
+                <div class="summary-amount" id="total-spent">฿0.00</div>
             </div>
         </div>
 
-        <div class="stat-card income">
-            <div class="stat-icon">
+        <div class="summary-card">
+            <div class="summary-icon">
                 <i data-lucide="piggy-bank"></i>
             </div>
-            <div class="stat-content">
-                <div class="stat-value" id="total-remaining">฿0</div>
-                <div class="stat-label">คงเหลือ</div>
+            <div class="summary-content">
+                <div class="summary-label">คงเหลือ</div>
+                <div class="summary-amount" id="total-remaining">฿0.00</div>
             </div>
         </div>
     </div>
 
     <!-- Budget List -->
     <div class="section">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="list"></i>
+                งบประมาณรายหมวดหมู่
+            </h2>
+        </div>
+
         <div id="budgets-list" class="budgets-list">
             <!-- Populated by JavaScript -->
             <div class="empty-state">
@@ -193,11 +200,9 @@
                 API.get(buildApiUrl(`budgets/summary?month=${month}`))
             ]);
 
-            const budgetCount = budgetsResult.budgets ? budgetsResult.budgets.length : 0;
-
-            // Update summary cards with count
+            // Update summary cards
             if (summaryResult.summary) {
-                updateSummaryCards(summaryResult.summary, budgetCount);
+                updateSummaryCards(summaryResult.summary);
             }
 
             // Render budget list
@@ -214,55 +219,22 @@
     }
 
     // ===== UPDATE SUMMARY CARDS =====
-    function updateSummaryCards(summary, budgetCount = 0) {
+    function updateSummaryCards(summary) {
         const formatMoney = (amount) => {
-            return amount.toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            return amount.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         };
 
-        // Update total budgeted
         document.getElementById('total-budgeted').textContent = `฿${formatMoney(summary.total_budgeted_formatted)}`;
-
-        // Update spent
         document.getElementById('total-spent').textContent = `฿${formatMoney(summary.total_spent_formatted)}`;
 
-        // Update remaining
         const remainingEl = document.getElementById('total-remaining');
         remainingEl.textContent = `฿${formatMoney(summary.total_remaining_formatted)}`;
+        remainingEl.style.color = summary.total_remaining >= 0 ? 'var(--success, #10b981)' : 'var(--error, #ef4444)';
     }
 
     // ===== RENDER BUDGETS =====
     function renderBudgets(budgets) {
         const container = document.getElementById('budgets-list');
-
-        // Mapping Lucide icon names to display
-        const lucideIconMap = {
-            'utensils': 'utensils',
-            'car': 'car',
-            'shopping-bag': 'shopping-bag',
-            'film': 'film',
-            'heart': 'heart',
-            'home': 'home',
-            'book': 'book',
-            'gift': 'gift',
-            'coffee': 'coffee',
-            'plane': 'plane',
-            'gamepad-2': 'gamepad-2',
-            'smartphone': 'smartphone',
-            'shirt': 'shirt',
-            'wifi': 'wifi',
-            'zap': 'zap',
-            'droplet': 'droplet',
-            'baby': 'baby',
-            'briefcase': 'briefcase',
-            'graduation-cap': 'graduation-cap',
-            'stethoscope': 'stethoscope'
-        };
-
-        // Function to check if string is emoji
-        function isEmoji(str) {
-            const emojiRegex = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u;
-            return emojiRegex.test(str);
-        }
 
         container.innerHTML = budgets.map(budget => {
             const progressColor = budget.is_over_budget ? 'over' : budget.is_near_limit ? 'warning' : 'normal';
@@ -271,25 +243,18 @@
             // Handle null category with fallback values
             const category = budget.category || {};
             const categoryName = category.name_th || 'หมวดหมู่ไม่ระบุ';
-            const categoryIcon = category.icon || 'folder';
+            const categoryIcon = category.icon || '📁';
             const categoryColor = category.color || '#6366f1';
 
-            // Determine if icon is emoji or Lucide name
-            const isIconEmoji = isEmoji(categoryIcon);
-            const iconHtml = isIconEmoji
-                ? `<span class="budget-icon-emoji">${categoryIcon}</span>`
-                : `<i data-lucide="${lucideIconMap[categoryIcon] || categoryIcon}" class="budget-lucide-icon"></i>`;
-
             return `
-            <div class="budget-card ${budget.is_over_budget ? 'over-budget' : ''} ${budget.is_near_limit ? 'near-limit' : ''}" data-id="${budget.id}">
+            <div class="budget-card ${budget.is_over_budget ? 'over-budget' : ''}" data-id="${budget.id}">
                 <div class="budget-card-header">
                     <div class="budget-main-info">
                         <div class="budget-icon-wrapper" style="
-                            background: color-mix(in srgb, ${categoryColor} 15%, transparent);
-                            border-color: ${categoryColor};
-                            color: ${categoryColor};
+                            background: color-mix(in srgb, ${categoryColor} 10%, transparent);
+                            border: 2px solid color-mix(in srgb, ${categoryColor} 35%, var(--border) 65%);
                         ">
-                            ${iconHtml}
+                            <span class="budget-icon-emoji">${categoryIcon}</span>
                         </div>
                         <div class="budget-title-section">
                             <h3 class="budget-title">${categoryName}</h3>
@@ -300,15 +265,15 @@
                         </div>
                     </div>
                     <div class="budget-menu-wrapper">
-                        <button type="button" class="btn-menu" onclick="toggleBudgetMenu('${budget.id}')" title="ตัวเลือก">
+                        <button class="btn-menu" onclick="toggleBudgetMenu('${budget.id}')" title="ตัวเลือก">
                             <i data-lucide="more-vertical"></i>
                         </button>
                         <div class="dropdown-menu" id="menu-${budget.id}">
-                            <button type="button" class="menu-item" onclick="editBudget('${budget.id}'); closeAllMenus();">
+                            <button class="menu-item" onclick="editBudget('${budget.id}'); closeAllMenus();">
                                 <i data-lucide="edit-2"></i>
                                 <span>แก้ไข</span>
                             </button>
-                            <button type="button" class="menu-item danger" onclick="deleteBudget('${budget.id}'); closeAllMenus();">
+                            <button class="menu-item danger" onclick="deleteBudget('${budget.id}'); closeAllMenus();">
                                 <i data-lucide="trash-2"></i>
                                 <span>ลบงบประมาณ</span>
                             </button>
@@ -319,18 +284,15 @@
                 <div class="budget-amount-section">
                     <div class="amount-item">
                         <span class="amount-label">งบประมาณ</span>
-                        <span class="amount-value budget">฿${budget.limit_amount_formatted.toLocaleString('th-TH')}</span>
+                        <span class="amount-value">฿${budget.limit_amount_formatted.toLocaleString('th-TH')}</span>
                     </div>
-                    <div class="amount-item center">
+                    <div class="amount-item">
                         <span class="amount-label">ใช้ไปแล้ว</span>
                         <span class="amount-value spent">฿${budget.spent_formatted.toLocaleString('th-TH')}</span>
                     </div>
                     <div class="amount-item">
-                        <span class="amount-label">
-                            คงเหลือ
-                            <i data-lucide="${budget.remaining < 0 ? 'alert-triangle' : 'check'}" class="remaining-icon ${budget.remaining < 0 ? 'negative' : 'positive'}"></i>
-                        </span>
-                        <span class="amount-value ${budget.remaining < 0 ? 'negative' : 'positive'}">฿${Math.abs(budget.remaining_formatted).toLocaleString('th-TH')}</span>
+                        <span class="amount-label">คงเหลือ</span>
+                        <span class="amount-value ${budget.remaining < 0 ? 'negative' : 'positive'}">฿${budget.remaining_formatted.toLocaleString('th-TH')}</span>
                     </div>
                 </div>
 
@@ -402,9 +364,6 @@
         editingBudgetId = null;
         document.getElementById('budget-form').reset();
         document.getElementById('modal-title').textContent = 'เพิ่มงบประมาณ';
-        // Re-enable fields for add mode
-        document.getElementById('budget-category').disabled = false;
-        document.getElementById('budget-month').disabled = false;
     }
 
     // ===== EVENT LISTENERS =====
@@ -413,10 +372,6 @@
         document.getElementById('btn-add-budget').addEventListener('click', () => {
             editingBudgetId = null;
             document.getElementById('modal-title').textContent = 'เพิ่มงบประมาณ';
-
-            // Enable fields for add mode
-            document.getElementById('budget-category').disabled = false;
-            document.getElementById('budget-month').disabled = false;
 
             // Set default month to current period
             const defaultMonth = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
@@ -475,28 +430,10 @@
             const amount = parseFloat(document.getElementById('budget-amount').value);
             const rolloverPolicy = document.getElementById('budget-rollover').value;
 
-            // Debug logging
-            console.log('Form submit:', {
-                editingBudgetId: editingBudgetId,
-                categoryId: categoryId,
-                month: month,
-                amount: amount,
-                rolloverPolicy: rolloverPolicy
-            });
-
-            // Validation - different for add vs edit mode
-            if (editingBudgetId) {
-                // Edit mode: only validate amount
-                if (!amount || amount <= 0) {
-                    showToast('กรุณากรอกจำนวนเงินที่ถูกต้อง', 'error');
-                    return;
-                }
-            } else {
-                // Add mode: validate all fields
-                if (!categoryId || !month || !amount || amount <= 0) {
-                    showToast('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
-                    return;
-                }
+            // Validation
+            if (!categoryId || !month || !amount || amount <= 0) {
+                showToast('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+                return;
             }
 
             // Loading state
@@ -510,7 +447,6 @@
                     limit_amount: Math.round(amount * 100), // Convert to satang
                     rollover_policy: rolloverPolicy
                 };
-                console.log('PUT request:', buildApiUrl('budgets', editingBudgetId), updatePayload);
                 await API.put(buildApiUrl('budgets', editingBudgetId), updatePayload);
                 showToast('อัพเดทงบประมาณสำเร็จ!', 'success');
             } else {
@@ -521,7 +457,6 @@
                     limit_amount: Math.round(amount * 100), // Convert to satang
                     rollover_policy: rolloverPolicy
                 };
-                console.log('POST request:', buildApiUrl('budgets'), createPayload);
                 await API.post(buildApiUrl('budgets'), createPayload);
                 showToast('เพิ่มงบประมาณสำเร็จ!', 'success');
             }
@@ -547,7 +482,6 @@
             const budget = result.budget;
 
             editingBudgetId = budgetId;
-            console.log('Editing budget:', editingBudgetId, budget);
             document.getElementById('modal-title').textContent = 'แก้ไขงบประมาณ';
 
             // Fill form
@@ -555,10 +489,6 @@
             document.getElementById('budget-month').value = budget.month_yyyymm;
             document.getElementById('budget-amount').value = budget.limit_amount_formatted;
             document.getElementById('budget-rollover').value = budget.rollover_policy;
-
-            // Disable category and month in edit mode (they are the composite key)
-            document.getElementById('budget-category').disabled = true;
-            document.getElementById('budget-month').disabled = true;
 
             openModal();
 
@@ -598,73 +528,47 @@
 </script>
 
 <style>
-    /* ===== BUDGETS STATS (matching goals-stats) ===== */
-    .budgets-stats {
+    /* Summary Section */
+    .summary-section {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 0.75rem;
         padding: 0 1rem;
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
     }
 
-    .stat-card {
+    .summary-card {
         background: var(--card-bg);
-        border: 1px solid var(--border-color);
         border-radius: 12px;
-        padding: 12px;
+        padding: 0.75rem;
         display: flex;
         align-items: center;
-        gap: 10px;
-        transition: all 0.2s ease;
+        gap: 0.5rem;
+        border: 1px solid var(--border-color);
     }
 
-    .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    }
-
-    .stat-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 12px;
+    .summary-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: white;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark, #4f46e5));
-        color: white;
         flex-shrink: 0;
     }
 
-    .stat-icon i {
-        width: 20px;
-        height: 20px;
+    .summary-label {
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.125rem;
     }
 
-    .stat-card.income .stat-icon {
-        background: linear-gradient(135deg, var(--income-color, #10b981), #34d399);
-    }
-
-    .stat-card.expense .stat-icon {
-        background: linear-gradient(135deg, var(--expense-color, #ef4444), #f87171);
-    }
-
-    .stat-content {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .stat-value {
-        font-size: 18px;
+    .summary-amount {
+        font-size: 0.875rem;
         font-weight: 700;
         color: var(--text-primary);
-        line-height: 1.2;
-    }
-
-    .stat-label {
-        font-size: 11px;
-        color: var(--text-secondary);
-        font-weight: 500;
-        margin-top: 2px;
     }
 
     /* ===== MINIMAL CARD DESIGN ===== */
@@ -678,27 +582,22 @@
         padding: 16px;
         margin-bottom: 12px;
         border: 1.5px solid var(--border-color);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         transition: all 0.3s ease;
         animation: fadeInUp 0.3s ease;
     }
 
     .budget-card:hover {
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-        border-color: var(--primary-color);
-        transform: translateY(-2px);
-    }
-
-    .budget-card.near-limit {
-        border-color: #f59e0b;
         border-width: 2px;
-        background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, var(--card-bg) 100%);
+        padding: 15.5px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border-color: var(--primary-color);
+        transform: translateY(-1px);
     }
 
     .budget-card.over-budget {
         border-color: var(--expense-color);
-        border-width: 2px;
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, var(--card-bg) 100%);
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.03) 0%, var(--card-bg) 100%);
     }
 
     /* Card Header */
@@ -717,30 +616,18 @@
     }
 
     .budget-icon-wrapper {
-        width: 44px;
-        height: 44px;
+        width: 42px;
+        height: 42px;
         border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
-        border: 2px solid var(--border-color);
-        transition: all 0.2s ease;
     }
 
     .budget-icon-emoji {
         font-size: 22px;
         filter: brightness(1.1);
-    }
-
-    .budget-lucide-icon {
-        width: 24px;
-        height: 24px;
-        color: inherit;
-    }
-
-    .budget-icon-wrapper:has(.budget-lucide-icon) {
-        color: var(--primary-color);
     }
 
     .budget-title-section {
@@ -877,68 +764,42 @@
         color: var(--expense-color);
     }
 
-    /* Amount Section - Enhanced 3-Column Layout */
+    /* Amount Section */
     .budget-amount-section {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 0;
         margin-bottom: 12px;
-        padding: 14px 12px;
+        padding: 12px 14px;
         background: var(--bg-secondary);
-        border-radius: 12px;
+        border-radius: 10px;
         border: 1px solid var(--border-color);
     }
 
     .amount-item {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 4px;
         text-align: center;
-        padding: 0 8px;
+        padding: 0 10px;
     }
 
     .amount-item:not(:last-child) {
         border-right: 1px solid var(--border-color);
     }
 
-    .amount-item.center {
-        position: relative;
-    }
-
     .amount-label {
-        font-size: 10px;
+        font-size: 11px;
         color: var(--text-secondary);
         font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.3px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 4px;
-    }
-
-    .remaining-icon {
-        width: 12px;
-        height: 12px;
-    }
-
-    .remaining-icon.positive {
-        color: var(--income-color);
-    }
-
-    .remaining-icon.negative {
-        color: var(--expense-color);
+        letter-spacing: 0.5px;
     }
 
     .amount-value {
-        font-size: 15px;
+        font-size: 16px;
         font-weight: 700;
         color: var(--text-primary);
-        line-height: 1.2;
-    }
-
-    .amount-value.budget {
-        color: var(--primary-color);
     }
 
     .amount-value.spent {
@@ -955,31 +816,31 @@
 
     /* Progress Section */
     .budget-progress-section {
-        margin-top: 14px;
+        margin-top: 12px;
     }
 
     .progress-bar-large {
-        height: 32px;
+        height: 36px;
         background: var(--bg-secondary);
-        border-radius: 16px;
-        overflow: hidden;
+        border-radius: 18px;
+        overflow: visible;
         position: relative;
-        border: 1.5px solid var(--border-color);
+        border: 1px solid var(--border-color);
     }
 
     .progress-fill-large {
         height: 100%;
-        border-radius: 14px;
+        border-radius: 18px;
         display: flex;
         align-items: center;
         justify-content: center;
         transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
-        min-width: 50px;
+        overflow: hidden;
     }
 
     .progress-fill-large.normal {
-        background: linear-gradient(90deg, #22c55e, #4ade80);
+        background: linear-gradient(90deg, #10b981, #34d399);
     }
 
     .progress-fill-large.warning {
@@ -987,16 +848,15 @@
     }
 
     .progress-fill-large.over {
-        background: linear-gradient(90deg, #ef4444, #f87171);
+        background: linear-gradient(90deg, var(--expense-color), #f87171);
     }
 
     .progress-percentage {
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 700;
         color: white;
-        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         z-index: 1;
-        white-space: nowrap;
     }
 
     /* Period Selector */
@@ -1138,29 +998,30 @@
 
     /* === Mobile Screen Fix (< 480px) === */
     @media (max-width: 480px) {
-        .budgets-stats {
+        .summary-section {
+            display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 0.5rem;
         }
 
-        .stat-card {
+        .summary-card {
             padding: 10px 12px;
         }
 
-        .stat-card:last-child {
+        .summary-card:last-child {
             grid-column: span 2;
         }
 
-        .stat-icon {
+        .summary-icon {
             width: 32px;
             height: 32px;
         }
 
-        .stat-value {
+        .summary-amount {
             font-size: 16px;
         }
 
-        .stat-label {
+        .summary-label {
             font-size: 11px;
         }
 
