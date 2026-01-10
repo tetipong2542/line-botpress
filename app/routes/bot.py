@@ -1877,6 +1877,10 @@ def smart_message():
     
     project_id = user.current_project_id
     
+    # Context Memory - store last transactions for reference
+    context = data.get('context', {})
+    last_transactions = context.get('last_transactions', [])
+    
     # Parse message using Gemini NLP
     parsed = gemini_nlp.parse_message(message)
     intent = parsed.get('intent', 'general')
@@ -3274,24 +3278,67 @@ def smart_message():
             
             transaction = transactions[index - 1]
             old_amount = transaction.amount / 100
-            cat_name = transaction.category.name_th if transaction.category else 'ไม่ระบุ'
+            old_cat_name = transaction.category.name_th if transaction.category else 'ไม่ระบุ'
             
-            if not new_amount:
+            # Get update fields
+            new_amount = entities.get('amount')
+            new_category_name = entities.get('category_name')
+            new_note = entities.get('note')
+            
+            # If no update field provided, show current info
+            if not new_amount and not new_category_name and not new_note:
                 return jsonify({
                     'success': True,
                     'need_more_info': True,
-                    'message': f"✏️ รายการที่ {index}: {cat_name} {old_amount:,.0f}฿\n\nพิมพ์จำนวนเงินใหม่ เช่น \"500 บาท\""
+                    'message': f"✏️ รายการที่ {index}:\n"
+                              f"📁 หมวด: {old_cat_name}\n"
+                              f"💵 จำนวน: {old_amount:,.0f}฿\n"
+                              f"📝 หมายเหตุ: {transaction.note or '-'}\n\n"
+                              f"พิมพ์:\n"
+                              f"• \"เปลี่ยนเป็น 500 บาท\"\n"
+                              f"• \"เปลี่ยนหมวด Netflix\"\n"
+                              f"• \"หมายเหตุ ค่าสมาชิก\""
                 })
             
+            # Track changes
+            changes = []
+            
             # Update amount
-            transaction.amount = int(new_amount * 100)
+            if new_amount:
+                old_amount = transaction.amount / 100
+                transaction.amount = int(new_amount * 100)
+                changes.append(f"💵 {old_amount:,.0f} → {new_amount:,.0f} บาท")
+            
+            # Update category
+            if new_category_name:
+                new_category = Category.query.filter(
+                    Category.project_id == project_id,
+                    Category.name_th.ilike(f'%{new_category_name}%')
+                ).first()
+                
+                if new_category:
+                    old_cat = old_cat_name
+                    transaction.category_id = new_category.id
+                    changes.append(f"📁 {old_cat} → {new_category.name_th}")
+                else:
+                    return jsonify({
+                        'success': False,
+                        'message': f'❌ ไม่พบหมวด "{new_category_name}"'
+                    })
+            
+            # Update note
+            if new_note:
+                old_note = transaction.note or '-'
+                transaction.note = new_note
+                changes.append(f"📝 {old_note} → {new_note}")
+            
             db.session.commit()
+            
+            cat_name = transaction.category.name_th if transaction.category else 'ไม่ระบุ'
             
             return jsonify({
                 'success': True,
-                'message': f"✅ แก้ไขรายการสำเร็จ!\n\n"
-                          f"📁 {cat_name}\n"
-                          f"💵 {old_amount:,.0f} → {new_amount:,.0f} บาท"
+                'message': f"✅ แก้ไขรายการที่ {index} สำเร็จ!\n\n" + "\n".join(changes)
             })
         
         # ========================

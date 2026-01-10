@@ -194,18 +194,34 @@ class GeminiNLPService:
                 result['entities']['amount'] = float(amount_match.group(1).replace(',', ''))
             return result
         
-        # Check for update transaction (แก้ไขรายการที่ 1)
-        if any(x in message_lower for x in ['แก้ไขรายการ', 'แก้รายการ', 'เปลี่ยนรายการ']) and 'ประจำ' not in message_lower:
-            result['intent'] = 'update_transaction'
-            # Check for index
-            num_match = re.search(r'ที่\s*(\d+)|รายการ\s*(\d+)', message)
-            if num_match:
-                result['entities']['index'] = int(num_match.group(1) or num_match.group(2))
-            # Extract amount
-            amount_match = re.search(r'(\d+(?:,\d+)?)\s*บาท', message)
-            if amount_match:
-                result['entities']['amount'] = float(amount_match.group(1).replace(',', ''))
-            return result
+        # Check for update transaction (แก้ไขรายการที่ 1, รายการที่ 1 เปลี่ยน)
+        # Pattern: "รายการที่ X เปลี่ยน" or "แก้ไขรายการที่ X"
+        update_match = re.search(r'รายการ(?:ที่)?\s*(\d+)\s*(?:เปลี่ยน|แก้)', message_lower)
+        if update_match or any(x in message_lower for x in ['แก้ไขรายการ', 'แก้รายการ', 'เปลี่ยนรายการ']):
+            if 'ประจำ' not in message_lower:
+                result['intent'] = 'update_transaction'
+                
+                # Extract index
+                num_match = re.search(r'(?:ที่|รายการ)\s*(\d+)', message)
+                if num_match:
+                    result['entities']['index'] = int(num_match.group(1))
+                
+                # Extract amount (ถ้ามี)
+                amount_match = re.search(r'(?:เป็น|เป็น)\s*(\d+(?:,\d+)?)\s*(?:บาท)?', message)
+                if amount_match:
+                    result['entities']['amount'] = float(amount_match.group(1).replace(',', ''))
+                
+                # Extract category (หมวด xxx, เป็นหมวด xxx)
+                cat_match = re.search(r'(?:หมวด|เป็นหมวด)\s*(\S+)', message)
+                if cat_match:
+                    result['entities']['category_name'] = cat_match.group(1)
+                
+                # Extract note (หมายเหตุ xxx, โน้ต xxx)
+                note_match = re.search(r'(?:หมายเหตุ|โน้ต|note)\s*(.+?)(?:\s*$|หมวด)', message, re.IGNORECASE)
+                if note_match:
+                    result['entities']['note'] = note_match.group(1).strip()
+                
+                return result
         
         # Check for delete all (need clarification: recurring or regular?)
         if 'ลบรายการทั้งหมด' in message_lower or ('ลบ' in message_lower and 'ทั้งหมด' in message_lower):
