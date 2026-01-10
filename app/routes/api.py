@@ -636,29 +636,7 @@ def delete_category_route(project_id, category_id):
         }), 403
 
 
-# Budgets
-@bp.route('/projects/<project_id>/budgets', methods=['GET'])
-def get_budgets(project_id):
-    """Get budgets for project"""
-    auth_error = require_auth()
-    if auth_error:
-        return auth_error
-
-    month = request.args.get('month')  # YYYY-MM format
-
-    if not month:
-        from datetime import datetime
-        month = datetime.utcnow().strftime('%Y-%m')
-
-    budgets = Budget.query.filter_by(
-        project_id=project_id,
-        month_yyyymm=month
-    ).all()
-
-    return jsonify({
-        'budgets': [b.to_dict() for b in budgets],
-        'month': month
-    })
+# Budgets - GET endpoint moved to BudgetService section below for enriched data
 
 
 @bp.route('/projects/<project_id>/budgets/<category_id>', methods=['PUT'])
