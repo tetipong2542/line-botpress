@@ -1124,6 +1124,11 @@
         </div>
     `).join('');
 
+        // Initialize Lucide icons ให้แสดงเป็น SVG
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
         section.style.display = 'block';
         section.classList.add('fade-in');
     }
