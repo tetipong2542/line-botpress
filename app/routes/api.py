@@ -1143,6 +1143,9 @@ def create_budget(project_id):
 
     try:
         data = request.get_json()
+        
+        # Debug logging
+        print(f"[CREATE_BUDGET] Received data: {data}")
 
         # Required fields
         category_id = data.get('category_id')
@@ -1154,8 +1157,17 @@ def create_budget(project_id):
                 "error": {"message": "category_id, month, and limit_amount are required"}
             }), 400
 
+        # CRITICAL: Validate category_id starts with correct prefix
+        if not category_id.startswith('cat_'):
+            print(f"[CREATE_BUDGET] ERROR: Invalid category_id format: {category_id}")
+            return jsonify({
+                "error": {"message": f"Invalid category_id format. Expected 'cat_...' but got '{category_id}'"}
+            }), 400
+
         # Optional
         rollover_policy = data.get('rollover_policy', 'none')
+
+        print(f"[CREATE_BUDGET] Creating budget: project={project_id}, category={category_id}, month={month_yyyymm}")
 
         # Create budget
         budget = BudgetService.create_budget(
@@ -1168,14 +1180,18 @@ def create_budget(project_id):
 
         # Get enriched data
         budget_dict = BudgetService.get_budget(budget.id, project_id)
+        
+        print(f"[CREATE_BUDGET] Successfully created budget: {budget.id}")
 
         return jsonify({"budget": budget_dict}), 201
 
     except ValueError as e:
+        print(f"[CREATE_BUDGET] ValueError: {str(e)}")
         return jsonify({
             "error": {"message": str(e)}
         }), 400
     except Exception as e:
+        print(f"[CREATE_BUDGET] Exception: {str(e)}")
         return jsonify({
             "error": {"message": str(e)}
         }), 500
