@@ -249,7 +249,8 @@
             <!-- รายละเอียด -->
             <div class="form-group">
                 <label class="form-label">รายละเอียด (ไม่บังคับ)</label>
-                <textarea class="form-textarea" id="transaction-note" placeholder="เช่น: ซื้อของที่ห้าง" rows="2"></textarea>
+                <textarea class="form-textarea" id="transaction-note" placeholder="เช่น: ซื้อของที่ห้าง"
+                    rows="2"></textarea>
             </div>
 
             <!-- จำนวนเงิน -->
@@ -257,7 +258,8 @@
                 <label class="form-label">จำนวนเงิน (THB)</label>
                 <div class="amount-input-wrapper">
                     <span class="currency">฿</span>
-                    <input type="number" class="form-input amount-input" id="transaction-amount" placeholder="0.00" step="0.01" required>
+                    <input type="number" class="form-input amount-input" id="transaction-amount" placeholder="0.00"
+                        step="0.01" required>
                 </div>
             </div>
 
@@ -344,512 +346,530 @@
 
 {% block extra_js %}
 <script>
-// ===== MODAL SYSTEM =====
-const modal = document.getElementById('transaction-form-modal');
-const addExpenseBtn = document.getElementById('btn-add-expense');
-const addIncomeBtn = document.getElementById('btn-add-income');
-const quickAddBtn = document.getElementById('btn-quick-add');
+    // ===== MODAL SYSTEM =====
+    const modal = document.getElementById('transaction-form-modal');
+    const addExpenseBtn = document.getElementById('btn-add-expense');
+    const addIncomeBtn = document.getElementById('btn-add-income');
+    const quickAddBtn = document.getElementById('btn-quick-add');
 
-let lastUsedCategories = {
-    expense: null,
-    income: null
-};
-
-let categoriesCache = {
-    expense: [],
-    income: []
-};
-
-// Load last used categories from localStorage
-function loadLastUsedCategories() {
-    try {
-        const saved = localStorage.getItem('lastUsedCategories');
-        if (saved) {
-            lastUsedCategories = JSON.parse(saved);
-        }
-    } catch (e) {
-        console.error('Failed to load last used categories:', e);
-    }
-}
-
-// Save last used categories to localStorage
-function saveLastUsedCategories(type, categoryId) {
-    lastUsedCategories[type] = categoryId;
-    try {
-        localStorage.setItem('lastUsedCategories', JSON.stringify(lastUsedCategories));
-    } catch (e) {
-        console.error('Failed to save last used categories:', e);
-    }
-}
-const closeBtn = modal.querySelector('.modal-close');
-const overlay = modal.querySelector('.modal-overlay');
-
-function openModal(type = null) {
-    // Reset form
-    document.getElementById('transaction-form').reset();
-    
-    // Set default date/time
-    const now = new Date();
-    document.getElementById('transaction-date').value = now.toISOString().split('T')[0];
-    document.getElementById('transaction-time').value = now.toTimeString().slice(0, 5);
-    
-    // Set type if provided
-    if (type) {
-        document.getElementById('transaction-type').value = type;
-    }
-    
-    // Update modal header color
-    const modalHeader = document.getElementById('transaction-modal-header');
-    const typeValue = type || document.getElementById('transaction-type').value;
-    modalHeader.classList.remove('expense', 'income');
-    modalHeader.classList.add(typeValue);
-    
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeModal() {
-    modal.classList.remove('active');
-    document.body.style.overflow = '';
-}
-
-// Quick action buttons
-addExpenseBtn.addEventListener('click', () => openModal('expense'));
-addIncomeBtn.addEventListener('click', () => openModal('income'));
-
-quickAddBtn.addEventListener('click', () => {
-    // Smart detection: prefer expense, fallback to income
-    let type = 'expense';
-    let categoryId = lastUsedCategories.expense;
-
-    // If no expense history, use default expense category (first one)
-    if (!categoryId && categoriesCache.expense.length > 0) {
-        categoryId = categoriesCache.expense[0].id;
-    }
-
-    // If no expense history but has income history, use income instead
-    if (!categoryId && lastUsedCategories.income) {
-        type = 'income';
-        categoryId = lastUsedCategories.income;
-    }
-
-    // If no income history, use default income category (first one)
-    if (!categoryId && categoriesCache.income.length > 0) {
-        type = 'income';
-        categoryId = categoriesCache.income[0].id;
-    }
-
-    // If still no categories at all, show error
-    if (!categoryId) {
-        showToast('กรุณาสร้างหมวดหมู่ก่อนใช้งาน', 'error');
-        return;
-    }
-
-    // Pre-fill form with last used category
-    document.getElementById('transaction-type').value = type;
-    document.getElementById('transaction-category').value = categoryId;
-
-    // Set default date/time
-    const now = new Date();
-    document.getElementById('transaction-date').value = now.toISOString().split('T')[0];
-    document.getElementById('transaction-time').value = now.toTimeString().slice(0, 5);
-
-    // Clear amount and note
-    document.getElementById('transaction-amount').value = '';
-    document.getElementById('transaction-note').value = '';
-
-    // Update modal header
-    const modalHeader = document.getElementById('transaction-modal-header');
-    const modalTitle = document.getElementById('transaction-modal-title');
-
-    if (modalHeader) {
-        modalHeader.classList.remove('expense', 'income');
-        modalHeader.classList.add(type);
-    }
-    if (modalTitle) {
-        modalTitle.textContent = `จดเร็ว: ${type === 'expense' ? 'รายจ่าย' : 'รายรับ'}`;
-    }
-
-    openModal();
-});
-
-closeBtn.addEventListener('click', closeModal);
-overlay.addEventListener('click', closeModal);
-
-// ESC key
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        closeModal();
-    }
-});
-
-// Type change - update header color AND filter categories
-document.getElementById('transaction-type').addEventListener('change', (e) => {
-    const type = e.target.value;
-    const modalHeader = document.getElementById('transaction-modal-header');
-    modalHeader.classList.remove('expense', 'income');
-    modalHeader.classList.add(type);
-
-    // Filter categories based on type
-    const categorySelect = document.getElementById('transaction-category');
-    const expenseGroup = document.getElementById('expense-categories');
-    const incomeGroup = document.getElementById('income-categories');
-
-    if (type === 'expense') {
-        if (expenseGroup) expenseGroup.style.display = '';
-        if (incomeGroup) incomeGroup.style.display = 'none';
-    } else {
-        if (expenseGroup) expenseGroup.style.display = 'none';
-        if (incomeGroup) incomeGroup.style.display = '';
-    }
-
-    // Reset category selection
-    if (categorySelect) categorySelect.value = '';
-});
-
-// Load last used categories on page ready
-document.addEventListener('DOMContentLoaded', loadLastUsedCategories);
-
-// ===== SET DEFAULT DATE/TIME =====
-function setDefaultDateTime(type) {
-    const now = new Date();
-    const date = now.toISOString().split('T')[0];
-    const time = now.toTimeString().slice(0, 5);
-
-    document.getElementById(`${type}-date`).value = date;
-    document.getElementById(`${type}-time`).value = time;
-}
-
-// ===== FORM SUBMISSION =====
-document.getElementById('transaction-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    const originalBtnContent = submitBtn.innerHTML;
-
-    // Get form values
-    const type = document.getElementById('transaction-type').value;
-    const categoryId = document.getElementById('transaction-category').value;
-    const amount = parseFloat(document.getElementById('transaction-amount').value);
-
-    // Validation
-    if (!categoryId) {
-        showToast('กรุณาเลือกหมวดหมู่', 'error');
-        return;
-    }
-    if (!amount || amount <= 0) {
-        showToast('กรุณากรอกจำนวนเงินที่ถูกต้อง', 'error');
-        return;
-    }
-
-    // Loading state
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังบันทึก...</span>';
-    lucide.createIcons();
-
-    // Prepare data
-    const date = document.getElementById('transaction-date').value;
-    const time = document.getElementById('transaction-time').value;
-    const occurred_at = `${date}T${time}:00`;
-
-    const payload = {
-        type: type,
-        category_id: categoryId,
-        amount: amount, // Backend will convert to satang
-        occurred_at: occurred_at,
-        note: document.getElementById('transaction-note').value || null
+    // เก็บรายการล่าสุดแบบ unified (type + categoryId รวมกัน)
+    let lastUsedTransaction = {
+        type: null,
+        categoryId: null
     };
 
-    try {
-        let result;
-        if (editingTransactionId) {
-            // Update existing transaction
-            result = await API.put(buildApiUrl('transactions', editingTransactionId), payload);
-            showToast(`อัพเดท${type === 'expense' ? 'รายจ่าย' : 'รายรับ'}สำเร็จ!`, 'success');
-        } else {
-            // Create new transaction
-            result = await API.post(buildApiUrl('transactions'), payload);
-            showToast(`บันทึก${type === 'expense' ? 'รายจ่าย' : 'รายรับ'}สำเร็จ!`, 'success');
+    let categoriesCache = {
+        expense: [],
+        income: []
+    };
+
+    // Load last used transaction from localStorage
+    function loadLastUsedTransaction() {
+        try {
+            const saved = localStorage.getItem('lastUsedTransaction');
+            if (saved) {
+                lastUsedTransaction = JSON.parse(saved);
+            }
+        } catch (e) {
+            console.error('Failed to load last used transaction:', e);
         }
+    }
 
-        // Save last used category for smart quick add
-        saveLastUsedCategories(type, categoryId);
+    // Save last used transaction to localStorage
+    function saveLastUsedTransaction(type, categoryId) {
+        lastUsedTransaction = { type, categoryId };
+        try {
+            localStorage.setItem('lastUsedTransaction', JSON.stringify(lastUsedTransaction));
+        } catch (e) {
+            console.error('Failed to save last used transaction:', e);
+        }
+    }
+    const closeBtn = modal.querySelector('.modal-close');
+    const overlay = modal.querySelector('.modal-overlay');
 
-        // Reset form and state
+    function openModal(type = null) {
+        // Reset form
         document.getElementById('transaction-form').reset();
-        editingTransactionId = null;
 
-        // Reset modal title and button
-        const modalTitle = document.getElementById('transaction-modal-title');
-        const submitBtnText = document.getElementById('transaction-submit-text');
-        if (modalTitle) modalTitle.textContent = 'เพิ่มรายการ';
-        if (submitBtnText) submitBtnText.textContent = 'บันทึก';
+        // Set default date/time
+        const now = new Date();
+        document.getElementById('transaction-date').value = now.toISOString().split('T')[0];
+        document.getElementById('transaction-time').value = now.toTimeString().slice(0, 5);
 
-        closeModal();
-
-        // Reload dashboard
-        await loadDashboard(true);
-
-    } catch (error) {
-        console.error('Transaction error:', error);
-        showToast(error.message || 'ไม่สามารถบันทึกได้ กรุณาลองใหม่', 'error');
-
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnContent;
-        lucide.createIcons();
-    }
-});
-
-// ===== LOAD CATEGORIES =====
-async function loadCategories() {
-    try {
-        const result = await API.get(buildApiUrl('categories'));
-
-        if (result.categories && result.categories.length > 0) {
-            const categories = result.categories;
-
-            // Separate by type
-            const expenseCategories = categories.filter(cat => cat.type === 'expense' && cat.is_active);
-            const incomeCategories = categories.filter(cat => cat.type === 'income' && cat.is_active);
-
-            // Cache categories for quick add
-            categoriesCache.expense = expenseCategories;
-            categoriesCache.income = incomeCategories;
-
-            // Helper to get icon display (emoji stays as is, Lucide shows as text for dropdown)
-            const getIconDisplay = (icon) => {
-                // Check if it's emoji
-                const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(icon || '');
-                return isEmoji ? icon : '📁'; // Use folder emoji as fallback for Lucide icons in dropdown
-            };
-
-            const expenseGroup = document.getElementById('expense-categories');
-            const incomeGroup = document.getElementById('income-categories');
-
-            if (expenseGroup) {
-                expenseGroup.innerHTML = expenseCategories.map(cat =>
-                    `<option value="${cat.id}">${getIconDisplay(cat.icon)} ${cat.name_th}</option>`
-                ).join('');
-            }
-
-            if (incomeGroup) {
-                incomeGroup.innerHTML = incomeCategories.map(cat =>
-                    `<option value="${cat.id}">${getIconDisplay(cat.icon)} ${cat.name_th}</option>`
-                ).join('');
-            }
+        // Set type if provided
+        if (type) {
+            document.getElementById('transaction-type').value = type;
         }
-    } catch (error) {
-        console.error('Error loading categories:', error);
-    }
-}
 
-// ===== RESET SKELETONS (Show skeletons before reload) =====
-function resetSkeletons() {
-    // Reset summary cards
-    const summaryCards = document.getElementById('summary-cards');
-    const summarySkeleton = document.getElementById('summary-skeleton');
-    if (summaryCards && summarySkeleton) {
-        summaryCards.classList.add('hidden');
-        summaryCards.classList.remove('fade-in');
-        summarySkeleton.classList.remove('hidden');
+        // Update modal header color
+        const modalHeader = document.getElementById('transaction-modal-header');
+        const typeValue = type || document.getElementById('transaction-type').value;
+        modalHeader.classList.remove('expense', 'income');
+        modalHeader.classList.add(typeValue);
+
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
     }
-    
-    // Reset transactions
-    const transactionsList = document.getElementById('transactions-list');
-    const transactionsSkeleton = document.getElementById('transactions-skeleton');
-    if (transactionsList && transactionsSkeleton) {
-        transactionsList.classList.add('hidden');
-        transactionsList.classList.remove('fade-in');
-        transactionsSkeleton.classList.remove('hidden');
+
+    function closeModal() {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
     }
-    
-    // Reset widgets (hide them for clean reload)
-    const widgetSections = [
-        'month-comparison-section',
-        'budget-progress-section', 
-        'alerts-section'
-    ];
-    widgetSections.forEach(id => {
-        const section = document.getElementById(id);
-        if (section) {
-            section.style.display = 'none';
-            section.classList.remove('fade-in');
+
+    // Quick action buttons
+    addExpenseBtn.addEventListener('click', () => openModal('expense'));
+    addIncomeBtn.addEventListener('click', () => openModal('income'));
+
+    quickAddBtn.addEventListener('click', () => {
+        // ใช้รายการล่าสุดที่บันทึกจริงๆ (type + category)
+        let type = lastUsedTransaction.type || 'expense';
+        let categoryId = lastUsedTransaction.categoryId;
+
+        // ถ้าไม่มี history เลย ใช้ category แรกของ expense
+        if (!categoryId && categoriesCache.expense.length > 0) {
+            type = 'expense';
+            categoryId = categoriesCache.expense[0].id;
+        }
+
+        // ถ้าไม่มี expense category ใช้ income category แทน
+        if (!categoryId && categoriesCache.income.length > 0) {
+            type = 'income';
+            categoryId = categoriesCache.income[0].id;
+        }
+
+        // ถ้ายังไม่มีเลย แสดง error
+        if (!categoryId) {
+            showToast('กรุณาสร้างหมวดหมู่ก่อนใช้งาน', 'error');
+            return;
+        }
+
+        // Pre-fill form ด้วยรายการล่าสุด
+        document.getElementById('transaction-type').value = type;
+        document.getElementById('transaction-category').value = categoryId;
+
+        // Set วันที่/เวลาปัจจุบัน
+        const now = new Date();
+        document.getElementById('transaction-date').value = now.toISOString().split('T')[0];
+        document.getElementById('transaction-time').value = now.toTimeString().slice(0, 5);
+
+        // Clear จำนวนเงินและหมายเหตุ
+        document.getElementById('transaction-amount').value = '';
+        document.getElementById('transaction-note').value = '';
+
+        // Filter categories ตาม type ที่เลือก
+        const expenseGroup = document.getElementById('expense-categories');
+        const incomeGroup = document.getElementById('income-categories');
+        if (type === 'expense') {
+            if (expenseGroup) expenseGroup.style.display = '';
+            if (incomeGroup) incomeGroup.style.display = 'none';
+        } else {
+            if (expenseGroup) expenseGroup.style.display = 'none';
+            if (incomeGroup) incomeGroup.style.display = '';
+        }
+
+        // Update modal header
+        const modalHeader = document.getElementById('transaction-modal-header');
+        const modalTitle = document.getElementById('transaction-modal-title');
+
+        if (modalHeader) {
+            modalHeader.classList.remove('expense', 'income');
+            modalHeader.classList.add(type);
+        }
+        if (modalTitle) {
+            // แสดงชื่อหมวดหมู่ที่เลือกด้วย
+            const selectedCategory = (type === 'expense' ? categoriesCache.expense : categoriesCache.income)
+                .find(c => c.id === categoryId);
+            const categoryName = selectedCategory ? selectedCategory.name_th : '';
+            modalTitle.textContent = `⚡ จดเร็ว: ${categoryName}`;
+        }
+
+        // Focus ที่ช่องจำนวนเงินเลย
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        // Delay focus เพื่อให้ modal เปิดก่อน
+        setTimeout(() => {
+            document.getElementById('transaction-amount').focus();
+        }, 100);
+    });
+
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', closeModal);
+
+    // ESC key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
         }
     });
-}
 
-// ===== DASHBOARD DATA =====
-async function loadDashboard(showSkeleton = false) {
-    try {
-        // Show skeletons if this is a reload
-        if (showSkeleton) {
-            resetSkeletons();
+    // Type change - update header color AND filter categories
+    document.getElementById('transaction-type').addEventListener('change', (e) => {
+        const type = e.target.value;
+        const modalHeader = document.getElementById('transaction-modal-header');
+        modalHeader.classList.remove('expense', 'income');
+        modalHeader.classList.add(type);
+
+        // Filter categories based on type
+        const categorySelect = document.getElementById('transaction-category');
+        const expenseGroup = document.getElementById('expense-categories');
+        const incomeGroup = document.getElementById('income-categories');
+
+        if (type === 'expense') {
+            if (expenseGroup) expenseGroup.style.display = '';
+            if (incomeGroup) incomeGroup.style.display = 'none';
+        } else {
+            if (expenseGroup) expenseGroup.style.display = 'none';
+            if (incomeGroup) incomeGroup.style.display = '';
         }
-        
-        // Load summary, widgets, and transactions in parallel
-        const [summaryPromise, widgetsPromise, transactionsPromise] = await Promise.allSettled([
-            loadMonthlySummary(),
-            loadDashboardWidgets(),
-            API.get(buildApiUrl('transactions') + '?per_page=10&page=1')
-        ]);
 
-        // Handle transactions
-        if (transactionsPromise.status === 'fulfilled') {
-            const result = transactionsPromise.value;
-            if (result.transactions && result.transactions.length > 0) {
-                renderTransactions(result.transactions);
+        // Reset category selection
+        if (categorySelect) categorySelect.value = '';
+    });
+
+    // Load last used categories on page ready
+    document.addEventListener('DOMContentLoaded', loadLastUsedTransaction);
+
+    // ===== SET DEFAULT DATE/TIME =====
+    function setDefaultDateTime(type) {
+        const now = new Date();
+        const date = now.toISOString().split('T')[0];
+        const time = now.toTimeString().slice(0, 5);
+
+        document.getElementById(`${type}-date`).value = date;
+        document.getElementById(`${type}-time`).value = time;
+    }
+
+    // ===== FORM SUBMISSION =====
+    document.getElementById('transaction-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalBtnContent = submitBtn.innerHTML;
+
+        // Get form values
+        const type = document.getElementById('transaction-type').value;
+        const categoryId = document.getElementById('transaction-category').value;
+        const amount = parseFloat(document.getElementById('transaction-amount').value);
+
+        // Validation
+        if (!categoryId) {
+            showToast('กรุณาเลือกหมวดหมู่', 'error');
+            return;
+        }
+        if (!amount || amount <= 0) {
+            showToast('กรุณากรอกจำนวนเงินที่ถูกต้อง', 'error');
+            return;
+        }
+
+        // Loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังบันทึก...</span>';
+        lucide.createIcons();
+
+        // Prepare data
+        const date = document.getElementById('transaction-date').value;
+        const time = document.getElementById('transaction-time').value;
+        const occurred_at = `${date}T${time}:00`;
+
+        const payload = {
+            type: type,
+            category_id: categoryId,
+            amount: amount, // Backend will convert to satang
+            occurred_at: occurred_at,
+            note: document.getElementById('transaction-note').value || null
+        };
+
+        try {
+            let result;
+            if (editingTransactionId) {
+                // Update existing transaction
+                result = await API.put(buildApiUrl('transactions', editingTransactionId), payload);
+                showToast(`อัพเดท${type === 'expense' ? 'รายจ่าย' : 'รายรับ'}สำเร็จ!`, 'success');
             } else {
-                // Hide skeleton
-                const skeleton = document.getElementById('transactions-skeleton');
-                if (skeleton) {
-                    skeleton.classList.add('hidden');
+                // Create new transaction
+                result = await API.post(buildApiUrl('transactions'), payload);
+                showToast(`บันทึก${type === 'expense' ? 'รายจ่าย' : 'รายรับ'}สำเร็จ!`, 'success');
+            }
+
+            // Save last used category for smart quick add
+            saveLastUsedTransaction(type, categoryId);
+
+            // Reset form and state
+            document.getElementById('transaction-form').reset();
+            editingTransactionId = null;
+
+            // Reset modal title and button
+            const modalTitle = document.getElementById('transaction-modal-title');
+            const submitBtnText = document.getElementById('transaction-submit-text');
+            if (modalTitle) modalTitle.textContent = 'เพิ่มรายการ';
+            if (submitBtnText) submitBtnText.textContent = 'บันทึก';
+
+            closeModal();
+
+            // Reload dashboard
+            await loadDashboard(true);
+
+        } catch (error) {
+            console.error('Transaction error:', error);
+            showToast(error.message || 'ไม่สามารถบันทึกได้ กรุณาลองใหม่', 'error');
+
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnContent;
+            lucide.createIcons();
+        }
+    });
+
+    // ===== LOAD CATEGORIES =====
+    async function loadCategories() {
+        try {
+            const result = await API.get(buildApiUrl('categories'));
+
+            if (result.categories && result.categories.length > 0) {
+                const categories = result.categories;
+
+                // Separate by type
+                const expenseCategories = categories.filter(cat => cat.type === 'expense' && cat.is_active);
+                const incomeCategories = categories.filter(cat => cat.type === 'income' && cat.is_active);
+
+                // Cache categories for quick add
+                categoriesCache.expense = expenseCategories;
+                categoriesCache.income = incomeCategories;
+
+                // Helper to get icon display (emoji stays as is, Lucide shows as text for dropdown)
+                const getIconDisplay = (icon) => {
+                    // Check if it's emoji
+                    const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(icon || '');
+                    return isEmoji ? icon : '📁'; // Use folder emoji as fallback for Lucide icons in dropdown
+                };
+
+                const expenseGroup = document.getElementById('expense-categories');
+                const incomeGroup = document.getElementById('income-categories');
+
+                if (expenseGroup) {
+                    expenseGroup.innerHTML = expenseCategories.map(cat =>
+                        `<option value="${cat.id}">${getIconDisplay(cat.icon)} ${cat.name_th}</option>`
+                    ).join('');
                 }
-                
-                // Show empty state
-                const transactionsList = document.getElementById('transactions-list');
-                transactionsList.classList.remove('hidden');
-                transactionsList.classList.add('fade-in');
-                transactionsList.innerHTML = `
+
+                if (incomeGroup) {
+                    incomeGroup.innerHTML = incomeCategories.map(cat =>
+                        `<option value="${cat.id}">${getIconDisplay(cat.icon)} ${cat.name_th}</option>`
+                    ).join('');
+                }
+            }
+        } catch (error) {
+            console.error('Error loading categories:', error);
+        }
+    }
+
+    // ===== RESET SKELETONS (Show skeletons before reload) =====
+    function resetSkeletons() {
+        // Reset summary cards
+        const summaryCards = document.getElementById('summary-cards');
+        const summarySkeleton = document.getElementById('summary-skeleton');
+        if (summaryCards && summarySkeleton) {
+            summaryCards.classList.add('hidden');
+            summaryCards.classList.remove('fade-in');
+            summarySkeleton.classList.remove('hidden');
+        }
+
+        // Reset transactions
+        const transactionsList = document.getElementById('transactions-list');
+        const transactionsSkeleton = document.getElementById('transactions-skeleton');
+        if (transactionsList && transactionsSkeleton) {
+            transactionsList.classList.add('hidden');
+            transactionsList.classList.remove('fade-in');
+            transactionsSkeleton.classList.remove('hidden');
+        }
+
+        // Reset widgets (hide them for clean reload)
+        const widgetSections = [
+            'month-comparison-section',
+            'budget-progress-section',
+            'alerts-section'
+        ];
+        widgetSections.forEach(id => {
+            const section = document.getElementById(id);
+            if (section) {
+                section.style.display = 'none';
+                section.classList.remove('fade-in');
+            }
+        });
+    }
+
+    // ===== DASHBOARD DATA =====
+    async function loadDashboard(showSkeleton = false) {
+        try {
+            // Show skeletons if this is a reload
+            if (showSkeleton) {
+                resetSkeletons();
+            }
+
+            // Load summary, widgets, and transactions in parallel
+            const [summaryPromise, widgetsPromise, transactionsPromise] = await Promise.allSettled([
+                loadMonthlySummary(),
+                loadDashboardWidgets(),
+                API.get(buildApiUrl('transactions') + '?per_page=10&page=1')
+            ]);
+
+            // Handle transactions
+            if (transactionsPromise.status === 'fulfilled') {
+                const result = transactionsPromise.value;
+                if (result.transactions && result.transactions.length > 0) {
+                    renderTransactions(result.transactions);
+                } else {
+                    // Hide skeleton
+                    const skeleton = document.getElementById('transactions-skeleton');
+                    if (skeleton) {
+                        skeleton.classList.add('hidden');
+                    }
+
+                    // Show empty state
+                    const transactionsList = document.getElementById('transactions-list');
+                    transactionsList.classList.remove('hidden');
+                    transactionsList.classList.add('fade-in');
+                    transactionsList.innerHTML = `
                     <div class="empty-state">
                         <i data-lucide="inbox"></i>
                         <p>ยังไม่มีรายการ</p>
                         <p class="empty-subtitle">เริ่มบันทึกรายรับรายจ่ายของคุณ</p>
                     </div>
                 `;
-                if (typeof lucide !== 'undefined') {
-                    lucide.createIcons();
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
                 }
-            }
-        } else {
-            // Handle transaction fetch error
-            const skeleton = document.getElementById('transactions-skeleton');
-            const transactionsList = document.getElementById('transactions-list');
-            if (skeleton) skeleton.classList.add('hidden');
-            if (transactionsList) {
-                transactionsList.classList.remove('hidden');
-                transactionsList.innerHTML = `
+            } else {
+                // Handle transaction fetch error
+                const skeleton = document.getElementById('transactions-skeleton');
+                const transactionsList = document.getElementById('transactions-list');
+                if (skeleton) skeleton.classList.add('hidden');
+                if (transactionsList) {
+                    transactionsList.classList.remove('hidden');
+                    transactionsList.innerHTML = `
                     <div class="empty-state">
                         <i data-lucide="alert-circle"></i>
                         <p>ไม่สามารถโหลดข้อมูลได้</p>
                         <p class="empty-subtitle">กรุณาลองใหม่อีกครั้ง</p>
                     </div>
                 `;
-                lucide.createIcons();
+                    lucide.createIcons();
+                }
             }
+        } catch (error) {
+            console.error('Error loading dashboard:', error);
+            showToast('เกิดข้อผิดพลาดในการโหลดข้อมูล', 'error');
         }
-    } catch (error) {
-        console.error('Error loading dashboard:', error);
-        showToast('เกิดข้อผิดพลาดในการโหลดข้อมูล', 'error');
     }
-}
 
-// ===== LOAD MONTHLY SUMMARY =====
-async function loadMonthlySummary() {
-    try {
-        // Get current month in YYYY-MM format
-        const now = new Date();
-        const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        
-        const result = await API.get(buildApiUrl(`analytics/summary?month=${month}`));
-        
-        if (result.summary) {
-            updateSummaryCards(result.summary);
+    // ===== LOAD MONTHLY SUMMARY =====
+    async function loadMonthlySummary() {
+        try {
+            // Get current month in YYYY-MM format
+            const now = new Date();
+            const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+            const result = await API.get(buildApiUrl(`analytics/summary?month=${month}`));
+
+            if (result.summary) {
+                updateSummaryCards(result.summary);
+            }
+        } catch (error) {
+            console.error('Error loading summary:', error);
+            // Silently fail - cards will show ฿0
         }
-    } catch (error) {
-        console.error('Error loading summary:', error);
-        // Silently fail - cards will show ฿0
-    }
-}
-
-// ===== UPDATE SUMMARY CARDS =====
-function updateSummaryCards(summary) {
-    // Format number with Thai locale
-    const formatMoney = (amount) => {
-        return amount.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    };
-
-    // Update Income
-    const incomeEl = document.getElementById('income-summary');
-    if (incomeEl && summary.income) {
-        incomeEl.textContent = `฿${formatMoney(summary.income.formatted)}`;
     }
 
-    // Update Expense
-    const expenseEl = document.getElementById('expense-summary');
-    if (expenseEl && summary.expense) {
-        expenseEl.textContent = `฿${formatMoney(summary.expense.formatted)}`;
-    }
+    // ===== UPDATE SUMMARY CARDS =====
+    function updateSummaryCards(summary) {
+        // Format number with Thai locale
+        const formatMoney = (amount) => {
+            return amount.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
 
-    // Update Balance
-    const balanceEl = document.getElementById('balance-amount');
-    if (balanceEl && summary.balance) {
-        balanceEl.textContent = `฿${formatMoney(summary.balance.formatted)}`;
-        // Update color based on positive/negative
-        const isPositive = summary.balance.total >= 0;
-        balanceEl.style.color = isPositive ? 'var(--success, #10b981)' : 'var(--error, #ef4444)';
-    }
-
-    // Hide skeleton, show real cards with fade-in
-    const skeleton = document.getElementById('summary-skeleton');
-    const cards = document.getElementById('summary-cards');
-    if (skeleton && cards) {
-        skeleton.classList.add('hidden');
-        cards.classList.remove('hidden');
-        cards.classList.add('fade-in');
-    }
-
-    // Initialize Lucide icons
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-
-    console.log('Summary loaded:', summary);
-}
-
-// ===== RENDER TRANSACTIONS =====
-function renderTransactions(transactions) {
-    const transactionsList = document.getElementById('transactions-list');
-
-    const formatDate = (dateStr) => {
-        const date = new Date(dateStr);
-        const today = new Date();
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-
-        if (date.toDateString() === today.toDateString()) {
-            return 'วันนี้';
-        } else if (date.toDateString() === yesterday.toDateString()) {
-            return 'เมื่อวาน';
-        } else {
-            return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+        // Update Income
+        const incomeEl = document.getElementById('income-summary');
+        if (incomeEl && summary.income) {
+            incomeEl.textContent = `฿${formatMoney(summary.income.formatted)}`;
         }
-    };
 
-    const formatAmount = (amount) => {
-        return (amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    };
-
-    const renderIcon = (iconName) => {
-        const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(iconName || '');
-        if (isEmoji || !iconName) {
-            return `<span class="transaction-icon-emoji">${iconName || '📁'}</span>`;
-        } else {
-            return `<i data-lucide="${iconName}"></i>`;
+        // Update Expense
+        const expenseEl = document.getElementById('expense-summary');
+        if (expenseEl && summary.expense) {
+            expenseEl.textContent = `฿${formatMoney(summary.expense.formatted)}`;
         }
-    };
 
-    // Hide skeleton first
-    const skeleton = document.getElementById('transactions-skeleton');
-    if (skeleton) {
-        skeleton.classList.add('hidden');
+        // Update Balance
+        const balanceEl = document.getElementById('balance-amount');
+        if (balanceEl && summary.balance) {
+            balanceEl.textContent = `฿${formatMoney(summary.balance.formatted)}`;
+            // Update color based on positive/negative
+            const isPositive = summary.balance.total >= 0;
+            balanceEl.style.color = isPositive ? 'var(--success, #10b981)' : 'var(--error, #ef4444)';
+        }
+
+        // Hide skeleton, show real cards with fade-in
+        const skeleton = document.getElementById('summary-skeleton');
+        const cards = document.getElementById('summary-cards');
+        if (skeleton && cards) {
+            skeleton.classList.add('hidden');
+            cards.classList.remove('hidden');
+            cards.classList.add('fade-in');
+        }
+
+        // Initialize Lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
+        console.log('Summary loaded:', summary);
     }
 
-    // Show transactions list
-    transactionsList.classList.remove('hidden');
-    transactionsList.classList.add('fade-in');
+    // ===== RENDER TRANSACTIONS =====
+    function renderTransactions(transactions) {
+        const transactionsList = document.getElementById('transactions-list');
 
-    transactionsList.innerHTML = transactions.map(tx => `
+        const formatDate = (dateStr) => {
+            const date = new Date(dateStr);
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            if (date.toDateString() === today.toDateString()) {
+                return 'วันนี้';
+            } else if (date.toDateString() === yesterday.toDateString()) {
+                return 'เมื่อวาน';
+            } else {
+                return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+            }
+        };
+
+        const formatAmount = (amount) => {
+            return (amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+
+        const renderIcon = (iconName) => {
+            const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(iconName || '');
+            if (isEmoji || !iconName) {
+                return `<span class="transaction-icon-emoji">${iconName || '📁'}</span>`;
+            } else {
+                return `<i data-lucide="${iconName}"></i>`;
+            }
+        };
+
+        // Hide skeleton first
+        const skeleton = document.getElementById('transactions-skeleton');
+        if (skeleton) {
+            skeleton.classList.add('hidden');
+        }
+
+        // Show transactions list
+        transactionsList.classList.remove('hidden');
+        transactionsList.classList.add('fade-in');
+
+        transactionsList.innerHTML = transactions.map(tx => `
         <div class="transaction-item ${tx.type}" 
              data-transaction-id="${tx.id}"
              data-transaction='${JSON.stringify(tx).replace(/'/g, "&apos;")}'>
@@ -877,185 +897,185 @@ function renderTransactions(transactions) {
         </div>
     `).join('');
 
-    // Initialize Lucide icons
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
+        // Initialize Lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
     }
-}
 
-// ===== EDIT TRANSACTION =====
-let editingTransactionId = null;
+    // ===== EDIT TRANSACTION =====
+    let editingTransactionId = null;
 
-function editTransaction(transactionId) {
-    try {
-        // Get transaction data from DOM (no API call needed!)
-        const txElement = document.querySelector(`[data-transaction-id="${transactionId}"]`);
-        if (!txElement) {
-            showToast('ไม่พบรายการที่ต้องการแก้ไข', 'error');
+    function editTransaction(transactionId) {
+        try {
+            // Get transaction data from DOM (no API call needed!)
+            const txElement = document.querySelector(`[data-transaction-id="${transactionId}"]`);
+            if (!txElement) {
+                showToast('ไม่พบรายการที่ต้องการแก้ไข', 'error');
+                return;
+            }
+
+            const tx = JSON.parse(txElement.dataset.transaction);
+            editingTransactionId = transactionId;
+
+            // Open modal first (this will reset the form)
+            openModal();
+
+            // Then pre-fill form with transaction data
+            document.getElementById('transaction-type').value = tx.type;
+
+            // Filter categories based on type BEFORE setting category value
+            const expenseGroup = document.getElementById('expense-categories');
+            const incomeGroup = document.getElementById('income-categories');
+
+            if (tx.type === 'expense') {
+                if (expenseGroup) expenseGroup.style.display = '';
+                if (incomeGroup) incomeGroup.style.display = 'none';
+            } else {
+                if (expenseGroup) expenseGroup.style.display = 'none';
+                if (incomeGroup) incomeGroup.style.display = '';
+            }
+
+            // Now set category value (after filtering)
+            document.getElementById('transaction-category').value = tx.category_id;
+
+            // Parse date properly
+            const occuredDate = new Date(tx.occurred_at);
+            const dateStr = occuredDate.toISOString().split('T')[0]; // YYYY-MM-DD
+            const timeStr = occuredDate.toTimeString().substr(0, 5); // HH:MM
+
+            document.getElementById('transaction-date').value = dateStr;
+            document.getElementById('transaction-time').value = timeStr;
+            document.getElementById('transaction-note').value = tx.note || '';
+            document.getElementById('transaction-amount').value = (tx.amount / 100).toFixed(2);
+
+            // Update modal header
+            const modalHeader = document.getElementById('transaction-modal-header');
+            const modalTitle = document.getElementById('transaction-modal-title');
+            const submitBtnText = document.getElementById('transaction-submit-text');
+
+            if (modalHeader) {
+                modalHeader.classList.remove('expense', 'income');
+                modalHeader.classList.add(tx.type);
+            }
+            if (modalTitle) {
+                modalTitle.textContent = `แก้ไข${tx.type === 'expense' ? 'รายจ่าย' : 'รายรับ'}`;
+            }
+            if (submitBtnText) {
+                submitBtnText.textContent = 'อัพเดท';
+            }
+        } catch (error) {
+            console.error('Edit transaction error:', error);
+            showToast('ไม่สามารถโหลดข้อมูลได้', 'error');
+        }
+    }
+
+    // ===== DELETE TRANSACTION =====
+    async function deleteTransaction(transactionId) {
+        if (!confirm('ต้องการลบรายการนี้หรือไม่?')) {
             return;
         }
 
-        const tx = JSON.parse(txElement.dataset.transaction);
-        editingTransactionId = transactionId;
+        try {
+            await API.delete(buildApiUrl('transactions', transactionId));
 
-        // Open modal first (this will reset the form)
-        openModal();
+            showToast('ลบรายการเรียบร้อยแล้ว', 'success');
 
-        // Then pre-fill form with transaction data
-        document.getElementById('transaction-type').value = tx.type;
+            // Reload dashboard
+            await loadDashboard(true);
 
-        // Filter categories based on type BEFORE setting category value
-        const expenseGroup = document.getElementById('expense-categories');
-        const incomeGroup = document.getElementById('income-categories');
-
-        if (tx.type === 'expense') {
-            if (expenseGroup) expenseGroup.style.display = '';
-            if (incomeGroup) incomeGroup.style.display = 'none';
-        } else {
-            if (expenseGroup) expenseGroup.style.display = 'none';
-            if (incomeGroup) incomeGroup.style.display = '';
+        } catch (error) {
+            showToast(error.message || 'ไม่สามารถลบได้', 'error');
         }
+    }
 
-        // Now set category value (after filtering)
-        document.getElementById('transaction-category').value = tx.category_id;
+    // ===== DEEP LINKING SUPPORT =====
+    function handleDeepLink() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const modalType = urlParams.get('openModal');
 
-        // Parse date properly
-        const occuredDate = new Date(tx.occurred_at);
-        const dateStr = occuredDate.toISOString().split('T')[0]; // YYYY-MM-DD
-        const timeStr = occuredDate.toTimeString().substr(0, 5); // HH:MM
-
-        document.getElementById('transaction-date').value = dateStr;
-        document.getElementById('transaction-time').value = timeStr;
-        document.getElementById('transaction-note').value = tx.note || '';
-        document.getElementById('transaction-amount').value = (tx.amount / 100).toFixed(2);
-
-        // Update modal header
-        const modalHeader = document.getElementById('transaction-modal-header');
-        const modalTitle = document.getElementById('transaction-modal-title');
-        const submitBtnText = document.getElementById('transaction-submit-text');
-
-        if (modalHeader) {
-            modalHeader.classList.remove('expense', 'income');
-            modalHeader.classList.add(tx.type);
+        if (modalType === 'expense') {
+            setTimeout(() => openModal(modals.expenseCategory), 100);
+        } else if (modalType === 'income') {
+            setTimeout(() => openModal(modals.incomeCategory), 100);
         }
-        if (modalTitle) {
-            modalTitle.textContent = `แก้ไข${tx.type === 'expense' ? 'รายจ่าย' : 'รายรับ'}`;
+    }
+
+    // ===== LOAD DASHBOARD WIDGETS =====
+    async function loadDashboardWidgets() {
+        try {
+            const result = await API.get(buildApiUrl('dashboard/widgets'));
+
+            if (result) {
+                // Render widgets
+                renderMonthComparison(result.comparison, result.summary);
+                renderBudgetProgress(result.top_budgets);
+                renderBudgetAlerts(result.alerts);
+
+                console.log('Dashboard widgets loaded:', result);
+            }
+        } catch (error) {
+            console.error('Error loading widgets:', error);
+            // Silently fail - widgets are optional
         }
-        if (submitBtnText) {
-            submitBtnText.textContent = 'อัพเดท';
+    }
+
+    // ===== RENDER MONTH COMPARISON =====
+    function renderMonthComparison(comparison, summary) {
+        if (!comparison) return;
+
+        const section = document.getElementById('month-comparison-section');
+        if (!section) return;
+
+        const formatMoney = (amount) => {
+            return (amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        };
+
+        const formatChange = (change) => {
+            if (change.direction === 'same') return '';
+
+            const arrow = change.direction === 'up' ? '↑' : '↓';
+            const className = change.direction === 'up' ? 'up' : 'down';
+            return `<span class="change-badge ${className}">${arrow} ${change.percentage}%</span>`;
+        };
+
+        // Update income
+        document.getElementById('compare-income-amount').textContent = `฿${formatMoney(summary.income.total)}`;
+        document.getElementById('compare-income-change').innerHTML = formatChange(comparison.income);
+
+        // Update expense
+        document.getElementById('compare-expense-amount').textContent = `฿${formatMoney(summary.expense.total)}`;
+        document.getElementById('compare-expense-change').innerHTML = formatChange(comparison.expense);
+
+        // Update balance
+        document.getElementById('compare-balance-amount').textContent = `฿${formatMoney(summary.balance.total)}`;
+        document.getElementById('compare-balance-change').innerHTML = formatChange(comparison.balance);
+
+        // Show section with fade-in
+        section.style.display = 'block';
+        section.classList.add('fade-in');
+
+        // Initialize Lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
         }
-    } catch (error) {
-        console.error('Edit transaction error:', error);
-        showToast('ไม่สามารถโหลดข้อมูลได้', 'error');
-    }
-}
-
-// ===== DELETE TRANSACTION =====
-async function deleteTransaction(transactionId) {
-    if (!confirm('ต้องการลบรายการนี้หรือไม่?')) {
-        return;
     }
 
-    try {
-        await API.delete(buildApiUrl('transactions', transactionId));
+    // ===== RENDER BUDGET PROGRESS =====
+    function renderBudgetProgress(budgets) {
+        if (!budgets || budgets.length === 0) return;
 
-        showToast('ลบรายการเรียบร้อยแล้ว', 'success');
+        const section = document.getElementById('budget-progress-section');
+        const container = document.getElementById('budget-progress-list');
 
-        // Reload dashboard
-        await loadDashboard(true);
+        if (!section || !container) return;
 
-    } catch (error) {
-        showToast(error.message || 'ไม่สามารถลบได้', 'error');
-    }
-}
+        container.innerHTML = budgets.map(budget => {
+            const cat = budget.category || {};
+            const usage = budget.usage_percentage || 0;
+            const statusClass = budget.is_over_budget ? 'over' : (budget.is_near_limit ? 'warning' : 'normal');
 
-// ===== DEEP LINKING SUPPORT =====
-function handleDeepLink() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const modalType = urlParams.get('openModal');
-
-    if (modalType === 'expense') {
-        setTimeout(() => openModal(modals.expenseCategory), 100);
-    } else if (modalType === 'income') {
-        setTimeout(() => openModal(modals.incomeCategory), 100);
-    }
-}
-
-// ===== LOAD DASHBOARD WIDGETS =====
-async function loadDashboardWidgets() {
-    try {
-        const result = await API.get(buildApiUrl('dashboard/widgets'));
-        
-        if (result) {
-            // Render widgets
-            renderMonthComparison(result.comparison, result.summary);
-            renderBudgetProgress(result.top_budgets);
-            renderBudgetAlerts(result.alerts);
-            
-            console.log('Dashboard widgets loaded:', result);
-        }
-    } catch (error) {
-        console.error('Error loading widgets:', error);
-        // Silently fail - widgets are optional
-    }
-}
-
-// ===== RENDER MONTH COMPARISON =====
-function renderMonthComparison(comparison, summary) {
-    if (!comparison) return;
-    
-    const section = document.getElementById('month-comparison-section');
-    if (!section) return;
-    
-    const formatMoney = (amount) => {
-        return (amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    };
-    
-    const formatChange = (change) => {
-        if (change.direction === 'same') return '';
-        
-        const arrow = change.direction === 'up' ? '↑' : '↓';
-        const className = change.direction === 'up' ? 'up' : 'down';
-        return `<span class="change-badge ${className}">${arrow} ${change.percentage}%</span>`;
-    };
-    
-    // Update income
-    document.getElementById('compare-income-amount').textContent = `฿${formatMoney(summary.income.total)}`;
-    document.getElementById('compare-income-change').innerHTML = formatChange(comparison.income);
-    
-    // Update expense
-    document.getElementById('compare-expense-amount').textContent = `฿${formatMoney(summary.expense.total)}`;
-    document.getElementById('compare-expense-change').innerHTML = formatChange(comparison.expense);
-    
-    // Update balance
-    document.getElementById('compare-balance-amount').textContent = `฿${formatMoney(summary.balance.total)}`;
-    document.getElementById('compare-balance-change').innerHTML = formatChange(comparison.balance);
-    
-    // Show section with fade-in
-    section.style.display = 'block';
-    section.classList.add('fade-in');
-    
-    // Initialize Lucide icons
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-}
-
-// ===== RENDER BUDGET PROGRESS =====
-function renderBudgetProgress(budgets) {
-    if (!budgets || budgets.length === 0) return;
-    
-    const section = document.getElementById('budget-progress-section');
-    const container = document.getElementById('budget-progress-list');
-    
-    if (!section || !container) return;
-    
-    container.innerHTML = budgets.map(budget => {
-        const cat = budget.category || {};
-        const usage = budget.usage_percentage || 0;
-        const statusClass = budget.is_over_budget ? 'over' : (budget.is_near_limit ? 'warning' : 'normal');
-        
-        return `
+            return `
             <div class="budget-quick-card ${statusClass}">
                 <div class="budget-quick-header">
                     <span class="budget-icon" style="color: ${cat.color || '#666'}">
@@ -1074,23 +1094,23 @@ function renderBudgetProgress(budgets) {
                 </div>
             </div>
         `;
-    }).join('');
-    
-    lucide.createIcons();
-    section.style.display = 'block';
-    section.classList.add('fade-in');
-}
+        }).join('');
 
-// ===== RENDER BUDGET ALERTS =====
-function renderBudgetAlerts(alerts) {
-    if (!alerts || alerts.length === 0) return;
-    
-    const section = document.getElementById('alerts-section');
-    const container = document.getElementById('alerts-list');
-    
-    if (!section || !container) return;
-    
-    container.innerHTML = alerts.map(alert => `
+        lucide.createIcons();
+        section.style.display = 'block';
+        section.classList.add('fade-in');
+    }
+
+    // ===== RENDER BUDGET ALERTS =====
+    function renderBudgetAlerts(alerts) {
+        if (!alerts || alerts.length === 0) return;
+
+        const section = document.getElementById('alerts-section');
+        const container = document.getElementById('alerts-list');
+
+        if (!section || !container) return;
+
+        container.innerHTML = alerts.map(alert => `
         <div class="alert alert-${alert.type}">
             <span class="alert-icon">${alert.icon}</span>
             <div class="alert-content">
@@ -1099,92 +1119,92 @@ function renderBudgetAlerts(alerts) {
             </div>
         </div>
     `).join('');
-    
-    section.style.display = 'block';
-    section.classList.add('fade-in');
-}
 
-// ===== SMART INSIGHTS =====
-const insightsModal = document.getElementById('insights-modal');
-const insightsCloseBtn = insightsModal.querySelector('.modal-close');
-const insightsOverlay = insightsModal.querySelector('.modal-overlay');
+        section.style.display = 'block';
+        section.classList.add('fade-in');
+    }
 
-function openInsightsModal() {
-    insightsModal.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    // ===== SMART INSIGHTS =====
+    const insightsModal = document.getElementById('insights-modal');
+    const insightsCloseBtn = insightsModal.querySelector('.modal-close');
+    const insightsOverlay = insightsModal.querySelector('.modal-overlay');
 
-    // Show loading state
-    const containers = ['insights-alerts-container', 'insights-trends-container',
-                       'insights-recommendations-container', 'insights-reminders-container'];
-    containers.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-    });
+    function openInsightsModal() {
+        insightsModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
 
-    // Show loading indicator
-    const emptyState = document.getElementById('insights-empty');
-    if (emptyState) {
-        emptyState.style.display = 'block';
-        emptyState.innerHTML = `
+        // Show loading state
+        const containers = ['insights-alerts-container', 'insights-trends-container',
+            'insights-recommendations-container', 'insights-reminders-container'];
+        containers.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+
+        // Show loading indicator
+        const emptyState = document.getElementById('insights-empty');
+        if (emptyState) {
+            emptyState.style.display = 'block';
+            emptyState.innerHTML = `
             <i data-lucide="loader" class="spinning"></i>
             <p>กำลังวิเคราะห์ข้อมูล...</p>
             <p class="empty-subtitle">กรุณารอสักครู่</p>
         `;
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        loadInsightsData();
+    }
+
+    function closeInsightsModal() {
+        insightsModal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    insightsCloseBtn.addEventListener('click', closeInsightsModal);
+    insightsOverlay.addEventListener('click', closeInsightsModal);
+
+    async function loadInsightsData() {
+        try {
+            const result = await API.get(buildApiUrl('insights/all'));
+
+            // Show/hide sections based on data
+            const hasAlerts = result.alerts && result.alerts.length > 0;
+            const hasTrends = result.trends && Object.keys(result.trends).length > 0;
+            const hasRecommendations = result.recommendations && result.recommendations.length > 0;
+            const hasReminders = result.reminders && result.reminders.length > 0;
+
+            const hasAnyInsights = hasAlerts || hasTrends || hasRecommendations || hasReminders;
+
+            // Show/hide containers
+            document.getElementById('insights-alerts-container').style.display = hasAlerts ? 'block' : 'none';
+            document.getElementById('insights-trends-container').style.display = hasTrends ? 'block' : 'none';
+            document.getElementById('insights-recommendations-container').style.display = hasRecommendations ? 'block' : 'none';
+            document.getElementById('insights-reminders-container').style.display = hasReminders ? 'block' : 'none';
+            document.getElementById('insights-empty').style.display = hasAnyInsights ? 'none' : 'block';
+
+            if (hasAlerts) renderInsightsAlerts(result.alerts);
+            if (hasTrends) renderSpendingTrends(result.trends);
+            if (hasRecommendations) renderRecommendations(result.recommendations);
+            if (hasReminders) renderRecurringReminders(result.reminders);
+
+        } catch (error) {
+            console.error('Error loading insights:', error);
+            // Show empty state on error
+            document.getElementById('insights-alerts-container').style.display = 'none';
+            document.getElementById('insights-trends-container').style.display = 'none';
+            document.getElementById('insights-recommendations-container').style.display = 'none';
+            document.getElementById('insights-reminders-container').style.display = 'none';
+            document.getElementById('insights-empty').style.display = 'block';
         }
     }
 
-    loadInsightsData();
-}
+    function renderInsightsAlerts(alerts) {
+        const container = document.getElementById('insights-alerts');
 
-function closeInsightsModal() {
-    insightsModal.classList.remove('active');
-    document.body.style.overflow = '';
-}
-
-insightsCloseBtn.addEventListener('click', closeInsightsModal);
-insightsOverlay.addEventListener('click', closeInsightsModal);
-
-async function loadInsightsData() {
-    try {
-        const result = await API.get(buildApiUrl('insights/all'));
-        
-        // Show/hide sections based on data
-        const hasAlerts = result.alerts && result.alerts.length > 0;
-        const hasTrends = result.trends && Object.keys(result.trends).length > 0;
-        const hasRecommendations = result.recommendations && result.recommendations.length > 0;
-        const hasReminders = result.reminders && result.reminders.length > 0;
-        
-        const hasAnyInsights = hasAlerts || hasTrends || hasRecommendations || hasReminders;
-        
-        // Show/hide containers
-        document.getElementById('insights-alerts-container').style.display = hasAlerts ? 'block' : 'none';
-        document.getElementById('insights-trends-container').style.display = hasTrends ? 'block' : 'none';
-        document.getElementById('insights-recommendations-container').style.display = hasRecommendations ? 'block' : 'none';
-        document.getElementById('insights-reminders-container').style.display = hasReminders ? 'block' : 'none';
-        document.getElementById('insights-empty').style.display = hasAnyInsights ? 'none' : 'block';
-        
-        if (hasAlerts) renderInsightsAlerts(result.alerts);
-        if (hasTrends) renderSpendingTrends(result.trends);
-        if (hasRecommendations) renderRecommendations(result.recommendations);
-        if (hasReminders) renderRecurringReminders(result.reminders);
-        
-    } catch (error) {
-        console.error('Error loading insights:', error);
-        // Show empty state on error
-        document.getElementById('insights-alerts-container').style.display = 'none';
-        document.getElementById('insights-trends-container').style.display = 'none';
-        document.getElementById('insights-recommendations-container').style.display = 'none';
-        document.getElementById('insights-reminders-container').style.display = 'none';
-        document.getElementById('insights-empty').style.display = 'block';
-    }
-}
-
-function renderInsightsAlerts(alerts) {
-    const container = document.getElementById('insights-alerts');
-    
-    container.innerHTML = alerts.map(alert => `
+        container.innerHTML = alerts.map(alert => `
         <div class="alert-card alert-${alert.type} fade-in">
             <div class="alert-icon-wrapper">
                 ${alert.icon}
@@ -1196,28 +1216,28 @@ function renderInsightsAlerts(alerts) {
             </div>
         </div>
     `).join('');
-    
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-}
 
-function renderSpendingTrends(trends) {
-    const container = document.getElementById('insights-trends');
-    const containerWrapper = document.getElementById('insights-trends-container');
-    
-    const change = trends.change;
-    let trendIcon, trendIconName;
-    if (change.direction === 'up') {
-        trendIconName = 'trending-up';
-    } else if (change.direction === 'down') {
-        trendIconName = 'trending-down';
-    } else {
-        trendIconName = 'minus';
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
     }
-    const trendClass = change.direction === 'up' ? 'trend-up' : change.direction === 'down' ? 'trend-down' : 'trend-same';
-    
-    container.innerHTML = `
+
+    function renderSpendingTrends(trends) {
+        const container = document.getElementById('insights-trends');
+        const containerWrapper = document.getElementById('insights-trends-container');
+
+        const change = trends.change;
+        let trendIcon, trendIconName;
+        if (change.direction === 'up') {
+            trendIconName = 'trending-up';
+        } else if (change.direction === 'down') {
+            trendIconName = 'trending-down';
+        } else {
+            trendIconName = 'minus';
+        }
+        const trendClass = change.direction === 'up' ? 'trend-up' : change.direction === 'down' ? 'trend-down' : 'trend-same';
+
+        container.innerHTML = `
         <div class="insight-card fade-in">
             <div class="insight-header">
                 <div class="insight-title">แนวโน้มการใช้จ่าย</div>
@@ -1229,11 +1249,11 @@ function renderSpendingTrends(trends) {
             <div class="insight-stats">
                 <div class="insight-stat">
                     <div class="insight-stat-label">สัปดาห์นี้</div>
-                    <div class="insight-stat-value">฿${(trends.current_week.total / 100).toLocaleString('th-TH', {minimumFractionDigits: 0})}</div>
+                    <div class="insight-stat-value">฿${(trends.current_week.total / 100).toLocaleString('th-TH', { minimumFractionDigits: 0 })}</div>
                 </div>
                 <div class="insight-stat">
                     <div class="insight-stat-label">สัปดาห์ก่อน</div>
-                    <div class="insight-stat-value">฿${(trends.previous_week.total / 100).toLocaleString('th-TH', {minimumFractionDigits: 0})}</div>
+                    <div class="insight-stat-value">฿${(trends.previous_week.total / 100).toLocaleString('th-TH', { minimumFractionDigits: 0 })}</div>
                 </div>
             </div>
             ${trends.top_categories && trends.top_categories.length > 0 ? `
@@ -1255,19 +1275,19 @@ function renderSpendingTrends(trends) {
             ` : ''}
         </div>
     `;
-    
-    containerWrapper.style.display = 'block';
-    
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-}
 
-function renderRecommendations(recommendations) {
-    const container = document.getElementById('insights-recommendations');
-    const containerWrapper = document.getElementById('insights-recommendations-container');
-    
-    container.innerHTML = recommendations.slice(0, 3).map(rec => `
+        containerWrapper.style.display = 'block';
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    function renderRecommendations(recommendations) {
+        const container = document.getElementById('insights-recommendations');
+        const containerWrapper = document.getElementById('insights-recommendations-container');
+
+        container.innerHTML = recommendations.slice(0, 3).map(rec => `
         <div class="insight-card fade-in">
             <div class="insight-header">
                 <div class="insight-icon">${rec.icon}</div>
@@ -1282,19 +1302,19 @@ function renderRecommendations(recommendations) {
             </div>
         </div>
     `).join('');
-    
-    containerWrapper.style.display = 'block';
-    
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-}
 
-function renderRecurringReminders(reminders) {
-    const container = document.getElementById('insights-reminders');
-    const containerWrapper = document.getElementById('insights-reminders-container');
-    
-    container.innerHTML = reminders.map(reminder => `
+        containerWrapper.style.display = 'block';
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    function renderRecurringReminders(reminders) {
+        const container = document.getElementById('insights-reminders');
+        const containerWrapper = document.getElementById('insights-reminders-container');
+
+        container.innerHTML = reminders.map(reminder => `
         <div class="insight-card fade-in">
             <div class="insight-icon ${reminder.type}">
                 ${reminder.icon}
@@ -1308,23 +1328,23 @@ function renderRecurringReminders(reminders) {
                 </div>
             </div>
             <div class="insight-amount ${reminder.type}">
-                ${reminder.type === 'expense' ? '-' : '+'}฿${(reminder.amount / 100).toLocaleString('th-TH', {minimumFractionDigits: 0})}
+                ${reminder.type === 'expense' ? '-' : '+'}฿${(reminder.amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 0 })}
             </div>
         </div>
     `).join('');
-    
-    containerWrapper.style.display = 'block';
-    
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-}
 
-// Load on page ready
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadCategories(); // Load categories first
-    await loadDashboard(); // First load - no skeleton reset needed
-    handleDeepLink();
-});
+        containerWrapper.style.display = 'block';
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    // Load on page ready
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadCategories(); // Load categories first
+        await loadDashboard(); // First load - no skeleton reset needed
+        handleDeepLink();
+    });
 </script>
 {% endblock %}
