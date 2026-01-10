@@ -441,21 +441,23 @@
             submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังบันทึก...</span>';
             lucide.createIcons();
 
-            // Prepare payload
-            const payload = {
-                category_id: categoryId,
-                month: month,
-                limit_amount: Math.round(amount * 100), // Convert to satang
-                rollover_policy: rolloverPolicy
-            };
-
             if (editingBudgetId) {
-                // Update existing budget
-                await API.put(buildApiUrl('budgets', editingBudgetId), payload);
+                // Update existing budget - only send limit_amount and rollover_policy
+                const updatePayload = {
+                    limit_amount: Math.round(amount * 100), // Convert to satang
+                    rollover_policy: rolloverPolicy
+                };
+                await API.put(buildApiUrl('budgets', editingBudgetId), updatePayload);
                 showToast('อัพเดทงบประมาณสำเร็จ!', 'success');
             } else {
-                // Create new budget
-                await API.post(buildApiUrl('budgets'), payload);
+                // Create new budget - send all fields
+                const createPayload = {
+                    category_id: categoryId,
+                    month: month,
+                    limit_amount: Math.round(amount * 100), // Convert to satang
+                    rollover_policy: rolloverPolicy
+                };
+                await API.post(buildApiUrl('budgets'), createPayload);
                 showToast('เพิ่มงบประมาณสำเร็จ!', 'success');
             }
 
