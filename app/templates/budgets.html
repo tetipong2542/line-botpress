@@ -239,7 +239,12 @@
         container.innerHTML = budgets.map(budget => {
             const progressColor = budget.is_over_budget ? 'over' : budget.is_near_limit ? 'warning' : 'normal';
             const statusText = budget.is_over_budget ? 'เกินงบ' : budget.is_near_limit ? 'ใกล้หมด' : 'ปกติ';
-            const categoryColor = budget.category.color || '#6366f1';
+
+            // Handle null category with fallback values
+            const category = budget.category || {};
+            const categoryName = category.name_th || 'หมวดหมู่ไม่ระบุ';
+            const categoryIcon = category.icon || '📁';
+            const categoryColor = category.color || '#6366f1';
 
             return `
             <div class="budget-card ${budget.is_over_budget ? 'over-budget' : ''}" data-id="${budget.id}">
@@ -247,12 +252,12 @@
                     <div class="budget-main-info">
                         <div class="budget-icon-wrapper" style="
                             background: color-mix(in srgb, ${categoryColor} 10%, transparent);
-                            border: 2px solid color-mix(in srgb, ${categoryColor} 35%, var(--border-color) 65%);
+                            border: 2px solid color-mix(in srgb, ${categoryColor} 35%, var(--border) 65%);
                         ">
-                            <span class="budget-icon-emoji">${budget.category.icon || '📁'}</span>
+                            <span class="budget-icon-emoji">${categoryIcon}</span>
                         </div>
                         <div class="budget-title-section">
-                            <h3 class="budget-title">${budget.category.name_th}</h3>
+                            <h3 class="budget-title">${categoryName}</h3>
                             <span class="budget-subtitle ${progressColor}">
                                 <i data-lucide="${budget.is_over_budget ? 'alert-circle' : budget.is_near_limit ? 'alert-triangle' : 'check-circle'}"></i>
                                 ${statusText}
