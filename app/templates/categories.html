@@ -232,6 +232,91 @@
     </div>
 </div>
 
+<!-- Modal: Category Usage Details -->
+<div class="modal" id="category-usage-modal">
+    <div class="modal-overlay" onclick="closeCategoryUsage()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="usage-modal-title">รายละเอียดหมวดหมู่</h2>
+            <button class="modal-close" onclick="closeCategoryUsage()">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="usage-summary">
+                <div class="usage-category-info">
+                    <div id="usage-category-icon" class="usage-icon">📁</div>
+                    <div>
+                        <h3 id="usage-category-name">ชื่อหมวดหมู่</h3>
+                        <span id="usage-category-type" class="category-type-badge">รายจ่าย</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="usage-stats">
+                <h4>การใช้งานในระบบ</h4>
+                <div class="usage-list">
+                    <div class="usage-item">
+                        <div class="usage-item-icon">
+                            <i data-lucide="receipt"></i>
+                        </div>
+                        <div class="usage-item-info">
+                            <span class="usage-item-label">รายการธรรมดา</span>
+                            <span class="usage-item-count" id="usage-transactions">0 รายการ</span>
+                        </div>
+                    </div>
+
+                    <div class="usage-item">
+                        <div class="usage-item-icon">
+                            <i data-lucide="refresh-cw"></i>
+                        </div>
+                        <div class="usage-item-info">
+                            <span class="usage-item-label">รายการประจำ</span>
+                            <span class="usage-item-count" id="usage-recurring">0 รายการ</span>
+                        </div>
+                    </div>
+
+                    <div class="usage-item">
+                        <div class="usage-item-icon">
+                            <i data-lucide="wallet"></i>
+                        </div>
+                        <div class="usage-item-info">
+                            <span class="usage-item-label">งบประมาณ</span>
+                            <span class="usage-item-count" id="usage-budgets">0 รายการ</span>
+                        </div>
+                    </div>
+
+                    <div class="usage-item">
+                        <div class="usage-item-icon">
+                            <i data-lucide="target"></i>
+                        </div>
+                        <div class="usage-item-info">
+                            <span class="usage-item-label">เป้าหมาย</span>
+                            <span class="usage-item-count" id="usage-goals">0 รายการ</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="usage-total">
+                    <strong>รวมทั้งหมด:</strong>
+                    <strong id="usage-total-count">0 รายการ</strong>
+                </div>
+            </div>
+
+            <div class="usage-actions">
+                <button type="button" class="btn-secondary" onclick="closeCategoryUsage()">
+                    <i data-lucide="x"></i>
+                    <span>ปิด</span>
+                </button>
+                <button type="button" class="btn-primary" id="edit-category-from-usage">
+                    <i data-lucide="edit-2"></i>
+                    <span>แก้ไข</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
 .icon-picker-trigger {
     display: flex;
@@ -302,6 +387,145 @@
     width: 24px;
     height: 24px;
 }
+
+/* Usage Modal Styles */
+.usage-summary {
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.usage-category-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.usage-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 2px solid var(--border-color);
+}
+
+.usage-icon i {
+    width: 32px;
+    height: 32px;
+}
+
+#usage-category-name {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+
+.category-type-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    background: var(--primary-color);
+    color: white;
+}
+
+.usage-stats {
+    margin-bottom: 1.5rem;
+}
+
+.usage-stats h4 {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.usage-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.usage-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1.5px solid var(--border-color);
+    transition: all 0.2s ease;
+}
+
+.usage-item:hover {
+    border-color: var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 5%, var(--bg-secondary));
+}
+
+.usage-item-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--primary-color) 15%, transparent);
+    border-radius: 10px;
+    color: var(--primary-color);
+}
+
+.usage-item-icon i {
+    width: 20px;
+    height: 20px;
+}
+
+.usage-item-info {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.usage-item-label {
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.usage-item-count {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.usage-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem;
+    margin-top: 1rem;
+    background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+    border-radius: 12px;
+    border: 2px solid var(--primary-color);
+}
+
+.usage-total strong {
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.usage-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.usage-actions button {
+    flex: 1;
+}
 </style>
 
 <!-- Sticky Footer Menu -->
@@ -359,7 +583,7 @@ document.getElementById('add-category-btn').addEventListener('click', async () =
     }
 });
 
-// Load categories
+// Load categories with usage counts
 async function loadCategories() {
     try {
         const result = await API.get(buildApiUrl('categories'));
@@ -381,18 +605,35 @@ async function loadCategories() {
                 }
             };
 
+            // Fetch usage counts for all categories in parallel
+            const usageCounts = await Promise.all(
+                categories.map(async (cat) => {
+                    try {
+                        const usageResult = await API.get(buildApiUrl('categories', cat.id) + '/usage');
+                        return { id: cat.id, count: usageResult.usage.total };
+                    } catch {
+                        return { id: cat.id, count: 0 };
+                    }
+                })
+            );
+
+            const usageMap = {};
+            usageCounts.forEach(item => {
+                usageMap[item.id] = item.count;
+            });
+
             // Update expense categories
             const expenseContent = document.querySelector('#expense-categories .category-list');
             if (expenseContent) {
                 expenseContent.innerHTML = expenseCategories.map(cat => `
-                    <div class="category-item">
+                    <div class="category-item" onclick="showCategoryUsage('${cat.id}')" style="cursor: pointer;">
                         ${renderIcon(cat.icon)}
                         <div class="category-info">
                             <div class="category-name">${cat.name_th}</div>
-                            <div class="category-meta">รายจ่าย • 0 รายการ</div>
+                            <div class="category-meta">รายจ่าย • ${usageMap[cat.id] || 0} รายการ</div>
                         </div>
                         <div class="category-actions">
-                            <button class="btn-icon" onclick="editCategory('${cat.id}', '${cat.name_th}')">
+                            <button class="btn-icon" onclick="event.stopPropagation(); editCategory('${cat.id}', '${cat.name_th}')">
                                 <i data-lucide="edit-2"></i>
                             </button>
                         </div>
@@ -404,21 +645,21 @@ async function loadCategories() {
             const incomeContent = document.querySelector('#income-categories .category-list');
             if (incomeContent) {
                 incomeContent.innerHTML = incomeCategories.map(cat => `
-                    <div class="category-item">
+                    <div class="category-item" onclick="showCategoryUsage('${cat.id}')" style="cursor: pointer;">
                         ${renderIcon(cat.icon)}
                         <div class="category-info">
                             <div class="category-name">${cat.name_th}</div>
-                            <div class="category-meta">รายรับ • 0 รายการ</div>
+                            <div class="category-meta">รายรับ • ${usageMap[cat.id] || 0} รายการ</div>
                         </div>
                         <div class="category-actions">
-                            <button class="btn-icon" onclick="editCategory('${cat.id}', '${cat.name_th}')">
+                            <button class="btn-icon" onclick="event.stopPropagation(); editCategory('${cat.id}', '${cat.name_th}')">
                                 <i data-lucide="edit-2"></i>
                             </button>
                         </div>
                     </div>
                 `).join('');
             }
-            
+
             // Initialize Lucide icons ONCE for all buttons
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
@@ -599,17 +840,92 @@ document.getElementById('category-form').addEventListener('submit', async (e) =>
     }
 });
 
+// Show category usage details modal
+let currentCategoryIdForUsage = null;
+
+async function showCategoryUsage(categoryId) {
+    try {
+        const result = await API.get(buildApiUrl('categories', categoryId) + '/usage');
+
+        if (!result || !result.category) {
+            throw new Error('ไม่พบข้อมูลหมวดหมู่');
+        }
+
+        const category = result.category;
+        const usage = result.usage;
+
+        currentCategoryIdForUsage = categoryId;
+
+        // Update modal content
+        document.getElementById('usage-modal-title').textContent = 'รายละเอียดหมวดหมู่';
+        document.getElementById('usage-category-name').textContent = category.name_th;
+        document.getElementById('usage-category-type').textContent = category.type === 'expense' ? 'รายจ่าย' : 'รายรับ';
+
+        // Update icon
+        const iconEl = document.getElementById('usage-category-icon');
+        const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(category.icon || '');
+        if (isEmoji || !category.icon) {
+            iconEl.innerHTML = category.icon || '📁';
+        } else {
+            iconEl.innerHTML = `<i data-lucide="${category.icon}"></i>`;
+        }
+
+        // Update usage counts
+        document.getElementById('usage-transactions').textContent = `${usage.transactions} รายการ`;
+        document.getElementById('usage-recurring').textContent = `${usage.recurring_transactions} รายการ`;
+        document.getElementById('usage-budgets').textContent = `${usage.budgets} รายการ`;
+        document.getElementById('usage-goals').textContent = `${usage.goals} รายการ`;
+        document.getElementById('usage-total-count').textContent = `${usage.total} รายการ`;
+
+        // Show modal
+        const modal = document.getElementById('category-usage-modal');
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        // Initialize icons
+        setTimeout(() => {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }, 50);
+
+    } catch (error) {
+        console.error('Error loading category usage:', error);
+        showToast(error.message || 'ไม่สามารถโหลดข้อมูลได้', 'error');
+    }
+}
+
+function closeCategoryUsage() {
+    const modal = document.getElementById('category-usage-modal');
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+    currentCategoryIdForUsage = null;
+}
+
+// Edit category from usage modal
+document.addEventListener('DOMContentLoaded', () => {
+    const editBtn = document.getElementById('edit-category-from-usage');
+    if (editBtn) {
+        editBtn.addEventListener('click', () => {
+            if (currentCategoryIdForUsage) {
+                closeCategoryUsage();
+                openCategoryModal(currentCategoryIdForUsage);
+            }
+        });
+    }
+});
+
 // Load on page ready
 document.addEventListener('DOMContentLoaded', () => {
     loadCategories();
-    
+
     // Remove loading class and fade in
     const container = document.querySelector('.mobile-container');
     if (container) {
         container.classList.remove('page-loading');
         container.classList.add('fade-in');
     }
-    
+
     // Initialize icons
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();

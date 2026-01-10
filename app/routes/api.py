@@ -636,6 +636,83 @@ def delete_category_route(project_id, category_id):
         }), 403
 
 
+@bp.route('/projects/<project_id>/categories/<category_id>/usage', methods=['GET'])
+def get_category_usage(project_id, category_id):
+    """Get usage statistics for a category"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.models.transaction import Transaction
+        from app.models.recurring_transaction import RecurringTransaction
+        from app.models.budget import Budget
+        from app.models.goal import Goal
+
+        # Verify category exists and belongs to project
+        category = Category.query.filter_by(
+            id=category_id,
+            project_id=project_id
+        ).first()
+
+        if not category:
+            return jsonify({
+                'error': {
+                    'code': 'NOT_FOUND',
+                    'message': 'Category not found'
+                }
+            }), 404
+
+        # Count transactions
+        transactions_count = Transaction.query.filter_by(
+            project_id=project_id,
+            category_id=category_id
+        ).filter(Transaction.deleted_at.is_(None)).count()
+
+        # Count recurring transactions
+        recurring_count = RecurringTransaction.query.filter_by(
+            project_id=project_id,
+            category_id=category_id,
+            is_active=True
+        ).count()
+
+        # Count budgets
+        budgets_count = Budget.query.filter_by(
+            project_id=project_id,
+            category_id=category_id
+        ).count()
+
+        # Count goals (if Goal model exists)
+        goals_count = 0
+        try:
+            goals_count = Goal.query.filter_by(
+                project_id=project_id,
+                category_id=category_id,
+                is_active=True
+            ).count()
+        except:
+            pass  # Goal table might not exist
+
+        return jsonify({
+            'category': category.to_dict(),
+            'usage': {
+                'transactions': transactions_count,
+                'recurring_transactions': recurring_count,
+                'budgets': budgets_count,
+                'goals': goals_count,
+                'total': transactions_count + recurring_count + budgets_count + goals_count
+            }
+        })
+
+    except Exception as e:
+        return jsonify({
+            'error': {
+                'code': 'INTERNAL_ERROR',
+                'message': str(e)
+            }
+        }), 500
+
+
 # Budgets - GET endpoint moved to BudgetService section below for enriched data
 
 
