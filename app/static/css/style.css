@@ -272,7 +272,7 @@ h2 i[data-lucide] {
     box-sizing: border-box;
 }
 
-/* Page Header - Full Viewport Width */
+/* Page Header - Full Width within Container */
 .page-header {
     background: var(--bg);
     padding: 24px 20px;
@@ -280,30 +280,23 @@ h2 i[data-lucide] {
     margin: 0 -7px 20px -7px;
     position: relative;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    width: calc(100% + 14px);
 }
 
-/* Desktop: Full viewport header */
+/* Desktop: Full width within container */
 @media (min-width: 769px) {
     .page-header {
-        width: 100vw;
-        margin-left: calc(-50vw + 50%);
-        margin-right: 0;
-        margin-bottom: 20px;
-        padding-left: calc(50vw - 50% + 20px);
-        padding-right: calc(50vw - 50% + 20px);
+        margin: 0 0 20px 0;
+        width: 100%;
     }
 }
 
 @media (min-width: 1200px) {
     .page-header {
-        padding-left: calc(50vw - 600px + 24px);
-        padding-right: calc(50vw - 600px + 24px);
+        margin: 0 -24px 20px -24px;
+        width: calc(100% + 48px);
+        padding: 24px 24px;
     }
-}
-
-.header-content {
-    max-width: 1200px;
-    margin: 0 auto;
 }
 
 .header-content h1 {
