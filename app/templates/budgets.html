@@ -475,10 +475,28 @@
             const amount = parseFloat(document.getElementById('budget-amount').value);
             const rolloverPolicy = document.getElementById('budget-rollover').value;
 
-            // Validation
-            if (!categoryId || !month || !amount || amount <= 0) {
-                showToast('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
-                return;
+            // Debug logging
+            console.log('Form submit:', {
+                editingBudgetId: editingBudgetId,
+                categoryId: categoryId,
+                month: month,
+                amount: amount,
+                rolloverPolicy: rolloverPolicy
+            });
+
+            // Validation - different for add vs edit mode
+            if (editingBudgetId) {
+                // Edit mode: only validate amount
+                if (!amount || amount <= 0) {
+                    showToast('กรุณากรอกจำนวนเงินที่ถูกต้อง', 'error');
+                    return;
+                }
+            } else {
+                // Add mode: validate all fields
+                if (!categoryId || !month || !amount || amount <= 0) {
+                    showToast('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+                    return;
+                }
             }
 
             // Loading state
@@ -492,6 +510,7 @@
                     limit_amount: Math.round(amount * 100), // Convert to satang
                     rollover_policy: rolloverPolicy
                 };
+                console.log('PUT request:', buildApiUrl('budgets', editingBudgetId), updatePayload);
                 await API.put(buildApiUrl('budgets', editingBudgetId), updatePayload);
                 showToast('อัพเดทงบประมาณสำเร็จ!', 'success');
             } else {
@@ -502,6 +521,7 @@
                     limit_amount: Math.round(amount * 100), // Convert to satang
                     rollover_policy: rolloverPolicy
                 };
+                console.log('POST request:', buildApiUrl('budgets'), createPayload);
                 await API.post(buildApiUrl('budgets'), createPayload);
                 showToast('เพิ่มงบประมาณสำเร็จ!', 'success');
             }
