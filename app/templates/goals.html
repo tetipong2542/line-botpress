@@ -307,11 +307,11 @@
                 <div class="goal-amount-section">
                     <div class="amount-current">
                         <span class="amount-label">ออมแล้ว</span>
-                        <span class="amount-value">฿${current.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
+                        <span class="amount-value">฿${current.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</span>
                     </div>
                     <div class="amount-target">
                         <span class="amount-label">เป้าหมาย</span>
-                        <span class="amount-value">฿${target.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
+                        <span class="amount-value">฿${target.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</span>
                     </div>
                 </div>
 
@@ -855,6 +855,7 @@
             opacity: 0;
             transform: translateY(10px);
         }
+
         to {
             opacity: 1;
             transform: translateY(0);
@@ -936,6 +937,41 @@
         .dropdown-menu {
             min-width: 160px;
         }
+    }
+
+    /* === Mobile Very Small Screen Fix === */
+    @media (max-width: 360px) {
+        .goals-stats {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+
+        .stat-card {
+            flex-direction: row;
+            padding: 12px 16px;
+        }
+
+        .stat-icon {
+            width: 36px;
+            height: 36px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+        }
+    }
+
+    /* === Dropdown Overflow Fix === */
+    .dropdown-menu {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+
+    /* Bottom position for dropdowns near bottom of screen */
+    .dropdown-menu.show-up {
+        top: auto;
+        bottom: 42px;
+        transform-origin: bottom right;
     }
 </style>
 {% endblock %}
