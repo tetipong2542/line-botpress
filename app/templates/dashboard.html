@@ -413,23 +413,31 @@ addExpenseBtn.addEventListener('click', () => openModal('expense'));
 addIncomeBtn.addEventListener('click', () => openModal('income'));
 
 quickAddBtn.addEventListener('click', () => {
-    const type = 'expense'; // Default to expense
-    const categoryId = lastUsedCategories.expense;
+    // Smart detection: prefer expense, fallback to income
+    let type = 'expense';
+    let categoryId = lastUsedCategories.expense;
 
+    // If no expense history but has income history, use income instead
+    if (!categoryId && lastUsedCategories.income) {
+        type = 'income';
+        categoryId = lastUsedCategories.income;
+    }
+
+    // If still no history at all, show helpful message
     if (!categoryId) {
-        showToast('ยังไม่มประวัติการบันทึกกรายจ่าย กรุณบันทึกกรายรายจ่ายก่อน', 'info');
+        showToast('ยังไม่มีประวัติการบันทึก กรุณาบันทึกรายการก่อนเพื่อใช้ฟีเจอร์จดรวดเร็ว', 'info');
         return;
     }
 
     // Pre-fill form with last used category
     document.getElementById('transaction-type').value = type;
     document.getElementById('transaction-category').value = categoryId;
-    
+
     // Set default date/time
     const now = new Date();
-    document.getElementById('transaction-date').value = now.totoISOString().split('T')[0];
+    document.getElementById('transaction-date').value = now.toISOString().split('T')[0];
     document.getElementById('transaction-time').value = now.toTimeString().slice(0, 5);
-    
+
     // Clear amount and note
     document.getElementById('transaction-amount').value = '';
     document.getElementById('transaction-note').value = '';
@@ -437,10 +445,10 @@ quickAddBtn.addEventListener('click', () => {
     // Update modal header
     const modalHeader = document.getElementById('transaction-modal-header');
     const modalTitle = document.getElementById('transaction-modal-title');
-    
+
     modalHeader.classList.remove('expense', 'income');
     modalHeader.classList.add(type);
-    modalTitle.textContent = 'บันทึกเร็ว';
+    modalTitle.textContent = `จดเร็ว: ${type === 'expense' ? 'รายจ่าย' : 'รายรับ'}`;
 
     openModal();
 });
@@ -526,6 +534,9 @@ document.getElementById('transaction-form').addEventListener('submit', async (e)
             result = await API.post(buildApiUrl('transactions'), payload);
             showToast(`บันทึก${type === 'expense' ? 'รายจ่าย' : 'รายรับ'}สำเร็จ!`, 'success');
         }
+
+        // Save last used category for smart quick add
+        saveLastUsedCategories(type, categoryId);
 
         // Reset form and state
         document.getElementById('transaction-form').reset();
@@ -1035,6 +1046,29 @@ const insightsOverlay = insightsModal.querySelector('.modal-overlay');
 function openInsightsModal() {
     insightsModal.classList.add('active');
     document.body.style.overflow = 'hidden';
+
+    // Show loading state
+    const containers = ['insights-alerts-container', 'insights-trends-container',
+                       'insights-recommendations-container', 'insights-reminders-container'];
+    containers.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+
+    // Show loading indicator
+    const emptyState = document.getElementById('insights-empty');
+    if (emptyState) {
+        emptyState.style.display = 'block';
+        emptyState.innerHTML = `
+            <i data-lucide="loader" class="spinning"></i>
+            <p>กำลังวิเคราะห์ข้อมูล...</p>
+            <p class="empty-subtitle">กรุณารอสักครู่</p>
+        `;
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
     loadInsightsData();
 }
 
