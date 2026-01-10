@@ -300,15 +300,15 @@
                         </div>
                     </div>
                     <div class="budget-menu-wrapper">
-                        <button class="btn-menu" onclick="toggleBudgetMenu('${budget.id}')" title="ตัวเลือก">
+                        <button type="button" class="btn-menu" onclick="toggleBudgetMenu('${budget.id}')" title="ตัวเลือก">
                             <i data-lucide="more-vertical"></i>
                         </button>
                         <div class="dropdown-menu" id="menu-${budget.id}">
-                            <button class="menu-item" onclick="editBudget('${budget.id}'); closeAllMenus();">
+                            <button type="button" class="menu-item" onclick="editBudget('${budget.id}'); closeAllMenus();">
                                 <i data-lucide="edit-2"></i>
                                 <span>แก้ไข</span>
                             </button>
-                            <button class="menu-item danger" onclick="deleteBudget('${budget.id}'); closeAllMenus();">
+                            <button type="button" class="menu-item danger" onclick="deleteBudget('${budget.id}'); closeAllMenus();">
                                 <i data-lucide="trash-2"></i>
                                 <span>ลบงบประมาณ</span>
                             </button>
