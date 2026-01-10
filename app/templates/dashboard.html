@@ -545,7 +545,6 @@
         e.preventDefault();
 
         const submitBtn = e.target.querySelector('button[type="submit"]');
-        const originalBtnContent = submitBtn.innerHTML;
 
         // Get form values
         const type = document.getElementById('transaction-type').value;
@@ -562,11 +561,6 @@
             return;
         }
 
-        // Loading state
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังบันทึก...</span>';
-        lucide.createIcons();
-
         // Prepare data
         const date = document.getElementById('transaction-date').value;
         const time = document.getElementById('transaction-time').value;
@@ -580,45 +574,43 @@
             note: document.getElementById('transaction-note').value || null
         };
 
-        try {
-            let result;
-            if (editingTransactionId) {
-                // Update existing transaction
-                result = await API.put(buildApiUrl('transactions', editingTransactionId), payload);
-                showToast(`อัพเดท${type === 'expense' ? 'รายจ่าย' : 'รายรับ'}สำเร็จ!`, 'success');
-            } else {
-                // Create new transaction
-                result = await API.post(buildApiUrl('transactions'), payload);
-                showToast(`บันทึก${type === 'expense' ? 'รายจ่าย' : 'รายรับ'}สำเร็จ!`, 'success');
+        // Use LoadingManager for automatic loading state management
+        await LoadingManager.withLoading(
+            async () => {
+                let result;
+                if (editingTransactionId) {
+                    // Update existing transaction
+                    result = await API.put(buildApiUrl('transactions', editingTransactionId), payload);
+                    showToast(`อัพเดท${type === 'expense' ? 'รายจ่าย' : 'รายรับ'}สำเร็จ!`, 'success');
+                } else {
+                    // Create new transaction
+                    result = await API.post(buildApiUrl('transactions'), payload);
+                    showToast(`บันทึก${type === 'expense' ? 'รายจ่าย' : 'รายรับ'}สำเร็จ!`, 'success');
+                }
+
+                // Save last used category for smart quick add
+                saveLastUsedTransaction(type, categoryId);
+
+                // Reset form and state
+                document.getElementById('transaction-form').reset();
+                editingTransactionId = null;
+
+                // Reset modal title and button
+                const modalTitle = document.getElementById('transaction-modal-title');
+                const submitBtnText = document.getElementById('transaction-submit-text');
+                if (modalTitle) modalTitle.textContent = 'เพิ่มรายการ';
+                if (submitBtnText) submitBtnText.textContent = 'บันทึก';
+
+                closeModal();
+
+                // Reload dashboard
+                await loadDashboard(true);
+            },
+            {
+                button: submitBtn,  // Automatic button loading state
+                topBar: true        // Show top loading bar
             }
-
-            // Save last used category for smart quick add
-            saveLastUsedTransaction(type, categoryId);
-
-            // Reset form and state
-            document.getElementById('transaction-form').reset();
-            editingTransactionId = null;
-
-            // Reset modal title and button
-            const modalTitle = document.getElementById('transaction-modal-title');
-            const submitBtnText = document.getElementById('transaction-submit-text');
-            if (modalTitle) modalTitle.textContent = 'เพิ่มรายการ';
-            if (submitBtnText) submitBtnText.textContent = 'บันทึก';
-
-            closeModal();
-
-            // Reload dashboard
-            await loadDashboard(true);
-
-        } catch (error) {
-            console.error('Transaction error:', error);
-            showToast(error.message || 'ไม่สามารถบันทึกได้ กรุณาลองใหม่', 'error');
-
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnContent;
-            lucide.createIcons();
-        }
+        );
     });
 
     // ===== LOAD CATEGORIES =====
@@ -980,17 +972,19 @@
             return;
         }
 
-        try {
-            await API.delete(buildApiUrl('transactions', transactionId));
+        // Use LoadingManager with top loading bar
+        await LoadingManager.withLoading(
+            async () => {
+                await API.delete(buildApiUrl('transactions', transactionId));
+                showToast('ลบรายการเรียบร้อยแล้ว', 'success');
 
-            showToast('ลบรายการเรียบร้อยแล้ว', 'success');
-
-            // Reload dashboard
-            await loadDashboard(true);
-
-        } catch (error) {
-            showToast(error.message || 'ไม่สามารถลบได้', 'error');
-        }
+                // Reload dashboard
+                await loadDashboard(true);
+            },
+            {
+                topBar: true  // Show top loading bar during deletion
+            }
+        );
     }
 
     // ===== DEEP LINKING SUPPORT =====

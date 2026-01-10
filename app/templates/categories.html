@@ -614,20 +614,23 @@ async function deleteCategory(categoryId) {
         return;
     }
 
-    try {
-        const result = await API.delete(buildApiUrl('categories') + `/${categoryId}`);
+    // Use LoadingManager with top loading bar
+    await LoadingManager.withLoading(
+        async () => {
+            const result = await API.delete(buildApiUrl('categories') + `/${categoryId}`);
 
-        if (result.warning) {
-            showToast(result.warning, 'warning', 5000);
-        } else {
-            showToast('ลบหมวดหมู่สำเร็จ!', 'success');
+            if (result.warning) {
+                showToast(result.warning, 'warning', 5000);
+            } else {
+                showToast('ลบหมวดหมู่สำเร็จ!', 'success');
+            }
+
+            await loadCategories();
+        },
+        {
+            topBar: true  // Show top loading bar during deletion
         }
-
-        await loadCategories();
-
-    } catch (error) {
-        showToast(error.message || 'ไม่สามารถลบหมวดหมู่ได้', 'error');
-    }
+    );
 }
 
 // Edit category - Now uses modal instead of prompt
@@ -739,43 +742,33 @@ document.getElementById('category-form').addEventListener('submit', async (e) =>
     e.preventDefault();
 
     const submitBtn = e.target.querySelector('button[type="submit"]');
-    const originalHTML = submitBtn.innerHTML;
 
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังบันทึก...</span>';
-    
-    // Initialize loader icon
-    setTimeout(() => {
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
+    const payload = {
+        type: document.getElementById('category-type').value,
+        name_th: document.getElementById('category-name').value,
+        icon: document.getElementById('category-icon').value,
+        color: document.getElementById('category-color').value
+    };
+
+    // Use LoadingManager for automatic loading state management
+    await LoadingManager.withLoading(
+        async () => {
+            if (editingCategoryId) {
+                await API.put(buildApiUrl('categories', editingCategoryId), payload);
+                showToast('แก้ไขหมวดหมู่สำเร็จ!', 'success');
+            } else {
+                await API.post(buildApiUrl('categories'), payload);
+                showToast('เพิ่มหมวดหมู่สำเร็จ!', 'success');
+            }
+
+            closeCategoryModal();
+            await loadCategories();
+        },
+        {
+            button: submitBtn,  // Automatic button loading state
+            topBar: true        // Show top loading bar
         }
-    }, 10);
-
-    try {
-        const payload = {
-            type: document.getElementById('category-type').value,
-            name_th: document.getElementById('category-name').value,
-            icon: document.getElementById('category-icon').value,
-            color: document.getElementById('category-color').value
-        };
-
-        if (editingCategoryId) {
-            await API.put(buildApiUrl('categories', editingCategoryId), payload);
-            showToast('แก้ไขหมวดหมู่สำเร็จ!', 'success');
-        } else {
-            await API.post(buildApiUrl('categories'), payload);
-            showToast('เพิ่มหมวดหมู่สำเร็จ!', 'success');
-        }
-
-        closeCategoryModal();
-        await loadCategories();
-
-    } catch (error) {
-        showToast(error.message || 'ไม่สามารถบันทึกได้', 'error');
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalHTML;
-    }
+    );
 });
 
 // Show category usage details modal

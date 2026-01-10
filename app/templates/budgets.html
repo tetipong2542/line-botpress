@@ -475,78 +475,70 @@
         e.preventDefault();
 
         const submitBtn = e.target.querySelector('button[type="submit"]');
-        const originalContent = submitBtn.innerHTML;
 
-        try {
-            // Get form data
-            const categoryId = document.getElementById('budget-category').value;
-            const month = document.getElementById('budget-month').value;
-            const amount = parseFloat(document.getElementById('budget-amount').value);
-            const rolloverPolicy = document.getElementById('budget-rollover').value;
+        // Get form data
+        const categoryId = document.getElementById('budget-category').value;
+        const month = document.getElementById('budget-month').value;
+        const amount = parseFloat(document.getElementById('budget-amount').value);
+        const rolloverPolicy = document.getElementById('budget-rollover').value;
 
-            // Debug logging
-            console.log('Form submit:', {
-                editingBudgetId: editingBudgetId,
-                categoryId: categoryId,
-                month: month,
-                amount: amount,
-                rolloverPolicy: rolloverPolicy
-            });
+        // Debug logging
+        console.log('Form submit:', {
+            editingBudgetId: editingBudgetId,
+            categoryId: categoryId,
+            month: month,
+            amount: amount,
+            rolloverPolicy: rolloverPolicy
+        });
 
-            // Validation - different for add vs edit mode
-            if (editingBudgetId) {
-                // Edit mode: only validate amount
-                if (!amount || amount <= 0) {
-                    showToast('กรุณากรอกจำนวนเงินที่ถูกต้อง', 'error');
-                    return;
-                }
-            } else {
-                // Add mode: validate all fields
-                if (!categoryId || !month || !amount || amount <= 0) {
-                    showToast('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
-                    return;
-                }
+        // Validation - different for add vs edit mode
+        if (editingBudgetId) {
+            // Edit mode: only validate amount
+            if (!amount || amount <= 0) {
+                showToast('กรุณากรอกจำนวนเงินที่ถูกต้อง', 'error');
+                return;
             }
-
-            // Loading state
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังบันทึก...</span>';
-            lucide.createIcons();
-
-            if (editingBudgetId) {
-                // Update existing budget - only send limit_amount and rollover_policy
-                const updatePayload = {
-                    limit_amount: Math.round(amount * 100), // Convert to satang
-                    rollover_policy: rolloverPolicy
-                };
-                console.log('PUT request:', buildApiUrl('budgets', editingBudgetId), updatePayload);
-                await API.put(buildApiUrl('budgets', editingBudgetId), updatePayload);
-                showToast('อัพเดทงบประมาณสำเร็จ!', 'success');
-            } else {
-                // Create new budget - send all fields
-                const createPayload = {
-                    category_id: categoryId,
-                    month: month,
-                    limit_amount: Math.round(amount * 100), // Convert to satang
-                    rollover_policy: rolloverPolicy
-                };
-                console.log('POST request:', buildApiUrl('budgets'), createPayload);
-                await API.post(buildApiUrl('budgets'), createPayload);
-                showToast('เพิ่มงบประมาณสำเร็จ!', 'success');
+        } else {
+            // Add mode: validate all fields
+            if (!categoryId || !month || !amount || amount <= 0) {
+                showToast('กรุณากรอกข้อมูลให้ครบถ้วน', 'error');
+                return;
             }
-
-            closeModal();
-            await loadBudgets();
-
-        } catch (error) {
-            console.error('Budget save error:', error);
-            showToast(error.message || 'ไม่สามารถบันทึกได้', 'error');
-
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalContent;
-            lucide.createIcons();
         }
+
+        // Use LoadingManager for automatic loading state management
+        await LoadingManager.withLoading(
+            async () => {
+                if (editingBudgetId) {
+                    // Update existing budget - only send limit_amount and rollover_policy
+                    const updatePayload = {
+                        limit_amount: Math.round(amount * 100), // Convert to satang
+                        rollover_policy: rolloverPolicy
+                    };
+                    console.log('PUT request:', buildApiUrl('budgets', editingBudgetId), updatePayload);
+                    await API.put(buildApiUrl('budgets', editingBudgetId), updatePayload);
+                    showToast('อัพเดทงบประมาณสำเร็จ!', 'success');
+                } else {
+                    // Create new budget - send all fields
+                    const createPayload = {
+                        category_id: categoryId,
+                        month: month,
+                        limit_amount: Math.round(amount * 100), // Convert to satang
+                        rollover_policy: rolloverPolicy
+                    };
+                    console.log('POST request:', buildApiUrl('budgets'), createPayload);
+                    await API.post(buildApiUrl('budgets'), createPayload);
+                    showToast('เพิ่มงบประมาณสำเร็จ!', 'success');
+                }
+
+                closeModal();
+                await loadBudgets();
+            },
+            {
+                button: submitBtn,  // Automatic button loading state
+                topBar: true        // Show top loading bar
+            }
+        );
     }
 
     // ===== EDIT BUDGET =====
@@ -590,14 +582,17 @@
             return;
         }
 
-        try {
-            await API.delete(buildApiUrl('budgets', budgetId));
-            showToast('ลบงบประมาณเรียบร้อยแล้ว', 'success');
-            await loadBudgets();
-
-        } catch (error) {
-            showToast(error.message || 'ไม่สามารถลบได้', 'error');
-        }
+        // Use LoadingManager with top loading bar
+        await LoadingManager.withLoading(
+            async () => {
+                await API.delete(buildApiUrl('budgets', budgetId));
+                showToast('ลบงบประมาณเรียบร้อยแล้ว', 'success');
+                await loadBudgets();
+            },
+            {
+                topBar: true  // Show top loading bar during deletion
+            }
+        );
     }
 
     // ===== UTILITY FUNCTIONS =====
