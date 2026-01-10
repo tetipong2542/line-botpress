@@ -36,7 +36,7 @@ class BudgetService:
         category = Category.query.filter_by(
             id=category_id,
             project_id=project_id,
-            deleted_at=None
+            is_active=True
         ).first()
 
         if not category:

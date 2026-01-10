@@ -81,6 +81,7 @@
             </button>
         </div>
         <form class="modal-body" id="goal-form">
+            <input type="hidden" id="goal-edit-id">
             <!-- ชื่อเป้าหมาย -->
             <div class="form-group">
                 <label class="form-label">ชื่อเป้าหมาย</label>
@@ -100,13 +101,9 @@
             <!-- ระยะเวลา -->
             <div class="form-group">
                 <label class="form-label">ระยะเวลา (เดือน)</label>
-                <select class="form-select" id="goal-months">
-                    <option value="1">1 เดือน</option>
-                    <option value="3">3 เดือน</option>
-                    <option value="6" selected>6 เดือน</option>
-                    <option value="12">1 ปี</option>
-                    <option value="24">2 ปี</option>
-                </select>
+                <input type="number" class="form-input" id="goal-months" placeholder="6" min="1" max="120" value="6"
+                    required>
+                <small class="form-hint">กรอกจำนวนเดือนที่ต้องการบรรลุเป้าหมาย</small>
             </div>
 
             <!-- Submit Button -->
@@ -197,8 +194,6 @@
         document.body.style.overflow = '';
     }
 
-    addBtn.addEventListener('click', () => openModal(goalModal));
-
     document.querySelectorAll('.modal-close, .modal-overlay').forEach(el => {
         el.addEventListener('click', (e) => {
             const modal = e.target.closest('.modal');
@@ -267,6 +262,9 @@
                         <p class="goal-target">เป้าหมาย: ฿${target.toLocaleString('th-TH')}</p>
                     </div>
                     <div class="goal-actions">
+                        <button class="btn-icon edit" onclick="openEdit('${goal.id}', '${goal.name}', ${goal.target_amount}, ${goal.days_remaining || 30})" title="แก้ไข">
+                            <i data-lucide="edit-2"></i>
+                        </button>
                         ${!isCompleted && current > 0 ? `
                             <button class="btn-icon withdraw" onclick="openWithdraw('${goal.id}', '${goal.name}', ${current})" title="ถอนเงิน">
                                 <i data-lucide="minus-circle"></i>
@@ -324,11 +322,35 @@
         openModal(contributeModal);
     }
 
-    // Create goal
+    // Open edit modal
+    function openEdit(goalId, name, targetAmount, daysRemaining) {
+        document.getElementById('goal-edit-id').value = goalId;
+        document.getElementById('goal-name').value = name;
+        document.getElementById('goal-amount').value = targetAmount / 100; // satang to baht
+        document.getElementById('goal-months').value = Math.ceil(daysRemaining / 30) || 6;
+
+        // Update modal header
+        document.querySelector('#goal-modal .modal-header h2').textContent = 'แก้ไขเป้าหมาย';
+        openModal(goalModal);
+    }
+
+    // Reset form when opening for add
+    addBtn.addEventListener('click', () => {
+        document.getElementById('goal-edit-id').value = '';
+        document.getElementById('goal-form').reset();
+        document.getElementById('goal-months').value = '6';
+        document.querySelector('#goal-modal .modal-header h2').textContent = 'เป้าหมายออมเงิน';
+        openModal(goalModal);
+    });
+
+    // Create/Update goal
     document.getElementById('goal-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const submitBtn = e.target.querySelector('button[type="submit"]');
         submitBtn.disabled = true;
+
+        const editId = document.getElementById('goal-edit-id').value;
+        const isEdit = !!editId;
 
         const payload = {
             name: document.getElementById('goal-name').value,
@@ -337,8 +359,13 @@
         };
 
         try {
-            await API.post(buildApiUrl('savings-goals'), payload);
-            showToast('สร้างเป้าหมายสำเร็จ!', 'success');
+            if (isEdit) {
+                await API.put(buildApiUrl('savings-goals', editId), payload);
+                showToast('อัพเดทเป้าหมายสำเร็จ!', 'success');
+            } else {
+                await API.post(buildApiUrl('savings-goals'), payload);
+                showToast('สร้างเป้าหมายสำเร็จ!', 'success');
+            }
             closeModal(goalModal);
             document.getElementById('goal-form').reset();
             await loadGoals();
@@ -529,6 +556,18 @@
     .btn-icon.delete:hover {
         background: var(--expense-color);
         color: white;
+    }
+
+    .btn-icon.edit:hover {
+        background: #3b82f6;
+        color: white;
+    }
+
+    .form-hint {
+        display: block;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-top: 0.25rem;
     }
 
     /* Progress */

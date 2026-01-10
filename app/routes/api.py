@@ -2231,7 +2231,7 @@ def create_savings_goal(project_id):
         goal = SavingsGoal(
             project_id=project_id,
             name=data.get('name'),
-            target_amount=int(data.get('target_amount') * 100),  # Convert baht to satang
+            target_amount=int(data.get('target_amount')),  # frontend ส่ง satang มาแล้ว
             target_date=datetime.strptime(data['target_date'], '%Y-%m-%d').date() if data.get('target_date') else None,
             category_id=data.get('category_id'),
             is_active=True
@@ -2269,7 +2269,7 @@ def update_savings_goal(project_id, goal_id):
         if 'name' in data:
             goal.name = data['name']
         if 'target_amount' in data:
-            goal.target_amount = int(data['target_amount'] * 100)
+            goal.target_amount = int(data['target_amount'])  # frontend ส่ง satang มาแล้ว
         if 'target_date' in data:
             from datetime import datetime
             goal.target_date = datetime.strptime(data['target_date'], '%Y-%m-%d').date()
