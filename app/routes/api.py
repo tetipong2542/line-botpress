@@ -2226,13 +2226,20 @@ def create_savings_goal(project_id):
     data = request.json
 
     try:
-        from datetime import datetime
+        from datetime import datetime, timedelta
+
+        # คำนวณ target_date จาก months หรือใช้ค่าที่ส่งมา
+        target_date = None
+        if data.get('target_date'):
+            target_date = datetime.strptime(data['target_date'], '%Y-%m-%d').date()
+        elif data.get('months'):
+            target_date = (datetime.utcnow() + timedelta(days=int(data['months']) * 30)).date()
 
         goal = SavingsGoal(
             project_id=project_id,
             name=data.get('name'),
             target_amount=int(data.get('target_amount')),  # frontend ส่ง satang มาแล้ว
-            target_date=datetime.strptime(data['target_date'], '%Y-%m-%d').date() if data.get('target_date') else None,
+            target_date=target_date,
             category_id=data.get('category_id'),
             is_active=True
         )
@@ -2260,6 +2267,8 @@ def update_savings_goal(project_id, goal_id):
     data = request.json
 
     try:
+        from datetime import datetime, timedelta
+        
         goal = SavingsGoal.get_goal(goal_id, project_id)
         if not goal:
             return jsonify({
@@ -2270,9 +2279,11 @@ def update_savings_goal(project_id, goal_id):
             goal.name = data['name']
         if 'target_amount' in data:
             goal.target_amount = int(data['target_amount'])  # frontend ส่ง satang มาแล้ว
-        if 'target_date' in data:
-            from datetime import datetime
+        if 'target_date' in data and data['target_date']:
             goal.target_date = datetime.strptime(data['target_date'], '%Y-%m-%d').date()
+        elif 'months' in data:
+            # คำนวณ target_date จากวันนี้บวก months
+            goal.target_date = (datetime.utcnow() + timedelta(days=int(data['months']) * 30)).date()
         if 'category_id' in data:
             goal.category_id = data['category_id']
         if 'is_active' in data:
