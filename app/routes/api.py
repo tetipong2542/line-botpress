@@ -1487,8 +1487,8 @@ def generate_budget_alerts(budgets):
             over_amount = budget['spent'] - budget['limit_amount']
             alerts.append({
                 'type': 'error',
-                'icon': '🚨',
-                'category': f"{cat_icon} {cat_name}",
+                'icon': cat_icon,  # ใช้ icon ของหมวดหมู่แทน emoji
+                'category': cat_name,  # ชื่อหมวดหมู่อย่างเดียว
                 'message': f"เกินงบแล้ว {usage}% (เกิน ฿{abs(over_amount/100):.2f})",
                 'budget_id': budget['id']
             })
@@ -1497,8 +1497,8 @@ def generate_budget_alerts(budgets):
             remaining = budget['remaining']
             alerts.append({
                 'type': 'warning',
-                'icon': '⚠️',
-                'category': f"{cat_icon} {cat_name}",
+                'icon': cat_icon,
+                'category': cat_name,
                 'message': f"ใช้ไป {usage}% แล้ว (เหลือ ฿{remaining/100:.2f})",
                 'budget_id': budget['id']
             })
@@ -1506,8 +1506,8 @@ def generate_budget_alerts(budgets):
             # Good progress
             alerts.append({
                 'type': 'info',
-                'icon': '✅',
-                'category': f"{cat_icon} {cat_name}",
+                'icon': cat_icon,
+                'category': cat_name,
                 'message': f"ใช้ไป {usage}% (ควบคุมได้ดี)",
                 'budget_id': budget['id']
             })
