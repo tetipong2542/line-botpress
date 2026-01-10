@@ -827,6 +827,17 @@
         console.log('Summary loaded:', summary);
     }
 
+    // ===== GLOBAL ICON HELPER =====
+    // ใช้สำหรับแสดง Lucide icon หรือ Emoji ได้ถูกต้อง
+    function renderIcon(iconName, customClass = '') {
+        const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(iconName || '');
+        if (isEmoji || !iconName) {
+            return `<span class="icon-emoji ${customClass}">${iconName || '📁'}</span>`;
+        } else {
+            return `<i data-lucide="${iconName}" class="${customClass}"></i>`;
+        }
+    }
+
     // ===== RENDER TRANSACTIONS =====
     function renderTransactions(transactions) {
         const transactionsList = document.getElementById('transactions-list');
@@ -850,14 +861,7 @@
             return (amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         };
 
-        const renderIcon = (iconName) => {
-            const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(iconName || '');
-            if (isEmoji || !iconName) {
-                return `<span class="transaction-icon-emoji">${iconName || '📁'}</span>`;
-            } else {
-                return `<i data-lucide="${iconName}"></i>`;
-            }
-        };
+        // ใช้ global renderIcon function ด้านบน
 
         // Hide skeleton first
         const skeleton = document.getElementById('transactions-skeleton');
@@ -1079,7 +1083,7 @@
             <div class="budget-quick-card ${statusClass}">
                 <div class="budget-quick-header">
                     <span class="budget-icon" style="color: ${cat.color || '#666'}">
-                        ${cat.icon || '📁'}
+                        ${renderIcon(cat.icon)}
                     </span>
                     <span class="budget-name">${cat.name_th || 'หมวดหมู่'}</span>
                 </div>
@@ -1112,7 +1116,7 @@
 
         container.innerHTML = alerts.map(alert => `
         <div class="alert alert-${alert.type}">
-            <span class="alert-icon">${alert.icon}</span>
+            <span class="alert-icon">${renderIcon(alert.icon)}</span>
             <div class="alert-content">
                 <strong>${alert.category}</strong>
                 <span>${alert.message}</span>
