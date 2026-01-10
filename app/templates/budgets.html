@@ -283,12 +283,13 @@
                 : `<i data-lucide="${lucideIconMap[categoryIcon] || categoryIcon}" class="budget-lucide-icon"></i>`;
 
             return `
-            <div class="budget-card ${budget.is_over_budget ? 'over-budget' : ''}" data-id="${budget.id}">
+            <div class="budget-card ${budget.is_over_budget ? 'over-budget' : ''} ${budget.is_near_limit ? 'near-limit' : ''}" data-id="${budget.id}">
                 <div class="budget-card-header">
                     <div class="budget-main-info">
                         <div class="budget-icon-wrapper" style="
                             background: color-mix(in srgb, ${categoryColor} 15%, transparent);
                             border-color: ${categoryColor};
+                            color: ${categoryColor};
                         ">
                             ${iconHtml}
                         </div>
@@ -320,15 +321,18 @@
                 <div class="budget-amount-section">
                     <div class="amount-item">
                         <span class="amount-label">งบประมาณ</span>
-                        <span class="amount-value">฿${budget.limit_amount_formatted.toLocaleString('th-TH')}</span>
+                        <span class="amount-value budget">฿${budget.limit_amount_formatted.toLocaleString('th-TH')}</span>
                     </div>
-                    <div class="amount-item">
+                    <div class="amount-item center">
                         <span class="amount-label">ใช้ไปแล้ว</span>
                         <span class="amount-value spent">฿${budget.spent_formatted.toLocaleString('th-TH')}</span>
                     </div>
                     <div class="amount-item">
-                        <span class="amount-label">คงเหลือ</span>
-                        <span class="amount-value ${budget.remaining < 0 ? 'negative' : 'positive'}">฿${budget.remaining_formatted.toLocaleString('th-TH')}</span>
+                        <span class="amount-label">
+                            คงเหลือ
+                            <i data-lucide="${budget.remaining < 0 ? 'alert-triangle' : 'check'}" class="remaining-icon ${budget.remaining < 0 ? 'negative' : 'positive'}"></i>
+                        </span>
+                        <span class="amount-value ${budget.remaining < 0 ? 'negative' : 'positive'}">฿${Math.abs(budget.remaining_formatted).toLocaleString('th-TH')}</span>
                     </div>
                 </div>
 
@@ -643,18 +647,21 @@
         border-radius: 16px;
         padding: 16px;
         margin-bottom: 12px;
-        border: 1.5px solid var(--border-color);
+        border: 1px solid var(--border-color);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         transition: all 0.3s ease;
         animation: fadeInUp 0.3s ease;
     }
 
     .budget-card:hover {
-        border-width: 2px;
-        padding: 15.5px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         border-color: var(--primary-color);
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+    }
+
+    .budget-card.near-limit {
+        border-color: #f59e0b;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.03) 0%, var(--card-bg) 100%);
     }
 
     .budget-card.over-budget {
@@ -838,42 +845,68 @@
         color: var(--expense-color);
     }
 
-    /* Amount Section */
+    /* Amount Section - Enhanced 3-Column Layout */
     .budget-amount-section {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 0;
         margin-bottom: 12px;
-        padding: 12px 14px;
+        padding: 14px 12px;
         background: var(--bg-secondary);
-        border-radius: 10px;
+        border-radius: 12px;
         border: 1px solid var(--border-color);
     }
 
     .amount-item {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 6px;
         text-align: center;
-        padding: 0 10px;
+        padding: 0 8px;
     }
 
     .amount-item:not(:last-child) {
         border-right: 1px solid var(--border-color);
     }
 
+    .amount-item.center {
+        position: relative;
+    }
+
     .amount-label {
-        font-size: 11px;
+        font-size: 10px;
         color: var(--text-secondary);
         font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.3px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+    }
+
+    .remaining-icon {
+        width: 12px;
+        height: 12px;
+    }
+
+    .remaining-icon.positive {
+        color: var(--income-color);
+    }
+
+    .remaining-icon.negative {
+        color: var(--expense-color);
     }
 
     .amount-value {
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 700;
         color: var(--text-primary);
+        line-height: 1.2;
+    }
+
+    .amount-value.budget {
+        color: var(--primary-color);
     }
 
     .amount-value.spent {
