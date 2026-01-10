@@ -250,70 +250,111 @@
             const progress = goal.progress_percentage || 0;
             const isCompleted = goal.is_completed;
             const isOverdue = goal.is_overdue;
+            const progressColor = progress >= 100 ? 'complete' : progress >= 80 ? 'warning' : 'normal';
 
             return `
             <div class="goal-card ${isCompleted ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}" data-id="${goal.id}">
-                <div class="goal-header">
-                    <div class="goal-icon">
-                        <i data-lucide="${isCompleted ? 'check-circle' : 'target'}"></i>
+                <div class="goal-card-header">
+                    <div class="goal-main-info">
+                        <div class="goal-icon-wrapper">
+                            <i data-lucide="${isCompleted ? 'check-circle' : 'target'}"></i>
+                        </div>
+                        <div class="goal-title-section">
+                            <h3 class="goal-title">${goal.name}</h3>
+                            ${goal.days_remaining !== null && !isCompleted ? `
+                                <span class="goal-subtitle ${isOverdue ? 'overdue' : ''}">
+                                    <i data-lucide="calendar"></i>
+                                    ${isOverdue ? 'เกินกำหนด' : `เหลือ ${goal.days_remaining} วัน`}
+                                </span>
+                            ` : ''}
+                            ${isCompleted ? `
+                                <span class="goal-subtitle success">
+                                    <i data-lucide="trophy"></i>
+                                    บรรลุเป้าหมายแล้ว!
+                                </span>
+                            ` : ''}
+                        </div>
                     </div>
-                    <div class="goal-info">
-                        <h3 class="goal-name">${goal.name}</h3>
-                        <p class="goal-target">เป้าหมาย: ฿${target.toLocaleString('th-TH')}</p>
-                    </div>
-                    <div class="goal-actions">
-                        <button class="btn-icon edit" onclick="openEdit('${goal.id}', '${goal.name}', ${goal.target_amount}, ${goal.days_remaining || 30})" title="แก้ไข">
-                            <i data-lucide="edit-2"></i>
+                    <div class="goal-menu-wrapper">
+                        <button class="btn-menu" onclick="toggleGoalMenu('${goal.id}')" title="ตัวเลือก">
+                            <i data-lucide="more-vertical"></i>
                         </button>
-                        ${!isCompleted && current > 0 ? `
-                            <button class="btn-icon withdraw" onclick="openWithdraw('${goal.id}', '${goal.name}', ${current})" title="ถอนเงิน">
-                                <i data-lucide="minus-circle"></i>
+                        <div class="dropdown-menu" id="menu-${goal.id}">
+                            ${!isCompleted ? `
+                                <button class="menu-item primary" onclick="openContribute('${goal.id}'); closeAllMenus();">
+                                    <i data-lucide="plus-circle"></i>
+                                    <span>เพิ่มเงินออม</span>
+                                </button>
+                            ` : ''}
+                            ${!isCompleted && current > 0 ? `
+                                <button class="menu-item warning" onclick="openWithdraw('${goal.id}', '${goal.name}', ${current}); closeAllMenus();">
+                                    <i data-lucide="minus-circle"></i>
+                                    <span>ถอนเงิน</span>
+                                </button>
+                            ` : ''}
+                            <button class="menu-item" onclick="openEdit('${goal.id}', '${goal.name}', ${goal.target_amount}, ${goal.days_remaining || 30}); closeAllMenus();">
+                                <i data-lucide="edit-2"></i>
+                                <span>แก้ไข</span>
                             </button>
-                        ` : ''}
-                        ${!isCompleted ? `
-                            <button class="btn-icon add" onclick="openContribute('${goal.id}')" title="เพิ่มเงิน">
-                                <i data-lucide="plus-circle"></i>
+                            <button class="menu-item danger" onclick="deleteGoal('${goal.id}'); closeAllMenus();">
+                                <i data-lucide="trash-2"></i>
+                                <span>ลบเป้าหมาย</span>
                             </button>
-                        ` : ''}
-                        <button class="btn-icon delete" onclick="deleteGoal('${goal.id}')" title="ลบ">
-                            <i data-lucide="trash-2"></i>
-                        </button>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="goal-progress">
-                    <div class="progress-bar">
-                        <div class="progress-fill ${isCompleted ? 'complete' : ''}" style="width: ${Math.min(progress, 100)}%"></div>
+
+                <div class="goal-amount-section">
+                    <div class="amount-current">
+                        <span class="amount-label">ออมแล้ว</span>
+                        <span class="amount-value">฿${current.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
                     </div>
-                    <div class="progress-text">
-                        <span>฿${current.toLocaleString('th-TH')} / ฿${target.toLocaleString('th-TH')}</span>
-                        <span>${progress.toFixed(0)}%</span>
+                    <div class="amount-target">
+                        <span class="amount-label">เป้าหมาย</span>
+                        <span class="amount-value">฿${target.toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
                     </div>
                 </div>
-                
-                ${goal.days_remaining !== null && !isCompleted ? `
-                    <div class="goal-footer">
-                        <span class="days-remaining ${isOverdue ? 'overdue' : ''}">
-                            <i data-lucide="calendar"></i>
-                            ${isOverdue ? 'เกินกำหนด' : `เหลืออีก ${goal.days_remaining} วัน`}
-                        </span>
+
+                <div class="goal-progress-section">
+                    <div class="progress-bar-large">
+                        <div class="progress-fill-large ${progressColor}" style="width: ${Math.min(progress, 100)}%">
+                            <span class="progress-percentage">${progress.toFixed(0)}%</span>
+                        </div>
                     </div>
-                ` : ''}
-                
-                ${isCompleted ? `
-                    <div class="goal-footer completed">
-                        <span class="completed-badge">
-                            <i data-lucide="trophy"></i>
-                            บรรลุเป้าหมายแล้ว!
-                        </span>
-                    </div>
-                ` : ''}
+                </div>
             </div>
         `;
         }).join('');
 
         lucide.createIcons();
     }
+
+    // Menu toggle functions
+    function toggleGoalMenu(goalId) {
+        const menu = document.getElementById(`menu-${goalId}`);
+        const isOpen = menu.classList.contains('show');
+
+        // Close all menus first
+        closeAllMenus();
+
+        // Toggle current menu
+        if (!isOpen) {
+            menu.classList.add('show');
+        }
+    }
+
+    function closeAllMenus() {
+        document.querySelectorAll('.dropdown-menu').forEach(menu => {
+            menu.classList.remove('show');
+        });
+    }
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.goal-menu-wrapper')) {
+            closeAllMenus();
+        }
+    });
 
     // Open contribute modal
     function openContribute(goalId) {
@@ -470,74 +511,109 @@
         margin-bottom: 1rem;
     }
 
-    /* Goal Card */
+    /* ===== MINIMAL CARD DESIGN ===== */
     .goal-card {
         background: var(--card-bg);
-        border-radius: 16px;
-        padding: 1rem;
-        margin-bottom: 0.75rem;
+        border-radius: 20px;
+        padding: 20px;
+        margin-bottom: 16px;
         border: 1px solid var(--border-color);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        animation: fadeInUp 0.3s ease;
+    }
+
+    .goal-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transform: translateY(-2px);
     }
 
     .goal-card.completed {
         border-color: var(--income-color);
-        background: color-mix(in srgb, var(--income-color) 5%, var(--card-bg));
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.03) 0%, var(--card-bg) 100%);
     }
 
     .goal-card.overdue {
         border-color: var(--expense-color);
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.03) 0%, var(--card-bg) 100%);
     }
 
-    .goal-header {
+    /* Card Header */
+    .goal-card-header {
         display: flex;
+        justify-content: space-between;
         align-items: flex-start;
-        gap: 0.75rem;
-        margin-bottom: 1rem;
+        margin-bottom: 20px;
     }
 
-    .goal-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 12px;
+    .goal-main-info {
+        display: flex;
+        gap: 12px;
+        flex: 1;
+        align-items: flex-start;
+    }
+
+    .goal-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--income-color);
+        background: linear-gradient(135deg, var(--income-color), #34d399);
         color: white;
         flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     }
 
-    .goal-card.completed .goal-icon {
-        background: var(--income-color);
+    .goal-card.completed .goal-icon-wrapper {
+        background: linear-gradient(135deg, #10b981, #059669);
     }
 
-    .goal-info {
+    .goal-title-section {
         flex: 1;
         min-width: 0;
     }
 
-    .goal-name {
-        font-size: 1rem;
-        font-weight: 600;
-        margin: 0 0 0.25rem;
+    .goal-title {
+        font-size: 18px;
+        font-weight: 700;
+        margin: 0 0 6px 0;
         color: var(--text-primary);
+        line-height: 1.3;
     }
 
-    .goal-target {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-        margin: 0;
-    }
-
-    .goal-actions {
+    .goal-subtitle {
         display: flex;
-        gap: 0.5rem;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-weight: 500;
     }
 
-    .btn-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
+    .goal-subtitle i {
+        width: 14px;
+        height: 14px;
+    }
+
+    .goal-subtitle.overdue {
+        color: var(--expense-color);
+    }
+
+    .goal-subtitle.success {
+        color: var(--income-color);
+    }
+
+    /* Menu Button & Dropdown */
+    .goal-menu-wrapper {
+        position: relative;
+    }
+
+    .btn-menu {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
         border: none;
         background: var(--bg-secondary);
         color: var(--text-secondary);
@@ -545,24 +621,165 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.2s;
+        transition: all 0.2s ease;
     }
 
-    .btn-icon:hover {
-        background: var(--income-color);
+    .btn-menu:hover {
+        background: var(--primary-color);
         color: white;
     }
 
-    .btn-icon.delete:hover {
-        background: var(--expense-color);
-        color: white;
+    .btn-menu:active {
+        transform: scale(0.95);
     }
 
-    .btn-icon.edit:hover {
-        background: #3b82f6;
-        color: white;
+    .dropdown-menu {
+        position: absolute;
+        top: 42px;
+        right: 0;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        min-width: 180px;
+        z-index: 100;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px) scale(0.95);
+        transition: all 0.2s ease;
     }
 
+    .dropdown-menu.show {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0) scale(1);
+    }
+
+    .menu-item {
+        width: 100%;
+        padding: 12px 16px;
+        border: none;
+        background: transparent;
+        color: var(--text-primary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        text-align: left;
+        transition: all 0.15s ease;
+    }
+
+    .menu-item:first-child {
+        border-radius: 12px 12px 0 0;
+    }
+
+    .menu-item:last-child {
+        border-radius: 0 0 12px 12px;
+    }
+
+    .menu-item:hover {
+        background: var(--bg-secondary);
+    }
+
+    .menu-item i {
+        width: 18px;
+        height: 18px;
+    }
+
+    .menu-item.primary {
+        color: var(--income-color);
+    }
+
+    .menu-item.warning {
+        color: #f59e0b;
+    }
+
+    .menu-item.danger {
+        color: var(--expense-color);
+    }
+
+    /* Amount Section */
+    .goal-amount-section {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        padding: 16px;
+        background: var(--bg-secondary);
+        border-radius: 12px;
+    }
+
+    .amount-current,
+    .amount-target {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .amount-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .amount-value {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    /* Progress Section */
+    .goal-progress-section {
+        margin-top: 16px;
+    }
+
+    .progress-bar-large {
+        height: 40px;
+        background: var(--bg-secondary);
+        border-radius: 20px;
+        overflow: visible;
+        position: relative;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .progress-fill-large {
+        height: 100%;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .progress-fill-large.normal {
+        background: linear-gradient(90deg, var(--income-color), #34d399);
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+
+    .progress-fill-large.warning {
+        background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+
+    .progress-fill-large.complete {
+        background: linear-gradient(90deg, #10b981, #059669);
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+    }
+
+    .progress-percentage {
+        font-size: 14px;
+        font-weight: 700;
+        color: white;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        z-index: 1;
+    }
+
+    /* Utility Classes */
     .form-hint {
         display: block;
         font-size: 0.75rem;
@@ -570,79 +787,6 @@
         margin-top: 0.25rem;
     }
 
-    /* Progress */
-    .goal-progress {
-        margin-bottom: 0.75rem;
-    }
-
-    .progress-bar {
-        height: 8px;
-        background: var(--bg-secondary);
-        border-radius: 4px;
-        overflow: hidden;
-        margin-bottom: 0.5rem;
-    }
-
-    .progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, var(--income-color), #34d399);
-        border-radius: 4px;
-        transition: width 0.5s ease;
-    }
-
-    .progress-fill.complete {
-        background: var(--income-color);
-    }
-
-    .progress-text {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-    }
-
-    /* Footer */
-    .goal-footer {
-        padding-top: 0.75rem;
-        border-top: 1px solid var(--border-color);
-    }
-
-    .days-remaining {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-    }
-
-    .days-remaining.overdue {
-        color: var(--expense-color);
-    }
-
-    .completed-badge {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: var(--income-color);
-        font-weight: 600;
-    }
-
-    .goal-footer.completed {
-        text-align: center;
-    }
-
-    /* Withdraw button */
-    .btn-icon.withdraw:hover {
-        background: var(--expense-color);
-        color: white;
-    }
-
-    .btn-icon.add:hover {
-        background: var(--income-color);
-        color: white;
-    }
-
-    /* Danger button */
     .btn-danger {
         width: 100%;
         padding: 1rem;
@@ -665,7 +809,6 @@
         transform: translateY(-2px);
     }
 
-    /* Info box */
     .info-box {
         background: var(--bg-secondary);
         padding: 1rem;
@@ -683,42 +826,64 @@
         color: var(--text-secondary);
     }
 
-    /* Card animations */
-    .goal-card {
-        animation: fadeInUp 0.3s ease;
-    }
-
+    /* Animations */
     @keyframes fadeInUp {
         from {
             opacity: 0;
             transform: translateY(10px);
         }
-
         to {
             opacity: 1;
             transform: translateY(0);
         }
     }
 
-    /* Mobile touch improvements */
+    /* Mobile Responsive */
     @media (max-width: 480px) {
-        .goal-actions {
-            gap: 0.25rem;
-        }
-
-        .btn-icon {
-            width: 36px;
-            height: 36px;
-            -webkit-tap-highlight-color: transparent;
-        }
-
         .goal-card {
-            padding: 0.875rem;
+            padding: 16px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+        }
+
+        .goal-icon-wrapper {
+            width: 42px;
+            height: 42px;
+        }
+
+        .goal-title {
+            font-size: 16px;
+        }
+
+        .goal-amount-section {
+            padding: 12px;
+        }
+
+        .amount-value {
+            font-size: 16px;
+        }
+
+        .progress-bar-large {
+            height: 36px;
+        }
+
+        .progress-percentage {
+            font-size: 13px;
         }
 
         .goals-stats {
             gap: 0.5rem;
             padding: 0 0.75rem;
+        }
+
+        .btn-menu {
+            width: 34px;
+            height: 34px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .dropdown-menu {
+            min-width: 160px;
         }
     }
 </style>
