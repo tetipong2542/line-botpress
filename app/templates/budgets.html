@@ -571,10 +571,10 @@
 
     .budget-card {
         background: var(--card-bg);
-        border-radius: 20px;
-        padding: 22px;
-        margin-bottom: 16px;
-        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 16px;
+        margin-bottom: 12px;
+        border: 1.5px solid var(--border-color);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         transition: all 0.3s ease;
         animation: fadeInUp 0.3s ease;
@@ -582,9 +582,10 @@
 
     .budget-card:hover {
         border-width: 2px;
-        padding: 21px;
+        padding: 15.5px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        transform: translateY(-2px);
+        border-color: var(--primary-color);
+        transform: translateY(-1px);
     }
 
     .budget-card.over-budget {
@@ -597,20 +598,20 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: 20px;
+        margin-bottom: 14px;
     }
 
     .budget-main-info {
         display: flex;
-        gap: 12px;
+        gap: 10px;
         flex: 1;
         align-items: flex-start;
     }
 
     .budget-icon-wrapper {
-        width: 48px;
-        height: 48px;
-        border-radius: 14px;
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -618,7 +619,7 @@
     }
 
     .budget-icon-emoji {
-        font-size: 24px;
+        font-size: 22px;
         filter: brightness(1.1);
     }
 
@@ -628,9 +629,9 @@
     }
 
     .budget-title {
-        font-size: 19px;
+        font-size: 17px;
         font-weight: 700;
-        margin: 0 0 8px 0;
+        margin: 0 0 6px 0;
         color: var(--text-primary);
         line-height: 1.3;
     }
@@ -638,8 +639,8 @@
     .budget-subtitle {
         display: flex;
         align-items: center;
-        gap: 5px;
-        font-size: 14px;
+        gap: 4px;
+        font-size: 13px;
         color: var(--text-secondary);
         font-weight: 500;
     }
@@ -694,9 +695,10 @@
         top: 42px;
         right: 0;
         background: var(--card-bg);
-        border: 1px solid var(--border-color);
+        backdrop-filter: blur(10px);
+        border: 1.5px solid var(--border-color);
         border-radius: 12px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
         min-width: 180px;
         z-index: 100;
         opacity: 0;
@@ -709,6 +711,13 @@
         opacity: 1;
         visibility: visible;
         transform: translateY(0) scale(1);
+    }
+
+    /* เพิ่ม background opacity สำหรับ theme mode */
+    @supports (backdrop-filter: blur(10px)) {
+        .dropdown-menu {
+            background: color-mix(in srgb, var(--card-bg) 95%, transparent);
+        }
     }
 
     .menu-item {
@@ -753,19 +762,19 @@
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 0;
-        margin-bottom: 18px;
-        padding: 18px;
+        margin-bottom: 12px;
+        padding: 12px 14px;
         background: var(--bg-secondary);
-        border-radius: 12px;
+        border-radius: 10px;
         border: 1px solid var(--border-color);
     }
 
     .amount-item {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 4px;
         text-align: center;
-        padding: 0 12px;
+        padding: 0 10px;
     }
 
     .amount-item:not(:last-child) {
@@ -773,7 +782,7 @@
     }
 
     .amount-label {
-        font-size: 13px;
+        font-size: 11px;
         color: var(--text-secondary);
         font-weight: 600;
         text-transform: uppercase;
@@ -781,7 +790,7 @@
     }
 
     .amount-value {
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 700;
         color: var(--text-primary);
     }
@@ -800,13 +809,13 @@
 
     /* Progress Section */
     .budget-progress-section {
-        margin-top: 18px;
+        margin-top: 12px;
     }
 
     .progress-bar-large {
-        height: 42px;
+        height: 36px;
         background: var(--bg-secondary);
-        border-radius: 21px;
+        border-radius: 18px;
         overflow: visible;
         position: relative;
         border: 1px solid var(--border-color);
@@ -814,7 +823,7 @@
 
     .progress-fill-large {
         height: 100%;
-        border-radius: 21px;
+        border-radius: 18px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -836,7 +845,7 @@
     }
 
     .progress-percentage {
-        font-size: 15px;
+        font-size: 14px;
         font-weight: 700;
         color: white;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -907,59 +916,70 @@
         }
 
         .budget-card {
-            padding: 18px;
-            border-radius: 16px;
-            margin-bottom: 12px;
+            padding: 14px;
+            border-radius: 14px;
+            margin-bottom: 10px;
         }
 
         .budget-card:hover {
-            padding: 17px;
+            padding: 13.5px;
+        }
+
+        .budget-card-header {
+            margin-bottom: 12px;
         }
 
         .budget-icon-wrapper {
-            width: 44px;
-            height: 44px;
+            width: 38px;
+            height: 38px;
         }
 
         .budget-icon-emoji {
-            font-size: 22px;
+            font-size: 20px;
         }
 
         .budget-title {
-            font-size: 17px;
+            font-size: 16px;
+            margin-bottom: 4px;
         }
 
         .budget-subtitle {
-            font-size: 13px;
+            font-size: 12px;
         }
 
         .budget-amount-section {
-            padding: 14px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
         }
 
         .amount-item {
             padding: 0 8px;
+            gap: 3px;
         }
 
         .amount-label {
-            font-size: 12px;
+            font-size: 10px;
         }
 
         .amount-value {
-            font-size: 16px;
-        }
-
-        .progress-bar-large {
-            height: 38px;
-        }
-
-        .progress-percentage {
             font-size: 14px;
         }
 
+        .budget-progress-section {
+            margin-top: 10px;
+        }
+
+        .progress-bar-large {
+            height: 32px;
+        }
+
+        .progress-percentage {
+            font-size: 13px;
+        }
+
         .btn-menu {
-            width: 34px;
-            height: 34px;
+            width: 32px;
+            height: 32px;
             -webkit-tap-highlight-color: transparent;
         }
 

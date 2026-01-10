@@ -181,7 +181,7 @@ const API = {
  * @param {string|null} resourceId - Optional resource ID
  * @returns {string} Full API endpoint URL
  */
-function buildApiUrl(resource, resourceId = null) {
+function buildApiUrl(resource, resourceId = null, action = null) {
     const projectId = getProjectId();
     if (!projectId) {
         throw new Error('Project ID is required');
@@ -190,6 +190,9 @@ function buildApiUrl(resource, resourceId = null) {
     let url = `/api/v1/projects/${projectId}/${resource}`;
     if (resourceId) {
         url += `/${resourceId}`;
+    }
+    if (action) {
+        url += `/${action}`;
     }
 
     return url;
