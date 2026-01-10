@@ -677,30 +677,32 @@
         border-radius: 16px;
         padding: 16px;
         margin-bottom: 16px;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        border: 1.5px solid var(--border-color);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1),
+                    0 1px 3px rgba(0, 0, 0, 0.08);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         animation: fadeInUp 0.3s ease;
     }
 
     .budget-card:hover {
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-        border-color: color-mix(in srgb, var(--primary-color) 50%, var(--border-color));
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15),
+                    0 4px 8px rgba(0, 0, 0, 0.1);
+        border-color: var(--primary-color);
         transform: translateY(-4px);
     }
 
     .budget-card.near-limit {
-        border-color: #f59e0b;
-        border-width: 1.5px;
-        background: linear-gradient(135deg, rgba(245, 158, 11, 0.04) 0%, var(--card-bg) 100%);
-        box-shadow: 0 2px 12px rgba(245, 158, 11, 0.15);
+        border: 2px solid #f59e0b;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, var(--card-bg) 100%);
+        box-shadow: 0 2px 12px rgba(245, 158, 11, 0.2),
+                    0 1px 3px rgba(245, 158, 11, 0.1);
     }
 
     .budget-card.over-budget {
-        border-color: var(--expense-color);
-        border-width: 1.5px;
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.04) 0%, var(--card-bg) 100%);
-        box-shadow: 0 2px 12px rgba(239, 68, 68, 0.15);
+        border: 2px solid var(--expense-color);
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, var(--card-bg) 100%);
+        box-shadow: 0 2px 12px rgba(239, 68, 68, 0.2),
+                    0 1px 3px rgba(239, 68, 68, 0.1);
     }
 
     /* Card Header */
@@ -1165,12 +1167,6 @@
         .period-selector {
             padding: 8px 12px;
         }
-    }
-
-    /* === Budgets List Container Border === */
-    .budgets-list {
-        background: transparent;
-        padding: 0 1rem;
     }
 
     /* === Dropdown Fixed Position Fix === */
