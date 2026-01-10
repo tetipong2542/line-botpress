@@ -639,53 +639,6 @@ def delete_category_route(project_id, category_id):
 # Budgets - GET endpoint moved to BudgetService section below for enriched data
 
 
-@bp.route('/projects/<project_id>/budgets/<category_id>', methods=['PUT'])
-def upsert_budget(project_id, category_id):
-    """Create or update budget for category"""
-    auth_error = require_auth()
-    if auth_error:
-        return auth_error
-
-    data = request.json
-    month = request.args.get('month')
-
-    if not month:
-        from datetime import datetime
-        month = datetime.utcnow().strftime('%Y-%m')
-
-    # Check if budget exists
-    budget = Budget.query.filter_by(
-        project_id=project_id,
-        category_id=category_id,
-        month_yyyymm=month
-    ).first()
-
-    amount = data.get('limit_amount')
-    if isinstance(amount, float):
-        amount = baht_to_satang(amount)
-
-    if budget:
-        # Update existing
-        budget.limit_amount = amount
-        budget.rollover_policy = data.get('rollover_policy', budget.rollover_policy)
-    else:
-        # Create new
-        budget = Budget(
-            project_id=project_id,
-            category_id=category_id,
-            month_yyyymm=month,
-            limit_amount=amount,
-            rollover_policy=data.get('rollover_policy', 'none')
-        )
-        db.session.add(budget)
-
-    db.session.commit()
-
-    return jsonify({
-        'budget': budget.to_dict()
-    })
-
-
 # Members & Invitations
 @bp.route('/projects/<project_id>/members/invite', methods=['POST'])
 def invite_member(project_id):
