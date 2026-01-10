@@ -2206,7 +2206,7 @@ def get_savings_goals(project_id):
     try:
         goals = SavingsGoal.get_active_goals(project_id)
         return jsonify({
-            'goals': [g.to_dict() for g in goals]
+            'savings_goals': [g.to_dict() for g in goals]
         }), 200
 
     except Exception as e:

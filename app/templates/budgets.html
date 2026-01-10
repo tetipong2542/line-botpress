@@ -81,9 +81,11 @@
     </div>
 
     <!-- Floating Action Button -->
-    <button class="fab" id="btn-add-budget">
-        <i data-lucide="plus"></i>
-    </button>
+    <div class="floating-action">
+        <button class="btn-fab" id="btn-add-budget">
+            <i data-lucide="plus"></i>
+        </button>
+    </div>
 
     <!-- Bottom spacing -->
     <div class="footer-spacing"></div>
@@ -630,29 +632,7 @@
         color: white;
     }
 
-    /* FAB */
-    .fab {
-        position: fixed;
-        bottom: calc(70px + 1rem);
-        right: 1rem;
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-        color: white;
-        border: none;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s;
-        z-index: 100;
-    }
-
-    .fab:hover {
-        transform: scale(1.1);
-    }
+    /* FAB uses global .btn-fab class */
 
     /* Period Selector */
     .period-selector {
