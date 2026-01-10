@@ -667,7 +667,7 @@
         margin-top: 2px;
     }
 
-    /* ===== MINIMAL CARD DESIGN ===== */
+    /* ===== MINIMAL CARD DESIGN - SUBTLE ELEVATION ===== */
     .budgets-list {
         padding: 0 1rem;
     }
@@ -676,29 +676,31 @@
         background: var(--card-bg);
         border-radius: 16px;
         padding: 16px;
-        margin-bottom: 12px;
-        border: 1.5px solid var(--border-color);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-        transition: all 0.3s ease;
+        margin-bottom: 16px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         animation: fadeInUp 0.3s ease;
     }
 
     .budget-card:hover {
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-        border-color: var(--primary-color);
-        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        border-color: color-mix(in srgb, var(--primary-color) 50%, var(--border-color));
+        transform: translateY(-4px);
     }
 
     .budget-card.near-limit {
         border-color: #f59e0b;
-        border-width: 2px;
-        background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, var(--card-bg) 100%);
+        border-width: 1.5px;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.04) 0%, var(--card-bg) 100%);
+        box-shadow: 0 2px 12px rgba(245, 158, 11, 0.15);
     }
 
     .budget-card.over-budget {
         border-color: var(--expense-color);
-        border-width: 2px;
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, var(--card-bg) 100%);
+        border-width: 1.5px;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.04) 0%, var(--card-bg) 100%);
+        box-shadow: 0 2px 12px rgba(239, 68, 68, 0.15);
     }
 
     /* Card Header */
@@ -884,9 +886,9 @@
         gap: 0;
         margin-bottom: 12px;
         padding: 14px 12px;
-        background: var(--bg-secondary);
+        background: color-mix(in srgb, var(--bg-secondary) 60%, transparent);
         border-radius: 12px;
-        border: 1px solid var(--border-color);
+        border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
     }
 
     .amount-item {
@@ -960,11 +962,11 @@
 
     .progress-bar-large {
         height: 32px;
-        background: var(--bg-secondary);
+        background: color-mix(in srgb, var(--bg-secondary) 60%, transparent);
         border-radius: 16px;
         overflow: hidden;
         position: relative;
-        border: 1.5px solid var(--border-color);
+        border: 1px solid color-mix(in srgb, var(--border-color) 50%, transparent);
     }
 
     .progress-fill-large {
@@ -1066,11 +1068,7 @@
         .budget-card {
             padding: 14px;
             border-radius: 14px;
-            margin-bottom: 10px;
-        }
-
-        .budget-card:hover {
-            padding: 13.5px;
+            margin-bottom: 14px;
         }
 
         .budget-card-header {
@@ -1171,14 +1169,8 @@
 
     /* === Budgets List Container Border === */
     .budgets-list {
-        background: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 16px;
-        padding: 12px;
-    }
-
-    .budget-card {
-        border: 1.5px solid var(--border-color);
+        background: transparent;
+        padding: 0 1rem;
     }
 
     /* === Dropdown Fixed Position Fix === */
