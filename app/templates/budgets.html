@@ -402,9 +402,18 @@
         editingBudgetId = null;
         document.getElementById('budget-form').reset();
         document.getElementById('modal-title').textContent = 'เพิ่มงบประมาณ';
-        // Re-enable fields for add mode
-        document.getElementById('budget-category').disabled = false;
-        document.getElementById('budget-month').disabled = false;
+
+        // Reset category and month fields to editable state
+        const categoryEl = document.getElementById('budget-category');
+        const monthEl = document.getElementById('budget-month');
+
+        categoryEl.style.pointerEvents = '';
+        categoryEl.style.opacity = '';
+        categoryEl.style.cursor = '';
+
+        monthEl.readOnly = false;
+        monthEl.style.opacity = '';
+        monthEl.style.cursor = '';
     }
 
     // ===== EVENT LISTENERS =====
@@ -556,9 +565,17 @@
             document.getElementById('budget-amount').value = budget.limit_amount_formatted;
             document.getElementById('budget-rollover').value = budget.rollover_policy;
 
-            // Disable category and month in edit mode (they are the composite key)
-            document.getElementById('budget-category').disabled = true;
-            document.getElementById('budget-month').disabled = true;
+            // Make category and month read-only in edit mode (they are the composite key)
+            const categoryEl = document.getElementById('budget-category');
+            const monthEl = document.getElementById('budget-month');
+
+            categoryEl.style.pointerEvents = 'none';
+            categoryEl.style.opacity = '0.6';
+            categoryEl.style.cursor = 'not-allowed';
+
+            monthEl.readOnly = true;
+            monthEl.style.opacity = '0.6';
+            monthEl.style.cursor = 'not-allowed';
 
             openModal();
 
