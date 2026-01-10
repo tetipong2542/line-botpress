@@ -355,6 +355,11 @@ let lastUsedCategories = {
     income: null
 };
 
+let categoriesCache = {
+    expense: [],
+    income: []
+};
+
 // Load last used categories from localStorage
 function loadLastUsedCategories() {
     try {
@@ -417,15 +422,26 @@ quickAddBtn.addEventListener('click', () => {
     let type = 'expense';
     let categoryId = lastUsedCategories.expense;
 
+    // If no expense history, use default expense category (first one)
+    if (!categoryId && categoriesCache.expense.length > 0) {
+        categoryId = categoriesCache.expense[0].id;
+    }
+
     // If no expense history but has income history, use income instead
     if (!categoryId && lastUsedCategories.income) {
         type = 'income';
         categoryId = lastUsedCategories.income;
     }
 
-    // If still no history at all, show helpful message
+    // If no income history, use default income category (first one)
+    if (!categoryId && categoriesCache.income.length > 0) {
+        type = 'income';
+        categoryId = categoriesCache.income[0].id;
+    }
+
+    // If still no categories at all, show error
     if (!categoryId) {
-        showToast('ยังไม่มีประวัติการบันทึก กรุณาบันทึกรายการก่อนเพื่อใช้ฟีเจอร์จดรวดเร็ว', 'info');
+        showToast('กรุณาสร้างหมวดหมู่ก่อนใช้งาน', 'error');
         return;
     }
 
@@ -446,9 +462,13 @@ quickAddBtn.addEventListener('click', () => {
     const modalHeader = document.getElementById('transaction-modal-header');
     const modalTitle = document.getElementById('transaction-modal-title');
 
-    modalHeader.classList.remove('expense', 'income');
-    modalHeader.classList.add(type);
-    modalTitle.textContent = `จดเร็ว: ${type === 'expense' ? 'รายจ่าย' : 'รายรับ'}`;
+    if (modalHeader) {
+        modalHeader.classList.remove('expense', 'income');
+        modalHeader.classList.add(type);
+    }
+    if (modalTitle) {
+        modalTitle.textContent = `จดเร็ว: ${type === 'expense' ? 'รายจ่าย' : 'รายรับ'}`;
+    }
 
     openModal();
 });
@@ -463,11 +483,28 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Type change - update header color
+// Type change - update header color AND filter categories
 document.getElementById('transaction-type').addEventListener('change', (e) => {
+    const type = e.target.value;
     const modalHeader = document.getElementById('transaction-modal-header');
     modalHeader.classList.remove('expense', 'income');
-    modalHeader.classList.add(e.target.value);
+    modalHeader.classList.add(type);
+
+    // Filter categories based on type
+    const categorySelect = document.getElementById('transaction-category');
+    const expenseGroup = document.getElementById('expense-categories');
+    const incomeGroup = document.getElementById('income-categories');
+
+    if (type === 'expense') {
+        if (expenseGroup) expenseGroup.style.display = '';
+        if (incomeGroup) incomeGroup.style.display = 'none';
+    } else {
+        if (expenseGroup) expenseGroup.style.display = 'none';
+        if (incomeGroup) incomeGroup.style.display = '';
+    }
+
+    // Reset category selection
+    if (categorySelect) categorySelect.value = '';
 });
 
 // Load last used categories on page ready
@@ -545,8 +582,8 @@ document.getElementById('transaction-form').addEventListener('submit', async (e)
         // Reset modal title and button
         const modalTitle = document.getElementById('transaction-modal-title');
         const submitBtnText = document.getElementById('transaction-submit-text');
-        modalTitle.textContent = 'เพิ่มรายการ';
-        submitBtnText.textContent = 'บันทึก';
+        if (modalTitle) modalTitle.textContent = 'เพิ่มรายการ';
+        if (submitBtnText) submitBtnText.textContent = 'บันทึก';
 
         closeModal();
 
@@ -575,6 +612,10 @@ async function loadCategories() {
             // Separate by type
             const expenseCategories = categories.filter(cat => cat.type === 'expense' && cat.is_active);
             const incomeCategories = categories.filter(cat => cat.type === 'income' && cat.is_active);
+
+            // Cache categories for quick add
+            categoriesCache.expense = expenseCategories;
+            categoriesCache.income = incomeCategories;
 
             // Helper to get icon display (emoji stays as is, Lucide shows as text for dropdown)
             const getIconDisplay = (icon) => {
