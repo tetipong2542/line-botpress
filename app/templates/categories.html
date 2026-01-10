@@ -30,82 +30,11 @@
     <!-- Categories List - Expense -->
     <div class="tab-content active" id="expense-categories">
         <div class="category-list">
-            <div class="category-item">
-                <div class="category-icon">🍔</div>
-                <div class="category-info">
-                    <div class="category-name">อาหารและเครื่องดื่ม</div>
-                    <div class="category-meta">รายจ่าย • 12 รายการ</div>
-                </div>
-                <div class="category-actions">
-                    <button class="btn-icon">
-                        <i data-lucide="edit-2"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="category-item">
-                <div class="category-icon">🚗</div>
-                <div class="category-info">
-                    <div class="category-name">ค่าเดินทาง</div>
-                    <div class="category-meta">รายจ่าย • 8 รายการ</div>
-                </div>
-                <div class="category-actions">
-                    <button class="btn-icon">
-                        <i data-lucide="edit-2"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="category-item">
-                <div class="category-icon">🛍️</div>
-                <div class="category-info">
-                    <div class="category-name">ช้อปปิ้ง</div>
-                    <div class="category-meta">รายจ่าย • 5 รายการ</div>
-                </div>
-                <div class="category-actions">
-                    <button class="btn-icon">
-                        <i data-lucide="edit-2"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="category-item">
-                <div class="category-icon">🎬</div>
-                <div class="category-info">
-                    <div class="category-name">ความบันเทิง</div>
-                    <div class="category-meta">รายจ่าย • 3 รายการ</div>
-                </div>
-                <div class="category-actions">
-                    <button class="btn-icon">
-                        <i data-lucide="edit-2"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="category-item">
-                <div class="category-icon">💡</div>
-                <div class="category-info">
-                    <div class="category-name">ค่าสาธารณูปโภค</div>
-                    <div class="category-meta">รายจ่าย • 4 รายการ</div>
-                </div>
-                <div class="category-actions">
-                    <button class="btn-icon">
-                        <i data-lucide="edit-2"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="category-item">
-                <div class="category-icon">🏥</div>
-                <div class="category-info">
-                    <div class="category-name">สุขภาพ</div>
-                    <div class="category-meta">รายจ่าย • 2 รายการ</div>
-                </div>
-                <div class="category-actions">
-                    <button class="btn-icon">
-                        <i data-lucide="edit-2"></i>
-                    </button>
-                </div>
+            <!-- Loading skeleton -->
+            <div class="loading-skeleton">
+                <div class="skeleton-item"></div>
+                <div class="skeleton-item"></div>
+                <div class="skeleton-item"></div>
             </div>
         </div>
     </div>
@@ -113,43 +42,10 @@
     <!-- Categories List - Income -->
     <div class="tab-content" id="income-categories">
         <div class="category-list">
-            <div class="category-item">
-                <div class="category-icon">💰</div>
-                <div class="category-info">
-                    <div class="category-name">เงินเดือน</div>
-                    <div class="category-meta">รายรับ • 1 รายการ</div>
-                </div>
-                <div class="category-actions">
-                    <button class="btn-icon">
-                        <i data-lucide="edit-2"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="category-item">
-                <div class="category-icon">📈</div>
-                <div class="category-info">
-                    <div class="category-name">รายได้เสริม</div>
-                    <div class="category-meta">รายรับ • 3 รายการ</div>
-                </div>
-                <div class="category-actions">
-                    <button class="btn-icon">
-                        <i data-lucide="edit-2"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="category-item">
-                <div class="category-icon">🎁</div>
-                <div class="category-info">
-                    <div class="category-name">ของขวัญ</div>
-                    <div class="category-meta">รายรับ • 0 รายการ</div>
-                </div>
-                <div class="category-actions">
-                    <button class="btn-icon">
-                        <i data-lucide="edit-2"></i>
-                    </button>
-                </div>
+            <!-- Loading skeleton -->
+            <div class="loading-skeleton">
+                <div class="skeleton-item"></div>
+                <div class="skeleton-item"></div>
             </div>
         </div>
     </div>
@@ -526,6 +422,36 @@
 .usage-actions button {
     flex: 1;
 }
+
+/* Loading Skeleton */
+.loading-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+}
+
+.skeleton-item {
+    height: 70px;
+    background: linear-gradient(
+        90deg,
+        var(--bg-secondary) 25%,
+        var(--border-color) 50%,
+        var(--bg-secondary) 75%
+    );
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 12px;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
 </style>
 
 <!-- Sticky Footer Menu -->
@@ -625,6 +551,12 @@ async function loadCategories() {
             // Update expense categories
             const expenseContent = document.querySelector('#expense-categories .category-list');
             if (expenseContent) {
+                // Remove loading skeleton first
+                const expenseSkeleton = expenseContent.querySelector('.loading-skeleton');
+                if (expenseSkeleton) {
+                    expenseSkeleton.remove();
+                }
+
                 expenseContent.innerHTML = expenseCategories.map(cat => `
                     <div class="category-item" onclick="showCategoryUsage('${cat.id}')" style="cursor: pointer;">
                         ${renderIcon(cat.icon)}
@@ -644,6 +576,12 @@ async function loadCategories() {
             // Update income categories
             const incomeContent = document.querySelector('#income-categories .category-list');
             if (incomeContent) {
+                // Remove loading skeleton first
+                const incomeSkeleton = incomeContent.querySelector('.loading-skeleton');
+                if (incomeSkeleton) {
+                    incomeSkeleton.remove();
+                }
+
                 incomeContent.innerHTML = incomeCategories.map(cat => `
                     <div class="category-item" onclick="showCategoryUsage('${cat.id}')" style="cursor: pointer;">
                         ${renderIcon(cat.icon)}
