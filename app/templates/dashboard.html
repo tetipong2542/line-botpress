@@ -172,6 +172,72 @@
         </div>
     </div>
 
+    <!-- Recurring Forecast Section -->
+    <div class="section" id="recurring-forecast-section" style="display: none;">
+        <div class="recurring-forecast-card">
+            <div class="forecast-header">
+                <div class="forecast-title">
+                    <i data-lucide="calendar-clock"></i>
+                    <span>พยากรณ์การเงินประจำ (30 วันข้างหน้า)</span>
+                </div>
+                <a href="/recurring" class="section-link">
+                    <i data-lucide="settings"></i>
+                    จัดการ
+                </a>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="recurring-forecast-summary">
+                <div class="rf-summary-card income">
+                    <div class="rf-icon">
+                        <i data-lucide="trending-up"></i>
+                    </div>
+                    <div class="rf-content">
+                        <span class="rf-label">รายรับประจำ</span>
+                        <span class="rf-amount" id="rf-income-total">฿0</span>
+                    </div>
+                </div>
+                <div class="rf-summary-card expense">
+                    <div class="rf-icon">
+                        <i data-lucide="trending-down"></i>
+                    </div>
+                    <div class="rf-content">
+                        <span class="rf-label">รายจ่ายประจำ</span>
+                        <span class="rf-amount" id="rf-expense-total">฿0</span>
+                    </div>
+                </div>
+                <div class="rf-summary-card balance">
+                    <div class="rf-icon">
+                        <i data-lucide="wallet"></i>
+                    </div>
+                    <div class="rf-content">
+                        <span class="rf-label">กระทบยอดคงเหลือ</span>
+                        <span class="rf-amount" id="rf-balance">฿0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline List -->
+            <div class="recurring-forecast-timeline" id="recurring-forecast-timeline">
+                <!-- Populated by JavaScript -->
+                <div class="rf-loading">
+                    <i data-lucide="loader" class="spinning"></i>
+                    <span>กำลังโหลดข้อมูล...</span>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="rf-empty" id="rf-empty" style="display: none;">
+                <i data-lucide="calendar-off"></i>
+                <p>ยังไม่มีรายการประจำ</p>
+                <a href="/recurring" class="btn-secondary">
+                    <i data-lucide="plus"></i>
+                    เพิ่มรายการประจำ
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- Month Comparison -->
     <div class="section" id="month-comparison-section" style="display: none;">
         <div class="comparison-card">
@@ -2595,8 +2661,206 @@
         });
     });
 
+    // ===== RECURRING FORECAST =====
+    async function loadRecurringForecast() {
+        const section = document.getElementById('recurring-forecast-section');
+        const timeline = document.getElementById('recurring-forecast-timeline');
+        const emptyState = document.getElementById('rf-empty');
+
+        try {
+            // Fetch recurring rules
+            const response = await API.get(buildApiUrl('recurring') + '?active_only=true');
+
+            if (!response.recurring_rules || response.recurring_rules.length === 0) {
+                // Show empty state
+                timeline.style.display = 'none';
+                emptyState.style.display = 'flex';
+                section.style.display = 'block';
+                lucide.createIcons();
+                return;
+            }
+
+            const rules = response.recurring_rules;
+
+            // Calculate totals and generate 30-day forecast
+            const forecast = generateRecurringForecast(rules, 30);
+
+            // Update summary cards
+            document.getElementById('rf-income-total').textContent =
+                '฿' + Number(forecast.totalIncome).toLocaleString('th-TH', {minimumFractionDigits: 0});
+            document.getElementById('rf-expense-total').textContent =
+                '฿' + Number(forecast.totalExpense).toLocaleString('th-TH', {minimumFractionDigits: 0});
+            document.getElementById('rf-balance').textContent =
+                '฿' + Number(forecast.netBalance).toLocaleString('th-TH', {minimumFractionDigits: 0});
+
+            // Render timeline
+            renderRecurringTimeline(forecast.timeline);
+
+            // Show section
+            timeline.style.display = 'block';
+            emptyState.style.display = 'none';
+            section.style.display = 'block';
+
+            lucide.createIcons();
+
+        } catch (error) {
+            console.error('Load Recurring Forecast error:', error);
+            // Don't show section on error
+        }
+    }
+
+    function generateRecurringForecast(rules, days) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const endDate = new Date(today);
+        endDate.setDate(endDate.getDate() + days);
+
+        const timeline = [];
+        let totalIncome = 0;
+        let totalExpense = 0;
+
+        // For each rule, calculate occurrences in the next 30 days
+        rules.forEach(rule => {
+            if (!rule.next_run_date) return;
+
+            let nextDate = new Date(rule.next_run_date);
+            nextDate.setHours(0, 0, 0, 0);
+
+            // Generate occurrences
+            while (nextDate <= endDate) {
+                if (nextDate >= today) {
+                    const occurrence = {
+                        date: new Date(nextDate),
+                        rule: rule,
+                        type: rule.type,
+                        category: rule.category?.name_th || 'ไม่ระบุ',
+                        icon: rule.category?.icon || '📁',
+                        amount: rule.amount,
+                        frequency: formatFrequency(rule.freq, rule.day_of_month)
+                    };
+
+                    timeline.push(occurrence);
+
+                    if (rule.type === 'income') {
+                        totalIncome += rule.amount;
+                    } else {
+                        totalExpense += rule.amount;
+                    }
+                }
+
+                // Calculate next occurrence
+                nextDate = getNextOccurrence(nextDate, rule.freq, rule.day_of_month, rule.day_of_week);
+            }
+        });
+
+        // Sort timeline by date
+        timeline.sort((a, b) => a.date - b.date);
+
+        return {
+            timeline,
+            totalIncome: totalIncome / 100,
+            totalExpense: totalExpense / 100,
+            netBalance: (totalIncome - totalExpense) / 100
+        };
+    }
+
+    function getNextOccurrence(currentDate, freq, dayOfMonth, dayOfWeek) {
+        const next = new Date(currentDate);
+
+        switch (freq) {
+            case 'daily':
+                next.setDate(next.getDate() + 1);
+                break;
+            case 'weekly':
+                next.setDate(next.getDate() + 7);
+                break;
+            case 'monthly':
+                next.setMonth(next.getMonth() + 1);
+                // Handle day overflow (e.g., Jan 31 → Feb 28)
+                if (dayOfMonth) {
+                    const lastDay = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate();
+                    next.setDate(Math.min(dayOfMonth, lastDay));
+                }
+                break;
+            case 'yearly':
+                next.setFullYear(next.getFullYear() + 1);
+                break;
+        }
+
+        return next;
+    }
+
+    function formatFrequency(freq, dayOfMonth) {
+        switch (freq) {
+            case 'daily': return 'รายวัน';
+            case 'weekly': return 'รายสัปดาห์';
+            case 'monthly': return `รายเดือน (${dayOfMonth} ทุกเดือน)`;
+            case 'yearly': return 'รายปี';
+            default: return freq;
+        }
+    }
+
+    function renderRecurringTimeline(timeline) {
+        const container = document.getElementById('recurring-forecast-timeline');
+
+        if (timeline.length === 0) {
+            container.innerHTML = '<p class="rf-loading">ไม่มีรายการในช่วง 30 วันข้างหน้า</p>';
+            return;
+        }
+
+        // Group by date
+        const grouped = {};
+        timeline.forEach(item => {
+            const dateKey = item.date.toISOString().split('T')[0];
+            if (!grouped[dateKey]) {
+                grouped[dateKey] = [];
+            }
+            grouped[dateKey].push(item);
+        });
+
+        // Render
+        let html = '';
+        Object.keys(grouped).sort().forEach(dateKey => {
+            const items = grouped[dateKey];
+            const date = new Date(dateKey);
+            const dayName = date.toLocaleDateString('th-TH', { weekday: 'short' });
+            const dateStr = date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+
+            html += `
+                <div class="rf-timeline-day">
+                    <div class="rf-day-header">
+                        <span class="rf-day-date">${dateStr}</span>
+                        <span class="rf-day-label">${dayName}</span>
+                    </div>
+                    ${items.map(item => {
+                        const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(item.icon);
+                        const iconHTML = isEmoji ? item.icon : '<i data-lucide="circle-dashed"></i>';
+
+                        return `
+                            <div class="rf-timeline-item ${item.type}">
+                                <div class="rf-item-icon">${iconHTML}</div>
+                                <div class="rf-item-info">
+                                    <div class="rf-item-category">${item.category}</div>
+                                    <div class="rf-item-frequency">${item.frequency}</div>
+                                </div>
+                                <div class="rf-item-amount">
+                                    ${item.type === 'expense' ? '-' : '+'}฿${(item.amount / 100).toLocaleString('th-TH', {minimumFractionDigits: 0})}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+        lucide.createIcons();
+    }
+
     // Load on page ready
     loadHealthScore();
     loadForecast(3);
+    loadRecurringForecast();
 </script>
 {% endblock %}
