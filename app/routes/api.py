@@ -3290,7 +3290,7 @@ def get_all_ai_keys():
             "openrouter": {
                 "has_key": bool(getattr(user, 'openrouter_api_key', None)),
                 "masked_key": mask_key(getattr(user, 'openrouter_api_key', None)),
-                "model": getattr(user, 'openrouter_model', None) or 'google/gemini-2.0-flash-exp:free'
+                "model": getattr(user, 'openrouter_model', None) or 'openai/gpt-4o-mini'
             }
         }
         
@@ -3344,7 +3344,7 @@ def save_openrouter_key():
         user = get_current_user()
         data = request.get_json()
         api_key = data.get('api_key', '').strip()
-        model = data.get('model', 'google/gemini-2.0-flash-exp:free').strip()
+        model = data.get('model', 'openai/gpt-4o-mini').strip()
         
         if not api_key:
             return jsonify({
@@ -3427,7 +3427,7 @@ def test_openrouter_key():
             url = "https://openrouter.ai/api/v1/chat/completions"
             
             payload = json_lib.dumps({
-                "model": "google/gemini-2.0-flash-exp:free",
+                "model": "openai/gpt-4o-mini",
                 "messages": [{"role": "user", "content": "hi"}],
                 "max_tokens": 5
             }).encode('utf-8')
