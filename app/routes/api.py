@@ -3224,15 +3224,22 @@ def get_ai_status():
         import os
         user = get_current_user()
         
-        # Check user's custom key first
-        user_key = getattr(user, 'gemini_api_key', None)
+        # Check user's custom keys (OpenRouter first as premium, then Gemini)
+        openrouter_key = getattr(user, 'openrouter_api_key', None)
+        gemini_key = getattr(user, 'gemini_api_key', None)
         system_key = os.environ.get('GEMINI_API_KEY')
         
-        if user_key:
+        if openrouter_key:
             return jsonify({
                 "is_available": True,
-                "source": "user",
-                "message": "ใช้ API Key ของคุณ"
+                "source": "openrouter",
+                "message": "ใช้ OpenRouter API Key ของคุณ"
+            }), 200
+        elif gemini_key:
+            return jsonify({
+                "is_available": True,
+                "source": "gemini",
+                "message": "ใช้ Gemini API Key ของคุณ"
             }), 200
         elif system_key:
             return jsonify({
@@ -3250,4 +3257,218 @@ def get_ai_status():
     except Exception as e:
         return jsonify({
             "error": {"message": str(e)}
+        }), 500
+
+
+# ============================================================
+# UNIFIED AI KEYS ENDPOINT
+# ============================================================
+
+@bp.route('/user/ai-keys', methods=['GET'])
+def get_all_ai_keys():
+    """Get all AI keys status with masked values"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        user = get_current_user()
+        
+        def mask_key(key):
+            if not key:
+                return None
+            # Show first 4 and last 4 characters
+            if len(key) > 12:
+                return key[:4] + '••••••••••' + key[-4:]
+            return '••••••••••'
+        
+        result = {
+            "gemini": {
+                "has_key": bool(getattr(user, 'gemini_api_key', None)),
+                "masked_key": mask_key(getattr(user, 'gemini_api_key', None))
+            },
+            "openrouter": {
+                "has_key": bool(getattr(user, 'openrouter_api_key', None)),
+                "masked_key": mask_key(getattr(user, 'openrouter_api_key', None))
+            }
+        }
+        
+        return jsonify(result), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+# ============================================================
+# OPENROUTER API KEY MANAGEMENT
+# ============================================================
+
+@bp.route('/user/openrouter-key', methods=['GET'])
+def get_openrouter_key_status():
+    """Check if user has a custom OpenRouter API key"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        user = get_current_user()
+        
+        has_key = bool(getattr(user, 'openrouter_api_key', None))
+        key_suffix = ''
+        
+        if has_key and user.openrouter_api_key:
+            key_suffix = '...' + user.openrouter_api_key[-4:]
+        
+        return jsonify({
+            "has_key": has_key,
+            "key_suffix": key_suffix
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/user/openrouter-key', methods=['POST'])
+def save_openrouter_key():
+    """Save user's custom OpenRouter API key"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        user = get_current_user()
+        data = request.get_json()
+        api_key = data.get('api_key', '').strip()
+        
+        if not api_key:
+            return jsonify({
+                "error": {"message": "API Key is required"}
+            }), 400
+        
+        # Validate key format (starts with sk-or-)
+        if not api_key.startswith('sk-or-'):
+            return jsonify({
+                "error": {"message": "Invalid API Key format. OpenRouter keys start with 'sk-or-'"}
+            }), 400
+        
+        # Save to user
+        user.openrouter_api_key = api_key
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": "API Key saved successfully"
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/user/openrouter-key', methods=['DELETE'])
+def delete_openrouter_key():
+    """Remove user's custom OpenRouter API key"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        user = get_current_user()
+        user.openrouter_api_key = None
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": "API Key removed"
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/user/openrouter-key/test', methods=['POST'])
+def test_openrouter_key():
+    """Test if an OpenRouter API key is valid"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        import requests
+        
+        data = request.get_json()
+        api_key = data.get('api_key', '').strip()
+        
+        if not api_key:
+            return jsonify({
+                "success": False,
+                "error": "API Key is required"
+            }), 400
+        
+        # Test the key by making a simple API call
+        try:
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "HTTP-Referer": "https://line-botpress.app",
+                "Content-Type": "application/json"
+            }
+            
+            # Simple test with minimal tokens
+            response = requests.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers=headers,
+                json={
+                    "model": "google/gemini-flash-1.5",
+                    "messages": [{"role": "user", "content": "test"}],
+                    "max_tokens": 5
+                },
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                return jsonify({
+                    "success": True,
+                    "message": "API Key is valid"
+                }), 200
+            elif response.status_code == 401:
+                return jsonify({
+                    "success": False,
+                    "error": "API Key ไม่ถูกต้อง"
+                }), 200
+            elif response.status_code == 402:
+                return jsonify({
+                    "success": False,
+                    "error": "ไม่มี credit ในบัญชี"
+                }), 200
+            else:
+                error_data = response.json() if response.text else {}
+                return jsonify({
+                    "success": False,
+                    "error": error_data.get('error', {}).get('message', f'Error: {response.status_code}')
+                }), 200
+                
+        except requests.exceptions.Timeout:
+            return jsonify({
+                "success": False,
+                "error": "Connection timeout"
+            }), 200
+        except Exception as api_error:
+            return jsonify({
+                "success": False,
+                "error": f"Error: {str(api_error)[:100]}"
+            }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
         }), 500

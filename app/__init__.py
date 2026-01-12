@@ -50,6 +50,15 @@ def run_auto_migrations():
             ))
             db.session.commit()
             print("✅ Auto-migration: 'gemini_api_key' column added!")
+        
+        # Migration: Add openrouter_api_key if not exists
+        if 'openrouter_api_key' not in columns:
+            print("📝 Auto-migration: Adding 'openrouter_api_key' column...")
+            db.session.execute(text(
+                "ALTER TABLE user ADD COLUMN openrouter_api_key VARCHAR(200)"
+            ))
+            db.session.commit()
+            print("✅ Auto-migration: 'openrouter_api_key' column added!")
                 
     except Exception as e:
         print(f"⚠️ Auto-migration check: {e}")

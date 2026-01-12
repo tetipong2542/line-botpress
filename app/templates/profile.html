@@ -383,14 +383,14 @@
     </div>
 </div>
 
-<!-- Modal: Gemini API Settings -->
+<!-- Modal: AI Settings (Gemini & OpenRouter) -->
 <div class="modal" id="gemini-settings-modal">
     <div class="modal-overlay"></div>
     <div class="modal-content">
         <div class="modal-header" style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); color: white;">
             <h2>
                 <i data-lucide="sparkles"></i>
-                ตั้งค่า Gemini AI
+                ตั้งค่า AI
             </h2>
             <button class="modal-close" style="color: white;">
                 <i data-lucide="x"></i>
@@ -401,8 +401,8 @@
             <div class="gemini-info-box">
                 <i data-lucide="info"></i>
                 <div>
-                    <strong>Gemini API Key คืออะไร?</strong>
-                    <p>API Key คือกุญแจที่ช่วยให้แอปเชื่อมต่อกับ AI ของ Google เพื่อใช้ฟีเจอร์อัจฉริยะต่างๆ เช่น:</p>
+                    <strong>API Key สำหรับฟีเจอร์ AI</strong>
+                    <p>เลือกใช้ Gemini (ฟรี) หรือ OpenRouter (รองรับหลายโมเดล) เพื่อใช้ฟีเจอร์:</p>
                     <ul>
                         <li>🤖 AI Financial Coach</li>
                         <li>📊 Smart Auto-Categorization</li>
@@ -411,40 +411,86 @@
                 </div>
             </div>
 
-            <!-- API Key Input -->
+            <!-- Provider Selector -->
             <div class="form-group" style="margin-top: 20px;">
-                <label class="form-label">Gemini API Key</label>
-                <div class="api-key-input-group">
-                    <input type="password" id="gemini-api-key-input" class="form-input"
-                        placeholder="ใส่ API Key ของคุณ..." autocomplete="off">
-                    <button type="button" id="toggle-key-visibility" class="btn-icon">
-                        <i data-lucide="eye"></i>
+                <label class="form-label">เลือก AI Provider</label>
+                <div class="provider-tabs">
+                    <button type="button" class="provider-tab active" data-provider="gemini">
+                        <span class="provider-icon">🔮</span>
+                        <span>Google Gemini</span>
+                    </button>
+                    <button type="button" class="provider-tab" data-provider="openrouter">
+                        <span class="provider-icon">🌐</span>
+                        <span>OpenRouter</span>
                     </button>
                 </div>
-                <small class="form-help">
-                    รับ API Key ฟรีได้ที่
-                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">
-                        Google AI Studio →
-                    </a>
-                </small>
+            </div>
+
+            <!-- Gemini Section -->
+            <div id="gemini-section" class="provider-section active">
+                <div class="form-group">
+                    <label class="form-label">Gemini API Key</label>
+                    <div class="api-key-input-group">
+                        <input type="password" id="gemini-api-key-input" class="form-input" placeholder="AIza..."
+                            autocomplete="off">
+                        <button type="button" class="btn-icon toggle-visibility" data-target="gemini-api-key-input">
+                            <i data-lucide="eye"></i>
+                        </button>
+                    </div>
+                    <small class="form-help">
+                        รับ API Key ฟรีได้ที่
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">
+                            Google AI Studio →
+                        </a>
+                    </small>
+                    <div id="gemini-saved-status" class="saved-status" style="display: none;">
+                        <i data-lucide="check-circle"></i>
+                        <span>บันทึกแล้ว</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OpenRouter Section -->
+            <div id="openrouter-section" class="provider-section" style="display: none;">
+                <div class="form-group">
+                    <label class="form-label">OpenRouter API Key</label>
+                    <div class="api-key-input-group">
+                        <input type="password" id="openrouter-api-key-input" class="form-input"
+                            placeholder="sk-or-v1-..." autocomplete="off">
+                        <button type="button" class="btn-icon toggle-visibility" data-target="openrouter-api-key-input">
+                            <i data-lucide="eye"></i>
+                        </button>
+                    </div>
+                    <small class="form-help">
+                        รับ API Key ได้ที่
+                        <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">
+                            OpenRouter →
+                        </a>
+                        (รองรับ GPT-4, Claude, Llama และอื่นๆ)
+                    </small>
+                    <div id="openrouter-saved-status" class="saved-status" style="display: none;">
+                        <i data-lucide="check-circle"></i>
+                        <span>บันทึกแล้ว</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Test Button -->
             <div style="margin-top: 20px;">
-                <button class="btn-secondary" id="test-gemini-key" style="width: 100%;">
+                <button class="btn-secondary" id="test-api-key" style="width: 100%;">
                     <i data-lucide="flask-conical"></i>
                     <span>ทดสอบ API Key</span>
                 </button>
             </div>
 
             <!-- Test Result -->
-            <div id="gemini-test-result" class="test-result" style="display: none;">
+            <div id="api-test-result" class="test-result" style="display: none;">
                 <!-- Populated by JavaScript -->
             </div>
 
             <!-- Save Button -->
             <div style="margin-top: 20px;">
-                <button class="btn-primary" id="save-gemini-key" style="width: 100%;">
+                <button class="btn-primary" id="save-api-key" style="width: 100%;">
                     <i data-lucide="save"></i>
                     <span>บันทึก API Key</span>
                 </button>
@@ -452,7 +498,7 @@
 
             <!-- Remove Key -->
             <div style="margin-top: 12px; text-align: center;">
-                <button class="btn-text-danger" id="remove-gemini-key">
+                <button class="btn-text-danger" id="remove-api-key">
                     <i data-lucide="trash-2"></i>
                     <span>ลบ API Key</span>
                 </button>
@@ -725,23 +771,26 @@
     checkChatbotStatus();
 
     // ========================================
-    // Gemini AI Settings
+    // AI Settings (Gemini & OpenRouter)
     // ========================================
     const geminiModal = document.getElementById('gemini-settings-modal');
     const geminiCloseBtn = geminiModal.querySelector('.modal-close');
     const geminiOverlay = geminiModal.querySelector('.modal-overlay');
-    const geminiApiKeyInput = document.getElementById('gemini-api-key-input');
+
+    let currentProvider = 'gemini';
 
     function openGeminiSettings() {
         geminiModal.classList.add('active');
         document.body.style.overflow = 'hidden';
-        loadGeminiApiKey();
+        loadAllApiKeys();
         lucide.createIcons();
     }
 
     function closeGeminiSettings() {
         geminiModal.classList.remove('active');
         document.body.style.overflow = '';
+        // Reset test result
+        document.getElementById('api-test-result').style.display = 'none';
     }
 
     // Open modal
@@ -749,46 +798,92 @@
     geminiCloseBtn.addEventListener('click', closeGeminiSettings);
     geminiOverlay.addEventListener('click', closeGeminiSettings);
 
-    // Toggle password visibility
-    document.getElementById('toggle-key-visibility').addEventListener('click', () => {
-        const input = geminiApiKeyInput;
-        const icon = document.querySelector('#toggle-key-visibility i');
+    // Provider Tab Switching
+    document.querySelectorAll('.provider-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Update tabs
+            document.querySelectorAll('.provider-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
 
-        if (input.type === 'password') {
-            input.type = 'text';
-            icon.setAttribute('data-lucide', 'eye-off');
-        } else {
-            input.type = 'password';
-            icon.setAttribute('data-lucide', 'eye');
-        }
-        lucide.createIcons();
+            // Update sections
+            currentProvider = tab.dataset.provider;
+            document.querySelectorAll('.provider-section').forEach(s => s.style.display = 'none');
+            document.getElementById(`${currentProvider}-section`).style.display = 'block';
+
+            // Hide test result when switching
+            document.getElementById('api-test-result').style.display = 'none';
+        });
     });
 
-    // Load saved API Key
-    async function loadGeminiApiKey() {
+    // Toggle password visibility (for all visibility buttons)
+    document.querySelectorAll('.toggle-visibility').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.dataset.target;
+            const input = document.getElementById(targetId);
+            const icon = btn.querySelector('i');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                input.type = 'password';
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        });
+    });
+
+    // Load all saved API Keys
+    async function loadAllApiKeys() {
         try {
-            const response = await fetch('/api/v1/user/gemini-key');
+            const response = await fetch('/api/v1/user/ai-keys');
             if (response.ok) {
                 const data = await response.json();
-                if (data.has_key) {
-                    geminiApiKeyInput.placeholder = '••••••••••••••••' + (data.key_suffix || '');
+
+                // Gemini
+                const geminiInput = document.getElementById('gemini-api-key-input');
+                const geminiStatus = document.getElementById('gemini-saved-status');
+                if (data.gemini?.has_key) {
+                    geminiInput.value = data.gemini.masked_key || '';
+                    geminiInput.dataset.savedKey = 'true';
+                    geminiStatus.style.display = 'flex';
                 } else {
-                    geminiApiKeyInput.placeholder = 'ใส่ API Key ของคุณ...';
+                    geminiInput.value = '';
+                    geminiInput.dataset.savedKey = 'false';
+                    geminiStatus.style.display = 'none';
                 }
+
+                // OpenRouter
+                const openrouterInput = document.getElementById('openrouter-api-key-input');
+                const openrouterStatus = document.getElementById('openrouter-saved-status');
+                if (data.openrouter?.has_key) {
+                    openrouterInput.value = data.openrouter.masked_key || '';
+                    openrouterInput.dataset.savedKey = 'true';
+                    openrouterStatus.style.display = 'flex';
+                } else {
+                    openrouterInput.value = '';
+                    openrouterInput.dataset.savedKey = 'false';
+                    openrouterStatus.style.display = 'none';
+                }
+
+                lucide.createIcons();
             }
         } catch (error) {
-            console.error('Error loading Gemini key:', error);
+            console.error('Error loading API keys:', error);
         }
     }
 
     // Test API Key
-    document.getElementById('test-gemini-key').addEventListener('click', async () => {
-        const key = geminiApiKeyInput.value.trim();
-        const resultEl = document.getElementById('gemini-test-result');
-        const testBtn = document.getElementById('test-gemini-key');
+    document.getElementById('test-api-key').addEventListener('click', async () => {
+        const inputId = currentProvider === 'gemini' ? 'gemini-api-key-input' : 'openrouter-api-key-input';
+        const input = document.getElementById(inputId);
+        const key = input.value.trim();
+        const resultEl = document.getElementById('api-test-result');
+        const testBtn = document.getElementById('test-api-key');
 
-        if (!key) {
-            showToast('กรุณาใส่ API Key ก่อน', 'error');
+        // Skip if using saved key (masked)
+        if (!key || key.startsWith('••••')) {
+            showToast('กรุณาใส่ API Key ใหม่ก่อนทดสอบ', 'error');
             return;
         }
 
@@ -797,7 +892,7 @@
         lucide.createIcons();
 
         try {
-            const response = await fetch('/api/v1/user/gemini-key/test', {
+            const response = await fetch(`/api/v1/user/${currentProvider}-key/test`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ api_key: key })
@@ -848,12 +943,15 @@
     });
 
     // Save API Key
-    document.getElementById('save-gemini-key').addEventListener('click', async () => {
-        const key = geminiApiKeyInput.value.trim();
-        const saveBtn = document.getElementById('save-gemini-key');
+    document.getElementById('save-api-key').addEventListener('click', async () => {
+        const inputId = currentProvider === 'gemini' ? 'gemini-api-key-input' : 'openrouter-api-key-input';
+        const input = document.getElementById(inputId);
+        const key = input.value.trim();
+        const saveBtn = document.getElementById('save-api-key');
 
-        if (!key) {
-            showToast('กรุณาใส่ API Key ก่อน', 'error');
+        // Skip if using saved key (masked)
+        if (!key || key.startsWith('••••')) {
+            showToast('กรุณาใส่ API Key ใหม่', 'error');
             return;
         }
 
@@ -862,7 +960,7 @@
         lucide.createIcons();
 
         try {
-            const response = await fetch('/api/v1/user/gemini-key', {
+            const response = await fetch(`/api/v1/user/${currentProvider}-key`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ api_key: key })
@@ -870,8 +968,7 @@
 
             if (response.ok) {
                 showToast('✅ บันทึก API Key เรียบร้อย!', 'success');
-                geminiApiKeyInput.value = '';
-                closeGeminiSettings();
+                loadAllApiKeys(); // Reload to show saved status
                 checkAIStatus(); // Refresh status
             } else {
                 const data = await response.json();
@@ -888,19 +985,19 @@
     });
 
     // Remove API Key
-    document.getElementById('remove-gemini-key').addEventListener('click', async () => {
-        if (!confirm('คุณต้องการลบ API Key ออกใช่หรือไม่?\n\nฟีเจอร์ AI จะใช้ค่าเริ่มต้นของระบบ')) return;
+    document.getElementById('remove-api-key').addEventListener('click', async () => {
+        const providerName = currentProvider === 'gemini' ? 'Gemini' : 'OpenRouter';
+        if (!confirm(`คุณต้องการลบ ${providerName} API Key ออกใช่หรือไม่?`)) return;
 
         try {
-            const response = await fetch('/api/v1/user/gemini-key', {
+            const response = await fetch(`/api/v1/user/${currentProvider}-key`, {
                 method: 'DELETE'
             });
 
             if (response.ok) {
                 showToast('ลบ API Key แล้ว', 'success');
-                geminiApiKeyInput.value = '';
-                document.getElementById('gemini-test-result').style.display = 'none';
-                closeGeminiSettings();
+                document.getElementById('api-test-result').style.display = 'none';
+                loadAllApiKeys();
                 checkAIStatus();
             }
         } catch (error) {
@@ -922,7 +1019,10 @@
 
                 if (data.is_available) {
                     statusTitle.textContent = 'AI พร้อมใช้งาน ✅';
-                    statusDesc.textContent = data.source === 'user' ? 'ใช้ API Key ของคุณ' : 'ใช้ค่าเริ่มต้นของระบบ';
+                    let desc = 'ใช้ค่าเริ่มต้นของระบบ';
+                    if (data.source === 'gemini') desc = 'ใช้ Gemini API Key ของคุณ';
+                    else if (data.source === 'openrouter') desc = 'ใช้ OpenRouter API Key ของคุณ';
+                    statusDesc.textContent = desc;
                     statusIcon.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
                 } else {
                     statusTitle.textContent = 'AI ยังไม่พร้อม ⚠️';
