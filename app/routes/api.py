@@ -3168,9 +3168,9 @@ def test_gemini_key():
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel('gemini-2.0-flash-exp')
             
-            # Simple test prompt
+            # Simple test prompt (English to avoid encoding issues)
             response = model.generate_content(
-                "ตอบว่า 'สวัสดี' เท่านั้น",
+                "Reply with only the word 'hello'",
                 generation_config={
                     'temperature': 0.1,
                     'max_output_tokens': 10,
