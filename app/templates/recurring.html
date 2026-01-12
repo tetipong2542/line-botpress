@@ -188,7 +188,25 @@
 
             <!-- จำนวนเงิน -->
             <div class="form-group">
-                <label class="form-label">จำนวนเงิน (THB)</label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label class="form-label" style="margin-bottom: 0;">จำนวนเงิน (THB)</label>
+                    <button type="button" class="btn-auto-suggest" onclick="toggleRecurringAmountHint()" title="แสดงคำแนะนำจากประวัติ">
+                        <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i>
+                        Auto Suggest
+                    </button>
+                </div>
+
+                <!-- Smart Amount Hint -->
+                <div id="recurring-amount-hint" class="amount-hint" style="display: none;">
+                    <i data-lucide="lightbulb"></i>
+                    <span id="recurring-amount-hint-text"></span>
+                </div>
+
+                <!-- Quick Amount Buttons -->
+                <div id="recurring-quick-amount-buttons" class="quick-amount-buttons" style="display: none;">
+                    <!-- Populated by JavaScript -->
+                </div>
+
                 <div class="amount-input-wrapper">
                     <span class="currency">฿</span>
                     <input type="number" class="form-input amount-input" id="recurring-amount" placeholder="0.00" step="0.01" required>
@@ -691,18 +709,108 @@ async function loadCategories() {
     }
 }
 
+// ===== SMART AMOUNT SUGGESTIONS =====
+let recurringAmountSuggestionsCache = {};
+
+async function loadRecurringAmountSuggestions(categoryId, type) {
+    const hintEl = document.getElementById('recurring-amount-hint');
+    const hintTextEl = document.getElementById('recurring-amount-hint-text');
+    const quickButtonsEl = document.getElementById('recurring-quick-amount-buttons');
+
+    // Reset
+    hintEl.style.display = 'none';
+    quickButtonsEl.style.display = 'none';
+
+    // Check cache
+    const cacheKey = categoryId ? `${categoryId}_${type}` : `all_${type}`;
+    if (recurringAmountSuggestionsCache[cacheKey]) {
+        displayRecurringAmountSuggestions(recurringAmountSuggestionsCache[cacheKey]);
+        return;
+    }
+
+    try {
+        // Build URL with optional category_id
+        let url = `analytics/amount-suggestions?type=${type}`;
+        if (categoryId) {
+            url += `&category_id=${categoryId}`;
+        }
+
+        const data = await API.get(buildApiUrl(url));
+        recurringAmountSuggestionsCache[cacheKey] = data;
+        displayRecurringAmountSuggestions(data);
+    } catch (error) {
+        console.error('Error loading amount suggestions:', error);
+    }
+}
+
+function displayRecurringAmountSuggestions(data) {
+    const hintEl = document.getElementById('recurring-amount-hint');
+    const hintTextEl = document.getElementById('recurring-amount-hint-text');
+    const quickButtonsEl = document.getElementById('recurring-quick-amount-buttons');
+
+    // Show hint if available
+    if (data.category_hint) {
+        hintTextEl.textContent = data.category_hint;
+        hintEl.style.display = 'flex';
+        lucide.createIcons();
+    }
+
+    // Show quick amount buttons
+    if (data.suggestions && data.suggestions.quick_amounts_formatted) {
+        const amounts = data.suggestions.quick_amounts_formatted;
+        quickButtonsEl.innerHTML = amounts.map(amount => `
+            <button type="button" class="quick-amount-btn" onclick="setRecurringQuickAmount(${amount})">
+                ฿${amount.toLocaleString('th-TH')}
+            </button>
+        `).join('');
+        quickButtonsEl.style.display = 'flex';
+    }
+}
+
+function setRecurringQuickAmount(amount) {
+    const amountInput = document.getElementById('recurring-amount');
+    const currentAmount = parseFloat(amountInput.value) || 0;
+    amountInput.value = (currentAmount + amount).toFixed(2);
+    // Highlight the button temporarily
+    document.querySelectorAll('.quick-amount-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+function toggleRecurringAmountHint() {
+    const hintEl = document.getElementById('recurring-amount-hint');
+    const quickButtonsEl = document.getElementById('recurring-quick-amount-buttons');
+    const categorySelect = document.getElementById('recurring-category');
+    const typeSelect = document.getElementById('recurring-type');
+
+    // Toggle visibility
+    const isVisible = hintEl.style.display !== 'none';
+
+    if (isVisible) {
+        // Hide if currently visible
+        hintEl.style.display = 'none';
+        quickButtonsEl.style.display = 'none';
+    } else {
+        // Show if currently hidden - load suggestions from history
+        const categoryId = categorySelect ? categorySelect.value : null;
+        const type = typeSelect ? typeSelect.value : 'expense';
+
+        // Load suggestions (with or without category filter)
+        loadRecurringAmountSuggestions(categoryId || null, type);
+    }
+}
+
 // Load on page ready
 document.addEventListener('DOMContentLoaded', async () => {
     await loadCategories();
     await loadRecurringRules();
-    
+
     // Remove loading class and fade in
     const container = document.querySelector('.mobile-container');
     if (container) {
         container.classList.remove('page-loading');
         container.classList.add('fade-in');
     }
-    
+
     // Initialize icons
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();

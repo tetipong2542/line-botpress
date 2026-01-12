@@ -757,17 +757,21 @@
         hintEl.style.display = 'none';
         quickButtonsEl.style.display = 'none';
 
-        if (!categoryId) return;
-
         // Check cache
-        const cacheKey = `${categoryId}_${type}`;
+        const cacheKey = categoryId ? `${categoryId}_${type}` : `all_${type}`;
         if (amountSuggestionsCache[cacheKey]) {
             displayAmountSuggestions(amountSuggestionsCache[cacheKey]);
             return;
         }
 
         try {
-            const data = await API.get(buildApiUrl(`analytics/amount-suggestions?category_id=${categoryId}&type=${type}`));
+            // Build URL with optional category_id
+            let url = `analytics/amount-suggestions?type=${type}`;
+            if (categoryId) {
+                url += `&category_id=${categoryId}`;
+            }
+
+            const data = await API.get(buildApiUrl(url));
             amountSuggestionsCache[cacheKey] = data;
             displayAmountSuggestions(data);
         } catch (error) {
@@ -822,20 +826,12 @@
             hintEl.style.display = 'none';
             quickButtonsEl.style.display = 'none';
         } else {
-            // Show if currently hidden
+            // Show if currently hidden - load suggestions from history
             const categoryId = categorySelect ? categorySelect.value : null;
             const type = typeSelect ? typeSelect.value : 'expense';
 
-            if (categoryId) {
-                // Load suggestions if category is selected
-                fetchAmountSuggestion(categoryId, type);
-            } else {
-                // Show a message if no category is selected
-                const hintTextEl = document.getElementById('amount-hint-text');
-                hintTextEl.textContent = 'กรุณาเลือกหมวดหมู่ก่อนเพื่อดูคำแนะนำ';
-                hintEl.style.display = 'flex';
-                lucide.createIcons();
-            }
+            // Load suggestions (with or without category filter)
+            loadAmountSuggestions(categoryId || null, type);
         }
     }
 
