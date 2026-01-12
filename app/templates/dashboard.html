@@ -2115,7 +2115,19 @@
             const data = await response.json();
 
             if (!data.success || !data.insights) {
-                contentEl.innerHTML = '<p class="ai-insights-empty">ยังไม่มีข้อมูลเพียงพอ</p>';
+                contentEl.innerHTML = `
+                    <p class="ai-insights-empty">ยังไม่มีข้อมูลเพียงพอ</p>
+                    <div class="ai-data-hint">
+                        <i data-lucide="info"></i>
+                        <div>
+                            <strong>วิธีเปิดใช้งาน:</strong>
+                            <ul class="ai-data-hint-list">
+                                <li>บันทึกรายรับ-รายจ่ายอย่างน้อย 5 รายการ</li>
+                                <li>ตั้งค่า API Key ใน Profile → ตั้งค่า AI</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
                 lucide.createIcons();
                 return;
             }
@@ -2165,7 +2177,13 @@
             }
 
             if (!html) {
-                html = '<p class="ai-insights-empty">บันทึกรายการเพิ่มเพื่อดู insights</p>';
+                html = `
+                    <p class="ai-insights-empty">บันทึกรายการเพิ่มเพื่อดู insights</p>
+                    <div class="ai-data-hint">
+                        <i data-lucide="plus-circle"></i>
+                        <span>กดปุ่ม "บันทึก" ด้านบนเพื่อเริ่มบันทึกรายการ</span>
+                    </div>
+                `;
             }
 
             contentEl.innerHTML = html;
@@ -2187,7 +2205,13 @@
             const data = await response.json();
 
             if (!data.success || !data.health) {
-                contentEl.innerHTML = '<p class="health-empty">ไม่มีข้อมูล</p>';
+                contentEl.innerHTML = `
+                    <p class="health-empty">ยังไม่มีข้อมูล</p>
+                    <div class="ai-data-hint">
+                        <i data-lucide="info"></i>
+                        <span>บันทึกรายรับ-รายจ่าย เพื่อดูคะแนนสุขภาพการเงิน</span>
+                    </div>
+                `;
                 return;
             }
 
@@ -2261,7 +2285,13 @@
             const data = await response.json();
 
             if (!data.success || !data.forecast) {
-                contentEl.innerHTML = '<p class="forecast-empty">ไม่มีข้อมูลเพียงพอ</p>';
+                contentEl.innerHTML = `
+                    <p class="forecast-empty">ยังไม่มีข้อมูลเพียงพอ</p>
+                    <div class="ai-data-hint">
+                        <i data-lucide="info"></i>
+                        <span>ต้องมีข้อมูลอย่างน้อย 1 เดือน เพื่อพยากรณ์การเงิน</span>
+                    </div>
+                `;
                 return;
             }
 

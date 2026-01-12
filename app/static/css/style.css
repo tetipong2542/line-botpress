@@ -7913,3 +7913,105 @@ a:focus-visible {
     background: #1f2937;
     border-color: #374151;
 }
+
+/* ===== DARK MODE: BUDGET PROGRESS FIXES ===== */
+
+[data-theme="dark"] .budget-quick-card {
+    background: #1f2937 !important;
+    border-color: #374151;
+    color: #f9fafb;
+}
+
+[data-theme="dark"] .budget-name {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .budget-meta,
+[data-theme="dark"] .budget-quick-meta {
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .budget-progress-bar {
+    background: #374151;
+}
+
+[data-theme="dark"] .budget-amount {
+    color: #f9fafb !important;
+}
+
+/* ===== DARK MODE: QUICK TEMPLATES ===== */
+
+[data-theme="dark"] .quick-template-btn {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .quick-template-btn:hover {
+    background: #374151 !important;
+}
+
+[data-theme="dark"] .template-name {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .template-amount {
+    color: #9ca3af !important;
+}
+
+[data-theme="dark"] .quick-template-empty {
+    color: #9ca3af !important;
+}
+
+/* ===== AI EMPTY STATES: HELPFUL ALERTS ===== */
+
+.ai-data-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 10px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.ai-data-hint i {
+    width: 16px;
+    height: 16px;
+    color: #3b82f6;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.ai-data-hint-list {
+    margin: 6px 0 0;
+    padding-left: 16px;
+    font-size: 12px;
+}
+
+.ai-data-hint-list li {
+    margin-bottom: 4px;
+}
+
+[data-theme="dark"] .ai-data-hint {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.08) 100%);
+}
+
+/* ===== DARK MODE: SECTION HEADERS ===== */
+
+[data-theme="dark"] .section-header h2 {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .section-link {
+    color: #8B5CF6 !important;
+}
+
+/* ===== SPINNING ANIMATION ===== */
+
+.spinning {
+    animation: spin 1s linear infinite;
+}
