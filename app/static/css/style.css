@@ -998,6 +998,8 @@ h2 i[data-lucide] {
     display: flex;
     flex-direction: column;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    isolation: isolate;
+    transform: translateZ(0);
 }
 
 .modal-container.modal-lg {
@@ -1021,6 +1023,8 @@ h2 i[data-lucide] {
     flex-direction: column;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     z-index: 2;
+    isolation: isolate;
+    transform: translateZ(0);
 }
 
 .modal-content.modal-large {
