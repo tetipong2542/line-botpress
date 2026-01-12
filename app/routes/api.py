@@ -2,7 +2,7 @@
 Core API routes - CRUD operations for web and bot
 """
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify, session
 from app.services.transaction_service import TransactionService
 from app.services.analytics_service import AnalyticsService
