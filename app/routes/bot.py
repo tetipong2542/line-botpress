@@ -1888,6 +1888,68 @@ def smart_message():
     missing_fields = parsed.get('missing_fields', [])
     fallback_question = parsed.get('fallback_question')
     
+    # ========================
+    # /AI COMMAND - Ask Gemini anything
+    # ========================
+    if message.lower().startswith('/ai'):
+        # Extract question after /ai
+        question = message[3:].strip()
+        
+        if not question:
+            # No question provided - show help
+            return jsonify({
+                'success': True,
+                'message': "🤖 **AI Assistant**\n\n"
+                          "พิมพ์ `/ai` ตามด้วยคำถามใดๆ เช่น:\n\n"
+                          "• `/ai วันนี้อากาศเป็นยังไง`\n"
+                          "• `/ai แนะนำวิธีออมเงิน`\n"
+                          "• `/ai อธิบาย blockchain หน่อย`\n"
+                          "• `/ai เขียนโค้ด Python นับ 1-10`\n\n"
+                          "ฉันสามารถตอบคำถามได้ทุกเรื่องค่ะ! 💡"
+            })
+        
+        # Build financial context for the user
+        from datetime import date
+        today = date.today()
+        
+        # Get recent summary
+        try:
+            month_start = datetime(today.year, today.month, 1)
+            if today.month == 12:
+                month_end = datetime(today.year + 1, 1, 1)
+            else:
+                month_end = datetime(today.year, today.month + 1, 1)
+            
+            income_total = db.session.query(db.func.sum(Transaction.amount)).filter(
+                Transaction.project_id == project_id,
+                Transaction.type == 'income',
+                Transaction.occurred_at >= month_start,
+                Transaction.occurred_at < month_end,
+                Transaction.deleted_at.is_(None)
+            ).scalar() or 0
+            
+            expense_total = db.session.query(db.func.sum(Transaction.amount)).filter(
+                Transaction.project_id == project_id,
+                Transaction.type == 'expense',
+                Transaction.occurred_at >= month_start,
+                Transaction.occurred_at < month_end,
+                Transaction.deleted_at.is_(None)
+            ).scalar() or 0
+            
+            context = f"""รายรับเดือนนี้: {income_total/100:,.0f} บาท
+รายจ่ายเดือนนี้: {expense_total/100:,.0f} บาท
+คงเหลือ: {(income_total-expense_total)/100:,.0f} บาท"""
+        except:
+            context = None
+        
+        # Get AI response
+        ai_response = gemini_nlp.chat(question, context)
+        
+        return jsonify({
+            'success': True,
+            'message': f"🤖 **AI:**\n\n{ai_response}"
+        })
+    
     # Check for missing required fields
     if missing_fields and fallback_question:
         return jsonify({
@@ -3564,7 +3626,8 @@ def smart_message():
                           f"💰 **งบประมาณ**\n"
                           f"• \"ตั้งงบอาหาร 5000 บาท\"\n"
                           f"• \"ดูงบ\"\n\n"
-                          f"📊 **สรุป**: \"สรุปเดือนนี้\"\n"
+                          f"📊 **สรุป**: \"สรุปเดือนนี้\"\n\n"
+                          f"🤖 **AI**: `/ai คำถาม` - ถามอะไรก็ได้!\n"
                           f"🌐 **อื่นๆ**: \"หมวดหมู่\" / \"ขอลิงก์เว็บ\""
             })
         

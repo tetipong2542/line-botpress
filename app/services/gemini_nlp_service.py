@@ -68,6 +68,47 @@ class GeminiNLPService:
         """Check if Gemini is properly configured"""
         return GEMINI_AVAILABLE and self.api_key and self.model
     
+    def chat(self, message: str, context: str = None) -> str:
+        """
+        Chat with Gemini AI - answer any question
+        
+        Args:
+            message: User's question
+            context: Optional context about user's financial data
+            
+        Returns:
+            AI response as string
+        """
+        if not self.is_available():
+            return "ขออภัยค่ะ ระบบ AI ยังไม่พร้อมใช้งาน กรุณาลองใหม่ภายหลัง"
+        
+        try:
+            # Build system context
+            system_context = """คุณเป็นผู้ช่วย AI อัจฉริยะที่ช่วยตอบคำถามทุกเรื่อง
+คุณสนทนาเป็นภาษาไทยได้อย่างเป็นธรรมชาติ ใช้น้ำเสียงเป็นมิตรและเป็นกันเอง
+ตอบคำถามอย่างกระชับ ชัดเจน และเป็นประโยชน์
+
+ถ้าคำถามเกี่ยวกับการเงินหรือการจัดการรายรับรายจ่าย คุณมีความเชี่ยวชาญเป็นพิเศษ"""
+            
+            if context:
+                system_context += f"\n\nข้อมูลการเงินของผู้ใช้:\n{context}"
+            
+            prompt = f"{system_context}\n\nคำถาม: {message}\n\nคำตอบ:"
+            
+            response = self.model.generate_content(
+                prompt,
+                generation_config={
+                    'temperature': 0.7,
+                    'max_output_tokens': 1000,
+                }
+            )
+            
+            return response.text.strip()
+            
+        except Exception as e:
+            print(f"Gemini chat error: {e}")
+            return f"ขออภัยค่ะ เกิดข้อผิดพลาด: {str(e)}"
+    
     def parse_message(self, message: str) -> dict:
         """
         Parse user message using Gemini AI
