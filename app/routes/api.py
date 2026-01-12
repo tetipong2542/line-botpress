@@ -3488,3 +3488,166 @@ def test_openrouter_key():
             "success": False,
             "error": str(e)
         }), 500
+
+
+# ============================================================
+# AI PLANNER ENDPOINTS (Option 1: Auto-Pilot Financial Planner)
+# ============================================================
+
+@bp.route('/ai/generate-monthly-plan', methods=['POST'])
+def generate_monthly_plan():
+    """Generate a complete monthly financial plan using AI"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.services.ai_planner_service import ai_planner
+        from app.models.transaction import Transaction
+        from app.models.category import Category
+        from app.models.budget import Budget
+        from app.models.goal import Goal
+        
+        user = get_current_user()
+        project_id = user.current_project_id
+        
+        if not project_id:
+            return jsonify({"error": {"message": "No project selected"}}), 400
+        
+        # Get last 3 months of transactions
+        three_months_ago = datetime.now() - timedelta(days=90)
+        transactions = Transaction.query.filter(
+            Transaction.project_id == project_id,
+            Transaction.created_at >= three_months_ago
+        ).order_by(Transaction.created_at.desc()).limit(500).all()
+        
+        tx_list = [{
+            "amount": tx.amount / 100,
+            "type": tx.type,
+            "category_name": tx.category.name if tx.category else "Unknown",
+            "note": tx.note or "",
+            "date": tx.created_at.strftime("%Y-%m-%d")
+        } for tx in transactions]
+        
+        # Get categories
+        categories = Category.query.filter_by(project_id=project_id).all()
+        cat_list = [{"id": c.id, "name": c.name, "icon": c.icon} for c in categories]
+        
+        # Get current budgets
+        budgets = Budget.query.filter_by(project_id=project_id).all()
+        budget_list = [{"category_id": b.category_id, "amount": b.amount / 100} for b in budgets]
+        
+        # Get goals
+        goals = Goal.query.filter_by(project_id=project_id).all()
+        goal_list = [{"name": g.name, "target": g.target_amount / 100, 
+                      "current": g.current_amount / 100} for g in goals]
+        
+        # Generate plan
+        plan = ai_planner.generate_monthly_plan(user, tx_list, cat_list, budget_list, goal_list)
+        
+        return jsonify({
+            "success": True,
+            "plan": plan
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@bp.route('/ai/recurring-expenses', methods=['GET'])
+def get_recurring_expenses():
+    """Detect recurring expenses from transaction history"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.services.ai_planner_service import ai_planner
+        from app.models.transaction import Transaction
+        
+        user = get_current_user()
+        project_id = user.current_project_id
+        
+        if not project_id:
+            return jsonify({"error": {"message": "No project selected"}}), 400
+        
+        # Get last 6 months of transactions
+        six_months_ago = datetime.now() - timedelta(days=180)
+        transactions = Transaction.query.filter(
+            Transaction.project_id == project_id,
+            Transaction.type == 'expense',
+            Transaction.created_at >= six_months_ago
+        ).order_by(Transaction.created_at.desc()).limit(500).all()
+        
+        tx_list = [{
+            "amount": tx.amount / 100,
+            "note": tx.note or "",
+            "date": tx.created_at.strftime("%Y-%m-%d"),
+            "category": tx.category.name if tx.category else "Unknown"
+        } for tx in transactions]
+        
+        recurring = ai_planner.detect_recurring_expenses(user, tx_list)
+        
+        return jsonify({
+            "success": True,
+            "recurring": recurring
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@bp.route('/ai/tax-estimation', methods=['GET'])
+def get_tax_estimation():
+    """Estimate annual tax based on income"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.services.ai_planner_service import ai_planner
+        from app.models.transaction import Transaction
+        
+        user = get_current_user()
+        project_id = user.current_project_id
+        
+        if not project_id:
+            return jsonify({"error": {"message": "No project selected"}}), 400
+        
+        # Get annual income (last 12 months)
+        one_year_ago = datetime.now() - timedelta(days=365)
+        income_transactions = Transaction.query.filter(
+            Transaction.project_id == project_id,
+            Transaction.type == 'income',
+            Transaction.created_at >= one_year_ago
+        ).all()
+        
+        annual_income = sum(tx.amount / 100 for tx in income_transactions)
+        
+        # Get optional deductions from request
+        deductions = request.args.get('deductions')
+        deductions_dict = None
+        if deductions:
+            try:
+                deductions_dict = json.loads(deductions)
+            except:
+                pass
+        
+        tax_estimate = ai_planner.estimate_taxes(user, annual_income, deductions_dict)
+        
+        return jsonify({
+            "success": True,
+            "tax": tax_estimate
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500

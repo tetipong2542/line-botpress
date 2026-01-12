@@ -101,6 +101,15 @@
         </button>
     </div>
 
+    <!-- AI Auto-Pilot Planner Button -->
+    <div class="section">
+        <button class="btn-ai-planner btn-block" onclick="openAIPlannerModal()" id="btn-ai-planner">
+            <i data-lucide="wand-2"></i>
+            <span>AI วางแผนการเงินอัตโนมัติ</span>
+            <span class="ai-badge">AI</span>
+        </button>
+    </div>
+
     <!-- Month Comparison -->
     <div class="section" id="month-comparison-section" style="display: none;">
         <div class="comparison-card">
@@ -414,6 +423,92 @@
                 <p>ยังไม่มีข้อมูลเพียงพอ</p>
                 <p class="empty-subtitle">เริ่มบันทึกรายการเพื่อดูข้อมูลเชิงลึก</p>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Planner Modal -->
+<div class="modal" id="ai-planner-modal">
+    <div class="modal-overlay" onclick="closeAIPlannerModal()"></div>
+    <div class="modal-container modal-lg">
+        <div class="modal-header">
+            <h2 class="modal-title">
+                <i data-lucide="wand-2"></i>
+                AI วางแผนการเงินอัตโนมัติ
+            </h2>
+            <button class="modal-close" onclick="closeAIPlannerModal()">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+            <!-- Loading State -->
+            <div id="ai-planner-loading" class="ai-loading" style="display: none;">
+                <div class="ai-loading-spinner"></div>
+                <p>AI กำลังวิเคราะห์ข้อมูลและสร้างแผนการเงิน...</p>
+            </div>
+
+            <!-- AI Planner Content -->
+            <div id="ai-planner-content" style="display: none;">
+                <!-- Summary Card -->
+                <div class="ai-summary-card" id="ai-plan-summary">
+                    <i data-lucide="sparkles"></i>
+                    <p id="ai-plan-summary-text">-</p>
+                </div>
+
+                <!-- Budget Plan -->
+                <div class="ai-section">
+                    <h3><i data-lucide="pie-chart"></i> แผนงบประมาณแนะนำ</h3>
+                    <div id="ai-budget-list" class="ai-budget-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Recurring Expenses -->
+                <div class="ai-section">
+                    <h3><i data-lucide="repeat"></i> รายจ่ายประจำที่ตรวจพบ</h3>
+                    <div id="ai-recurring-list" class="ai-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Tax Estimation -->
+                <div class="ai-section">
+                    <h3><i data-lucide="receipt"></i> ประมาณการภาษี</h3>
+                    <div id="ai-tax-estimation" class="ai-tax-card">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Tips -->
+                <div class="ai-section">
+                    <h3><i data-lucide="lightbulb"></i> คำแนะนำจาก AI</h3>
+                    <div id="ai-tips-list" class="ai-tips">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="ai-planner-empty" style="display: none; text-align: center; padding: 40px;">
+                <i data-lucide="database"
+                    style="width: 48px; height: 48px; color: var(--text-secondary); margin-bottom: 16px;"></i>
+                <p style="color: var(--text-secondary);">ยังไม่มีข้อมูลเพียงพอ</p>
+                <p style="color: var(--text-secondary); font-size: 14px;">เริ่มบันทึกรายการอย่างน้อย 10 รายการ</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="ai-planner-error" style="display: none; text-align: center; padding: 40px;">
+                <i data-lucide="alert-circle"
+                    style="width: 48px; height: 48px; color: #ef4444; margin-bottom: 16px;"></i>
+                <p id="ai-planner-error-text" style="color: #ef4444;">เกิดข้อผิดพลาด</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-ai-generate" id="btn-generate-plan" onclick="generateAIPlan()">
+                <i data-lucide="wand-2"></i>
+                <span>สร้างแผนใหม่</span>
+            </button>
+            <button class="btn-secondary" onclick="closeAIPlannerModal()">ปิด</button>
         </div>
     </div>
 </div>
@@ -1387,6 +1482,158 @@
 
         section.style.display = 'block';
         section.classList.add('fade-in');
+    }
+
+    // ===== AI AUTO-PILOT PLANNER =====
+    const aiPlannerModal = document.getElementById('ai-planner-modal');
+
+    function openAIPlannerModal() {
+        aiPlannerModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        generateAIPlan();
+        lucide.createIcons();
+    }
+
+    function closeAIPlannerModal() {
+        aiPlannerModal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    async function generateAIPlan() {
+        const loadingEl = document.getElementById('ai-planner-loading');
+        const contentEl = document.getElementById('ai-planner-content');
+        const emptyEl = document.getElementById('ai-planner-empty');
+        const errorEl = document.getElementById('ai-planner-error');
+        const genBtn = document.getElementById('btn-generate-plan');
+
+        // Reset states
+        loadingEl.style.display = 'flex';
+        contentEl.style.display = 'none';
+        emptyEl.style.display = 'none';
+        errorEl.style.display = 'none';
+        genBtn.disabled = true;
+        lucide.createIcons();
+
+        try {
+            // Generate monthly plan
+            const planResponse = await fetch('/api/v1/ai/generate-monthly-plan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const planData = await planResponse.json();
+
+            // Get recurring expenses
+            const recurringResponse = await fetch('/api/v1/ai/recurring-expenses');
+            const recurringData = await recurringResponse.json();
+
+            // Get tax estimation
+            const taxResponse = await fetch('/api/v1/ai/tax-estimation');
+            const taxData = await taxResponse.json();
+
+            loadingEl.style.display = 'none';
+
+            if (!planData.success && !recurringData.success) {
+                emptyEl.style.display = 'block';
+                genBtn.disabled = false;
+                lucide.createIcons();
+                return;
+            }
+
+            // Show content
+            contentEl.style.display = 'block';
+
+            // --- Populate Summary ---
+            const plan = planData.plan || {};
+            document.getElementById('ai-plan-summary-text').textContent =
+                plan.summary || 'AI ได้วิเคราะห์ข้อมูลการเงินของคุณแล้ว';
+
+            // --- Populate Budget List ---
+            const budgetList = document.getElementById('ai-budget-list');
+            const budgets = plan.monthly_plan?.budgets || [];
+            if (budgets.length > 0) {
+                budgetList.innerHTML = budgets.map(b => `
+                    <div class="ai-budget-item">
+                        <div class="ai-budget-name">${b.category}</div>
+                        <div class="ai-budget-amount">฿${Number(b.amount).toLocaleString()}</div>
+                        <div class="ai-budget-reason">${b.reason || ''}</div>
+                    </div>
+                `).join('');
+            } else {
+                budgetList.innerHTML = '<p class="text-muted">ยังไม่มีข้อมูลเพียงพอ</p>';
+            }
+
+            // --- Populate Recurring ---
+            const recurringList = document.getElementById('ai-recurring-list');
+            const recurring = recurringData.recurring || plan.recurring_detected || [];
+            if (recurring.length > 0) {
+                recurringList.innerHTML = recurring.map(r => `
+                    <div class="ai-list-item">
+                        <i data-lucide="repeat"></i>
+                        <div class="ai-list-content">
+                            <div class="ai-list-title">${r.name}</div>
+                            <div class="ai-list-meta">฿${Number(r.amount).toLocaleString()} / ${r.frequency || 'monthly'}</div>
+                        </div>
+                        <div class="ai-confidence">${Math.round((r.confidence || 0.8) * 100)}%</div>
+                    </div>
+                `).join('');
+            } else {
+                recurringList.innerHTML = '<p class="text-muted">ไม่พบรายจ่ายประจำ</p>';
+            }
+
+            // --- Populate Tax ---
+            const taxCard = document.getElementById('ai-tax-estimation');
+            const tax = taxData.tax || {};
+            if (tax.estimated_tax !== undefined) {
+                taxCard.innerHTML = `
+                    <div class="ai-tax-grid">
+                        <div class="ai-tax-item">
+                            <span class="ai-tax-label">รายได้ต่อปี</span>
+                            <span class="ai-tax-value">฿${Number(tax.annual_income || 0).toLocaleString()}</span>
+                        </div>
+                        <div class="ai-tax-item">
+                            <span class="ai-tax-label">ค่าลดหย่อน</span>
+                            <span class="ai-tax-value">฿${Number(tax.total_deductions || 0).toLocaleString()}</span>
+                        </div>
+                        <div class="ai-tax-item highlight">
+                            <span class="ai-tax-label">ภาษีประมาณ</span>
+                            <span class="ai-tax-value">฿${Number(tax.estimated_tax || 0).toLocaleString()}</span>
+                        </div>
+                        <div class="ai-tax-item">
+                            <span class="ai-tax-label">เฉลี่ยต่อเดือน</span>
+                            <span class="ai-tax-value">฿${Number(tax.monthly_tax_reserve || 0).toLocaleString()}</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                taxCard.innerHTML = '<p class="text-muted">ไม่มีข้อมูลรายได้</p>';
+            }
+
+            // --- Populate Tips ---
+            const tipsList = document.getElementById('ai-tips-list');
+            const allTips = [...(plan.tips || []), ...(plan.alerts || []), ...(tax.tips || [])];
+            if (allTips.length > 0) {
+                tipsList.innerHTML = allTips.slice(0, 5).map(t => `
+                    <div class="ai-tip-item">
+                        <i data-lucide="lightbulb"></i>
+                        <span>${t}</span>
+                    </div>
+                `).join('');
+            } else {
+                tipsList.innerHTML = '<p class="text-muted">ไม่มีคำแนะนำเพิ่มเติม</p>';
+            }
+
+            lucide.createIcons();
+
+        } catch (error) {
+            console.error('AI Planner error:', error);
+            loadingEl.style.display = 'none';
+            errorEl.style.display = 'block';
+            document.getElementById('ai-planner-error-text').textContent =
+                'เกิดข้อผิดพลาด: ' + (error.message || 'Unknown error');
+            lucide.createIcons();
+        } finally {
+            genBtn.disabled = false;
+        }
     }
 
     // ===== SMART INSIGHTS =====
