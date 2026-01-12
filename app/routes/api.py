@@ -3,6 +3,7 @@ Core API routes - CRUD operations for web and bot
 """
 import re
 from datetime import datetime, timedelta
+from sqlalchemy.orm import joinedload
 from flask import Blueprint, request, jsonify, session
 from app.services.transaction_service import TransactionService
 from app.services.analytics_service import AnalyticsService
@@ -3516,7 +3517,9 @@ def generate_monthly_plan():
         
         # Get last 3 months of transactions
         three_months_ago = datetime.now() - timedelta(days=90)
-        transactions = Transaction.query.filter(
+        transactions = Transaction.query.options(
+            joinedload(Transaction.category)
+        ).filter(
             Transaction.project_id == project_id,
             Transaction.created_at >= three_months_ago
         ).order_by(Transaction.created_at.desc()).limit(500).all()
@@ -3576,7 +3579,9 @@ def get_recurring_expenses():
         
         # Get last 6 months of transactions
         six_months_ago = datetime.now() - timedelta(days=180)
-        transactions = Transaction.query.filter(
+        transactions = Transaction.query.options(
+            joinedload(Transaction.category)
+        ).filter(
             Transaction.project_id == project_id,
             Transaction.type == 'expense',
             Transaction.created_at >= six_months_ago
@@ -3586,7 +3591,7 @@ def get_recurring_expenses():
             "amount": tx.amount / 100,
             "note": tx.note or "",
             "date": tx.created_at.strftime("%Y-%m-%d"),
-            "category": tx.category.name if tx.category else "Unknown"
+            "category": getattr(tx.category, 'name', 'Unknown') if tx.category else "Unknown"
         } for tx in transactions]
         
         recurring = ai_planner.detect_recurring_expenses(user, tx_list)
@@ -3725,7 +3730,9 @@ def get_spending_patterns():
         days = request.args.get('days', 30, type=int)
         start_date = datetime.now() - timedelta(days=days)
         
-        transactions = Transaction.query.filter(
+        transactions = Transaction.query.options(
+            joinedload(Transaction.category)
+        ).filter(
             Transaction.project_id == project_id,
             Transaction.created_at >= start_date
         ).all()
@@ -3733,7 +3740,7 @@ def get_spending_patterns():
         tx_list = [{
             "amount": tx.amount / 100,
             "type": tx.type,
-            "category_name": tx.category.name if tx.category else "Other",
+            "category_name": getattr(tx.category, 'name', 'Other') if tx.category else "Other",
             "date": tx.created_at.strftime("%Y-%m-%d")
         } for tx in transactions]
         
@@ -3773,7 +3780,9 @@ def get_auto_insights():
         now = datetime.now()
         start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         
-        transactions = Transaction.query.filter(
+        transactions = Transaction.query.options(
+            joinedload(Transaction.category)
+        ).filter(
             Transaction.project_id == project_id,
             Transaction.created_at >= start_of_month
         ).all()
@@ -3781,7 +3790,7 @@ def get_auto_insights():
         tx_list = [{
             "amount": tx.amount / 100,
             "type": tx.type,
-            "category_name": tx.category.name if tx.category else "Other",
+            "category_name": getattr(tx.category, 'name', 'Other') if tx.category else "Other",
             "date": tx.created_at.strftime("%Y-%m-%d")
         } for tx in transactions]
         
@@ -3890,7 +3899,9 @@ def simulate_what_if():
         now = datetime.now()
         start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         
-        transactions = Transaction.query.filter(
+        transactions = Transaction.query.options(
+            joinedload(Transaction.category)
+        ).filter(
             Transaction.project_id == project_id,
             Transaction.created_at >= start_of_month
         ).all()
@@ -3898,7 +3909,7 @@ def simulate_what_if():
         tx_list = [{
             "amount": tx.amount / 100,
             "type": tx.type,
-            "category_name": tx.category.name if tx.category else "Other"
+            "category_name": getattr(tx.category, 'name', 'Other') if tx.category else "Other"
         } for tx in transactions]
         
         simulation = ai_forecast.simulate_what_if(tx_list, changes)
