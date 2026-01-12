@@ -2068,8 +2068,10 @@
     }
 
     function openCreateTemplateModal() {
-        // For now, redirect to modal or alert
-        showToast('info', 'กำลังพัฒนา - สามารถสร้างจากคำแนะนำที่แสดง');
+        // Open Add Expense modal to create a template
+        // User can create transaction and it will auto-suggest as template if used frequently
+        openAddExpenseModal();
+        showToast('info', 'บันทึกรายการที่ใช้บ่อย ระบบจะสร้าง Template อัตโนมัติ');
     }
 
     function showToast(type, message) {
