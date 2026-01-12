@@ -998,8 +998,7 @@ h2 i[data-lucide] {
     display: flex;
     flex-direction: column;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-    isolation: isolate;
-    transform: translateZ(0);
+    margin: auto;
 }
 
 .modal-container.modal-lg {
@@ -6202,6 +6201,34 @@ a:focus-visible {
 [data-theme="dark"] .transaction-actions .btn-delete:hover {
     background: rgba(239, 68, 68, 0.25) !important;
     color: #fca5a5 !important;
+}
+
+/* ===== DARK MODE: FLOATING ACTION BUTTON ===== */
+[data-theme="dark"] .btn-fab {
+    background: #10b981 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
+}
+
+[data-theme="dark"] .btn-fab:hover {
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.5) !important;
+}
+
+[data-theme="dark"] .btn-fab i {
+    color: #ffffff !important;
+}
+
+/* ===== DARK MODE: CATEGORY ACTIONS ===== */
+[data-theme="dark"] .category-actions .btn-icon {
+    background: #374151 !important;
+}
+
+[data-theme="dark"] .category-actions .btn-icon i {
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .category-actions .btn-icon:hover {
+    background: #4b5563 !important;
 }
 
 /* ===== BTN-INSIGHTS FIXES ===== */
