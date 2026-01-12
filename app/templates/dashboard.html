@@ -800,10 +800,43 @@
     }
 
     function setQuickAmount(amount) {
-        document.getElementById('transaction-amount').value = amount;
-        // Highlight the button
+        const amountInput = document.getElementById('transaction-amount');
+        const currentAmount = parseFloat(amountInput.value) || 0;
+        amountInput.value = (currentAmount + amount).toFixed(2);
+        // Highlight the button temporarily
         document.querySelectorAll('.quick-amount-btn').forEach(btn => btn.classList.remove('active'));
         event.target.classList.add('active');
+    }
+
+    function toggleSmartAmountHint() {
+        const hintEl = document.getElementById('amount-hint');
+        const quickButtonsEl = document.getElementById('quick-amount-buttons');
+        const categorySelect = document.getElementById('transaction-category');
+        const typeSelect = document.getElementById('transaction-type');
+
+        // Toggle visibility
+        const isVisible = hintEl.style.display !== 'none';
+
+        if (isVisible) {
+            // Hide if currently visible
+            hintEl.style.display = 'none';
+            quickButtonsEl.style.display = 'none';
+        } else {
+            // Show if currently hidden
+            const categoryId = categorySelect ? categorySelect.value : null;
+            const type = typeSelect ? typeSelect.value : 'expense';
+
+            if (categoryId) {
+                // Load suggestions if category is selected
+                fetchAmountSuggestion(categoryId, type);
+            } else {
+                // Show a message if no category is selected
+                const hintTextEl = document.getElementById('amount-hint-text');
+                hintTextEl.textContent = 'กรุณาเลือกหมวดหมู่ก่อนเพื่อดูคำแนะนำ';
+                hintEl.style.display = 'flex';
+                lucide.createIcons();
+            }
+        }
     }
 
     // ===== AUTO-COMPLETE NOTES =====

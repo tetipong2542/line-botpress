@@ -134,6 +134,31 @@ h1 {
     border-color: var(--secondary);
 }
 
+.btn-auto-suggest {
+    padding: 6px 12px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.btn-auto-suggest:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.btn-auto-suggest:active {
+    transform: translateY(0);
+}
+
 .features {
     margin-top: 32px;
     padding-top: 32px;
@@ -995,6 +1020,7 @@ h2 i[data-lucide] {
     display: flex;
     flex-direction: column;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    z-index: 2;
 }
 
 .modal-content.modal-large {
@@ -5997,6 +6023,15 @@ a:focus-visible {
 [data-theme="dark"] .btn-secondary:hover {
     background: #374151 !important;
     border-color: #4b5563 !important;
+}
+
+[data-theme="dark"] .btn-auto-suggest {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3) !important;
+}
+
+[data-theme="dark"] .btn-auto-suggest:hover {
+    box-shadow: 0 4px 8px rgba(16, 185, 129, 0.4) !important;
 }
 
 [data-theme="dark"] .features {
