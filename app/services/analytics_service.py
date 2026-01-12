@@ -1231,3 +1231,154 @@ class AnalyticsService:
             "period2": period2,
             "comparison": comparison
         }
+
+    @staticmethod
+    def get_amount_suggestions(project_id, category_id=None, type='expense'):
+        """
+        Get smart amount suggestions based on spending history
+        
+        Args:
+            project_id: Project ID
+            category_id: Optional category ID for category-specific suggestions
+            type: 'expense' or 'income'
+        
+        Returns:
+            dict: {
+                "suggestions": {
+                    "avg_amount": 15000,  # satang
+                    "avg_formatted": 150.00,  # baht
+                    "min_amount": 5000,
+                    "max_amount": 35000,
+                    "typical_range": "50-350 บาท",
+                    "quick_amounts": [5000, 10000, 15000, 20000, 50000],  # satang
+                    "quick_amounts_formatted": [50, 100, 150, 200, 500],  # baht
+                },
+                "recent_transactions": [
+                    {"amount": 15000, "formatted": 150.00, "note": "กาแฟ", "date": "2026-01-11"},
+                ],
+                "category_hint": "ปกติคุณใช้ 50-350 บาท"
+            }
+        """
+        from datetime import timedelta
+        from sqlalchemy import func
+        
+        # Get transactions from last 90 days
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=90)
+        
+        # Build base query
+        base_query = Transaction.query.filter(
+            Transaction.project_id == project_id,
+            Transaction.type == type,
+            Transaction.occurred_at >= start_date,
+            Transaction.deleted_at.is_(None)
+        )
+        
+        # Add category filter if provided
+        if category_id:
+            base_query = base_query.filter(Transaction.category_id == category_id)
+        
+        # Get statistics
+        stats = db.session.query(
+            func.avg(Transaction.amount).label('avg'),
+            func.min(Transaction.amount).label('min'),
+            func.max(Transaction.amount).label('max'),
+            func.count(Transaction.id).label('count')
+        ).filter(
+            Transaction.project_id == project_id,
+            Transaction.type == type,
+            Transaction.occurred_at >= start_date,
+            Transaction.deleted_at.is_(None)
+        )
+        
+        if category_id:
+            stats = stats.filter(Transaction.category_id == category_id)
+        
+        stats_result = stats.first()
+        
+        # Get recent transactions (last 5)
+        recent = base_query.order_by(Transaction.occurred_at.desc()).limit(5).all()
+        
+        # Calculate suggestions
+        avg_amount = int(stats_result.avg) if stats_result.avg else 0
+        min_amount = int(stats_result.min) if stats_result.min else 0
+        max_amount = int(stats_result.max) if stats_result.max else 0
+        count = stats_result.count or 0
+        
+        # Generate quick amounts based on distribution
+        if count > 0:
+            # Calculate percentiles for quick amounts
+            amounts_query = db.session.query(Transaction.amount).filter(
+                Transaction.project_id == project_id,
+                Transaction.type == type,
+                Transaction.occurred_at >= start_date,
+                Transaction.deleted_at.is_(None)
+            )
+            if category_id:
+                amounts_query = amounts_query.filter(Transaction.category_id == category_id)
+            
+            amounts = [a[0] for a in amounts_query.all()]
+            amounts.sort()
+            
+            # Get percentiles (10th, 25th, 50th, 75th, 90th)
+            if len(amounts) >= 5:
+                n = len(amounts)
+                quick_amounts = [
+                    amounts[int(n * 0.1)],
+                    amounts[int(n * 0.25)],
+                    amounts[int(n * 0.5)],
+                    amounts[int(n * 0.75)],
+                    amounts[int(n * 0.9)]
+                ]
+                # Round to nice numbers
+                quick_amounts = [round(a / 5000) * 5000 for a in quick_amounts]  # Round to nearest 50 baht
+                quick_amounts = list(dict.fromkeys(quick_amounts))  # Remove duplicates
+            else:
+                # Default quick amounts
+                quick_amounts = [5000, 10000, 15000, 20000, 50000]
+        else:
+            # Default quick amounts when no history
+            quick_amounts = [5000, 10000, 15000, 20000, 50000]
+        
+        # Ensure we have at least 5 amounts
+        default_amounts = [5000, 10000, 15000, 20000, 50000]
+        while len(quick_amounts) < 5:
+            for da in default_amounts:
+                if da not in quick_amounts:
+                    quick_amounts.append(da)
+                    break
+        quick_amounts = sorted(quick_amounts[:5])
+        
+        # Create category hint
+        if count > 0:
+            min_baht = satang_to_baht(min_amount)
+            max_baht = satang_to_baht(max_amount)
+            category_hint = f"ปกติคุณใช้ {int(min_baht)}-{int(max_baht)} บาท"
+        else:
+            category_hint = None
+        
+        # Format recent transactions
+        recent_transactions = []
+        for t in recent:
+            recent_transactions.append({
+                "amount": t.amount,
+                "formatted": satang_to_baht(t.amount),
+                "note": t.note or "",
+                "date": t.occurred_at.strftime('%Y-%m-%d') if t.occurred_at else None
+            })
+        
+        return {
+            "suggestions": {
+                "avg_amount": avg_amount,
+                "avg_formatted": satang_to_baht(avg_amount),
+                "min_amount": min_amount,
+                "max_amount": max_amount,
+                "typical_range": f"{int(satang_to_baht(min_amount))}-{int(satang_to_baht(max_amount))} บาท" if count > 0 else None,
+                "quick_amounts": quick_amounts,
+                "quick_amounts_formatted": [satang_to_baht(a) for a in quick_amounts],
+                "transaction_count": count
+            },
+            "recent_transactions": recent_transactions,
+            "category_hint": category_hint
+        }
+

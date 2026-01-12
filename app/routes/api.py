@@ -1160,6 +1160,89 @@ def get_analytics_trends(project_id):
         }), 500
 
 
+@bp.route('/projects/<project_id>/analytics/amount-suggestions', methods=['GET'])
+def get_amount_suggestions(project_id):
+    """Get smart amount suggestions based on spending history"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        category_id = request.args.get('category_id')
+        type = request.args.get('type', 'expense')
+        
+        # Validate type
+        if type not in ['expense', 'income']:
+            return jsonify({
+                "error": {"message": "Type must be 'expense' or 'income'"}
+            }), 400
+
+        # Get suggestions
+        data = AnalyticsService.get_amount_suggestions(project_id, category_id, type)
+
+        return jsonify(data), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/notes/suggestions', methods=['GET'])
+def get_notes_suggestions(project_id):
+    """Get auto-complete suggestions for transaction notes"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        query = request.args.get('q', '').strip()
+        category_id = request.args.get('category_id')
+        limit = min(int(request.args.get('limit', 10)), 20)
+        
+        from sqlalchemy import func, distinct
+        from app.models.transaction import Transaction
+        
+        # Base query for notes
+        base_query = db.session.query(
+            Transaction.note,
+            func.count(Transaction.id).label('usage_count')
+        ).filter(
+            Transaction.project_id == project_id,
+            Transaction.note.isnot(None),
+            Transaction.note != '',
+            Transaction.deleted_at.is_(None)
+        )
+        
+        # Filter by category if provided
+        if category_id:
+            base_query = base_query.filter(Transaction.category_id == category_id)
+        
+        # Filter by search query
+        if query:
+            base_query = base_query.filter(Transaction.note.ilike(f'%{query}%'))
+        
+        # Group and order by usage
+        suggestions = base_query.group_by(Transaction.note).order_by(
+            func.count(Transaction.id).desc()
+        ).limit(limit).all()
+        
+        return jsonify({
+            "suggestions": [
+                {
+                    "note": s.note,
+                    "usage_count": s.usage_count
+                }
+                for s in suggestions if s.note
+            ]
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
 # ============================================================
 # BUDGETS
 # ============================================================
@@ -2505,6 +2588,239 @@ def get_custom_aggregation(project_id):
         return jsonify(result), 200
 
     except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+# ============================================================
+# QUICK TEMPLATES
+# ============================================================
+
+@bp.route('/projects/<project_id>/quick-templates', methods=['GET'])
+def get_quick_templates(project_id):
+    """Get quick templates for a project"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.models.quick_template import QuickTemplate
+        
+        include_suggestions = request.args.get('include_suggestions', 'false').lower() == 'true'
+        
+        # Get active templates
+        templates = QuickTemplate.get_active_templates(project_id, limit=10)
+        
+        result = {
+            "templates": [t.to_dict() for t in templates]
+        }
+        
+        # Include AI-generated suggestions if requested
+        if include_suggestions:
+            result["suggestions"] = QuickTemplate.generate_from_frequent_transactions(project_id, limit=5)
+        
+        return jsonify(result), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/quick-templates', methods=['POST'])
+def create_quick_template(project_id):
+    """Create a quick template"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.models.quick_template import QuickTemplate
+        from app.utils.helpers import baht_to_satang
+        
+        user = get_current_user()
+        data = request.get_json()
+        
+        # Validate required fields
+        if not data.get('name'):
+            return jsonify({
+                "error": {"message": "Template name is required"}
+            }), 400
+        
+        if not data.get('amount'):
+            return jsonify({
+                "error": {"message": "Amount is required"}
+            }), 400
+        
+        # Convert amount to satang
+        amount = baht_to_satang(float(data['amount']))
+        
+        template = QuickTemplate(
+            project_id=project_id,
+            user_id=user.id,
+            name=data.get('name'),
+            icon=data.get('icon', '📝'),
+            category_id=data.get('category_id'),
+            amount=amount,
+            note=data.get('note'),
+            type=data.get('type', 'expense'),
+            is_auto_generated=data.get('is_auto_generated', False)
+        )
+        
+        db.session.add(template)
+        db.session.commit()
+        
+        return jsonify({
+            "template": template.to_dict()
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/quick-templates/<template_id>', methods=['PUT'])
+def update_quick_template(project_id, template_id):
+    """Update a quick template"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.models.quick_template import QuickTemplate
+        from app.utils.helpers import baht_to_satang
+        
+        template = QuickTemplate.query.filter_by(
+            id=template_id,
+            project_id=project_id
+        ).first()
+        
+        if not template:
+            return jsonify({
+                "error": {"message": "Template not found"}
+            }), 404
+        
+        data = request.get_json()
+        
+        # Update fields
+        if 'name' in data:
+            template.name = data['name']
+        if 'icon' in data:
+            template.icon = data['icon']
+        if 'category_id' in data:
+            template.category_id = data['category_id']
+        if 'amount' in data:
+            template.amount = baht_to_satang(float(data['amount']))
+        if 'note' in data:
+            template.note = data['note']
+        if 'type' in data:
+            template.type = data['type']
+        if 'sort_order' in data:
+            template.sort_order = data['sort_order']
+        if 'is_active' in data:
+            template.is_active = data['is_active']
+        
+        db.session.commit()
+        
+        return jsonify({
+            "template": template.to_dict()
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/quick-templates/<template_id>', methods=['DELETE'])
+def delete_quick_template(project_id, template_id):
+    """Delete (deactivate) a quick template"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.models.quick_template import QuickTemplate
+        
+        template = QuickTemplate.query.filter_by(
+            id=template_id,
+            project_id=project_id
+        ).first()
+        
+        if not template:
+            return jsonify({
+                "error": {"message": "Template not found"}
+            }), 404
+        
+        # Soft delete by marking inactive
+        template.is_active = False
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": "ลบ template เรียบร้อยแล้ว"
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/quick-templates/<template_id>/use', methods=['POST'])
+def use_quick_template(project_id, template_id):
+    """Use a quick template to create a transaction"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.models.quick_template import QuickTemplate
+        from datetime import datetime
+        
+        user = get_current_user()
+        
+        template = QuickTemplate.query.filter_by(
+            id=template_id,
+            project_id=project_id,
+            is_active=True
+        ).first()
+        
+        if not template:
+            return jsonify({
+                "error": {"message": "Template not found"}
+            }), 404
+        
+        # Get optional overrides from request
+        data = request.get_json() or {}
+        
+        # Create transaction using template values (with optional overrides)
+        transaction = TransactionService.create_transaction(
+            project_id=project_id,
+            user_id=user.id,
+            type=data.get('type', template.type),
+            category_id=data.get('category_id', template.category_id),
+            amount=data.get('amount', template.amount / 100),  # Convert satang to baht for service
+            occurred_at=data.get('occurred_at', datetime.now().isoformat()),
+            note=data.get('note', template.note)
+        )
+        
+        # Increment template usage
+        template.increment_usage()
+        db.session.commit()
+        
+        return jsonify({
+            "transaction": transaction.to_dict(include_category=True),
+            "message": f"บันทึกจาก {template.name} สำเร็จ"
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
         return jsonify({
             "error": {"message": str(e)}
         }), 500

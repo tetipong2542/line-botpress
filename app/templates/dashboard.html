@@ -154,6 +154,27 @@
         </div>
     </div>
 
+    <!-- Quick Templates (1-tap transaction) -->
+    <div class="section" id="quick-templates-section">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="zap"></i>
+                บันทึกด่วน
+            </h2>
+            <button class="btn-text" onclick="openCreateTemplateModal()">
+                <i data-lucide="plus"></i>
+                เพิ่ม
+            </button>
+        </div>
+        <div id="quick-templates-list" class="quick-templates-list">
+            <!-- Populated by JavaScript -->
+            <div class="quick-template-empty" id="quick-templates-empty">
+                <i data-lucide="sparkles"></i>
+                <span>ยังไม่มี template<br>ระบบจะสร้างอัตโนมัติจากรายการที่ใช้บ่อย</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Recent Transactions -->
     <div class="section">
         <div class="section-header">
@@ -246,16 +267,33 @@
                 </div>
             </div>
 
-            <!-- รายละเอียด -->
+            <!-- รายละเอียด (with auto-complete) -->
             <div class="form-group">
                 <label class="form-label">รายละเอียด (ไม่บังคับ)</label>
-                <textarea class="form-textarea" id="transaction-note" placeholder="เช่น: ซื้อของที่ห้าง"
-                    rows="2"></textarea>
+                <div class="autocomplete-wrapper">
+                    <textarea class="form-textarea" id="transaction-note" placeholder="เช่น: ซื้อของที่ห้าง" rows="2"
+                        autocomplete="off"></textarea>
+                    <div id="note-suggestions" class="autocomplete-dropdown" style="display: none;">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
             </div>
 
             <!-- จำนวนเงิน -->
             <div class="form-group">
                 <label class="form-label">จำนวนเงิน (THB)</label>
+
+                <!-- Smart Amount Hint -->
+                <div id="amount-hint" class="amount-hint" style="display: none;">
+                    <i data-lucide="lightbulb"></i>
+                    <span id="amount-hint-text"></span>
+                </div>
+
+                <!-- Quick Amount Buttons -->
+                <div id="quick-amount-buttons" class="quick-amount-buttons" style="display: none;">
+                    <!-- Populated by JavaScript -->
+                </div>
+
                 <div class="amount-input-wrapper">
                     <span class="currency">฿</span>
                     <input type="number" class="form-input amount-input" id="transaction-amount" placeholder="0.00"
@@ -503,6 +541,187 @@
         }
     });
 
+    // ===== SMART AMOUNT SUGGESTIONS =====
+    let amountSuggestionsCache = {};
+
+    async function loadAmountSuggestions(categoryId, type) {
+        const hintEl = document.getElementById('amount-hint');
+        const hintTextEl = document.getElementById('amount-hint-text');
+        const quickButtonsEl = document.getElementById('quick-amount-buttons');
+
+        // Reset
+        hintEl.style.display = 'none';
+        quickButtonsEl.style.display = 'none';
+
+        if (!categoryId) return;
+
+        // Check cache
+        const cacheKey = `${categoryId}_${type}`;
+        if (amountSuggestionsCache[cacheKey]) {
+            displayAmountSuggestions(amountSuggestionsCache[cacheKey]);
+            return;
+        }
+
+        try {
+            const data = await API.get(buildApiUrl(`analytics/amount-suggestions?category_id=${categoryId}&type=${type}`));
+            amountSuggestionsCache[cacheKey] = data;
+            displayAmountSuggestions(data);
+        } catch (error) {
+            console.error('Error loading amount suggestions:', error);
+        }
+    }
+
+    function displayAmountSuggestions(data) {
+        const hintEl = document.getElementById('amount-hint');
+        const hintTextEl = document.getElementById('amount-hint-text');
+        const quickButtonsEl = document.getElementById('quick-amount-buttons');
+
+        // Show hint if available
+        if (data.category_hint) {
+            hintTextEl.textContent = data.category_hint;
+            hintEl.style.display = 'flex';
+            lucide.createIcons();
+        }
+
+        // Show quick amount buttons
+        if (data.suggestions && data.suggestions.quick_amounts_formatted) {
+            const amounts = data.suggestions.quick_amounts_formatted;
+            quickButtonsEl.innerHTML = amounts.map(amount => `
+                <button type="button" class="quick-amount-btn" onclick="setQuickAmount(${amount})">
+                    ฿${amount.toLocaleString('th-TH')}
+                </button>
+            `).join('');
+            quickButtonsEl.style.display = 'flex';
+        }
+    }
+
+    function setQuickAmount(amount) {
+        document.getElementById('transaction-amount').value = amount;
+        // Highlight the button
+        document.querySelectorAll('.quick-amount-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+
+    // ===== AUTO-COMPLETE NOTES =====
+    let noteDebounceTimer = null;
+    let currentSuggestionIndex = -1;
+
+    const noteInput = document.getElementById('transaction-note');
+    const noteSuggestions = document.getElementById('note-suggestions');
+
+    // Debounced search for notes
+    noteInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+
+        // Clear previous timer
+        if (noteDebounceTimer) clearTimeout(noteDebounceTimer);
+
+        // Hide suggestions if query is too short
+        if (query.length < 2) {
+            noteSuggestions.style.display = 'none';
+            return;
+        }
+
+        // Debounce API call
+        noteDebounceTimer = setTimeout(async () => {
+            const categoryId = document.getElementById('transaction-category').value;
+            await loadNoteSuggestions(query, categoryId);
+        }, 300);
+    });
+
+    async function loadNoteSuggestions(query, categoryId) {
+        try {
+            let url = buildApiUrl(`notes/suggestions?q=${encodeURIComponent(query)}`);
+            if (categoryId) url += `&category_id=${categoryId}`;
+
+            const data = await API.get(url);
+            displayNoteSuggestions(data.suggestions);
+        } catch (error) {
+            console.error('Error loading note suggestions:', error);
+            noteSuggestions.style.display = 'none';
+        }
+    }
+
+    function displayNoteSuggestions(suggestions) {
+        if (!suggestions || suggestions.length === 0) {
+            noteSuggestions.style.display = 'none';
+            return;
+        }
+
+        noteSuggestions.innerHTML = suggestions.map((s, index) => `
+            <div class="autocomplete-item" data-index="${index}" onclick="selectNoteSuggestion('${escapeHtml(s.note)}')">
+                <span class="suggestion-text">${highlightMatch(s.note, noteInput.value)}</span>
+                <span class="suggestion-count">${s.usage_count}x</span>
+            </div>
+        `).join('');
+
+        noteSuggestions.style.display = 'block';
+        currentSuggestionIndex = -1;
+    }
+
+    function selectNoteSuggestion(note) {
+        noteInput.value = note;
+        noteSuggestions.style.display = 'none';
+        noteInput.focus();
+    }
+
+    function highlightMatch(text, query) {
+        const regex = new RegExp(`(${query})`, 'gi');
+        return text.replace(regex, '<strong>$1</strong>');
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML.replace(/'/g, "\\'");
+    }
+
+    // Keyboard navigation for suggestions
+    noteInput.addEventListener('keydown', (e) => {
+        const items = noteSuggestions.querySelectorAll('.autocomplete-item');
+        if (items.length === 0 || noteSuggestions.style.display === 'none') return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            currentSuggestionIndex = Math.min(currentSuggestionIndex + 1, items.length - 1);
+            updateSuggestionHighlight(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            currentSuggestionIndex = Math.max(currentSuggestionIndex - 1, 0);
+            updateSuggestionHighlight(items);
+        } else if (e.key === 'Enter' && currentSuggestionIndex >= 0) {
+            e.preventDefault();
+            const selectedItem = items[currentSuggestionIndex];
+            if (selectedItem) {
+                selectNoteSuggestion(selectedItem.querySelector('.suggestion-text').textContent);
+            }
+        } else if (e.key === 'Escape') {
+            noteSuggestions.style.display = 'none';
+        }
+    });
+
+    function updateSuggestionHighlight(items) {
+        items.forEach((item, index) => {
+            item.classList.toggle('highlighted', index === currentSuggestionIndex);
+        });
+    }
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.autocomplete-wrapper')) {
+            noteSuggestions.style.display = 'none';
+        }
+    });
+
+    // Category change - load amount suggestions
+    document.getElementById('transaction-category').addEventListener('change', (e) => {
+        const categoryId = e.target.value;
+        const type = document.getElementById('transaction-type').value;
+        if (categoryId) {
+            loadAmountSuggestions(categoryId, type);
+        }
+    });
+
     // Type change - update header color AND filter categories
     document.getElementById('transaction-type').addEventListener('change', (e) => {
         const type = e.target.value;
@@ -523,8 +742,10 @@
             if (incomeGroup) incomeGroup.style.display = '';
         }
 
-        // Reset category selection
+        // Reset category selection and hide suggestions
         if (categorySelect) categorySelect.value = '';
+        document.getElementById('amount-hint').style.display = 'none';
+        document.getElementById('quick-amount-buttons').style.display = 'none';
     });
 
     // Load last used categories on page ready
@@ -1343,10 +1564,121 @@
         }
     }
 
+    // ===== QUICK TEMPLATES =====
+    async function loadQuickTemplates() {
+        try {
+            const data = await API.get(buildApiUrl('quick-templates?include_suggestions=true'));
+            displayQuickTemplates(data);
+        } catch (error) {
+            console.error('Error loading quick templates:', error);
+        }
+    }
+
+    function displayQuickTemplates(data) {
+        const container = document.getElementById('quick-templates-list');
+        const emptyEl = document.getElementById('quick-templates-empty');
+
+        const templates = data.templates || [];
+        const suggestions = data.suggestions || [];
+
+        // Combine templates and suggestions (max 6)
+        const allItems = [...templates, ...suggestions.map(s => ({ ...s, isSuggestion: true }))].slice(0, 6);
+
+        if (allItems.length === 0) {
+            emptyEl.style.display = 'flex';
+            return;
+        }
+
+        emptyEl.style.display = 'none';
+
+        // Render template buttons
+        container.innerHTML = allItems.map(t => `
+            <button class="quick-template-btn ${t.isSuggestion ? 'suggestion' : ''}" 
+                    onclick="${t.isSuggestion ? `saveSuggestedTemplate('${escapeHtml(JSON.stringify(t))}')` : `useQuickTemplate('${t.id}')`}"
+                    title="${t.note || t.name}">
+                <span class="template-icon">${t.icon || '📝'}</span>
+                <span class="template-name">${t.name}</span>
+                <span class="template-amount">฿${(t.amount_formatted || t.amount / 100).toLocaleString('th-TH')}</span>
+                ${t.isSuggestion ? '<span class="suggestion-badge">แนะนำ</span>' : ''}
+            </button>
+        `).join('') + `<div class="quick-template-empty" id="quick-templates-empty" style="display: none;">
+                <i data-lucide="sparkles"></i>
+                <span>ยังไม่มี template<br>ระบบจะสร้างอัตโนมัติจากรายการที่ใช้บ่อย</span>
+            </div>`;
+
+        lucide.createIcons();
+    }
+
+    async function useQuickTemplate(templateId) {
+        try {
+            const data = await API.post(buildApiUrl(`quick-templates/${templateId}/use`), {});
+            showToast('success', data.message || 'บันทึกสำเร็จ');
+            await loadDashboard(); // Refresh dashboard
+        } catch (error) {
+            console.error('Error using template:', error);
+            showToast('error', 'เกิดข้อผิดพลาด');
+        }
+    }
+
+    async function saveSuggestedTemplate(jsonStr) {
+        try {
+            const suggestion = JSON.parse(jsonStr);
+
+            // Create template from suggestion
+            const template = await API.post(buildApiUrl('quick-templates'), {
+                name: suggestion.name,
+                icon: suggestion.icon,
+                category_id: suggestion.category_id,
+                amount: suggestion.amount / 100,
+                note: suggestion.note,
+                type: suggestion.type,
+                is_auto_generated: true
+            });
+
+            // Then use it
+            await useQuickTemplate(template.template.id);
+
+        } catch (error) {
+            console.error('Error saving suggested template:', error);
+            showToast('error', 'เกิดข้อผิดพลาด');
+        }
+    }
+
+    function openCreateTemplateModal() {
+        // For now, redirect to modal or alert
+        showToast('info', 'กำลังพัฒนา - สามารถสร้างจากคำแนะนำที่แสดง');
+    }
+
+    function showToast(type, message) {
+        // Simple toast notification
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
+        `;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.animation = 'fadeOut 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 2500);
+    }
+
     // Load on page ready
     document.addEventListener('DOMContentLoaded', async () => {
         await loadCategories(); // Load categories first
         await loadDashboard(); // First load - no skeleton reset needed
+        await loadQuickTemplates(); // Load quick templates
         handleDeepLink();
     });
 </script>
