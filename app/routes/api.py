@@ -3424,7 +3424,7 @@ def test_openrouter_key():
             url = "https://openrouter.ai/api/v1/chat/completions"
             
             payload = json_lib.dumps({
-                "model": "google/gemini-flash-1.5",
+                "model": "google/gemini-2.0-flash-exp:free",
                 "messages": [{"role": "user", "content": "hi"}],
                 "max_tokens": 5
             }).encode('utf-8')
