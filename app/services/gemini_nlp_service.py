@@ -779,7 +779,206 @@ class GeminiNLPService:
             "motivational_message": "ทุกก้าวเล็กๆ ในการจัดการเงินนำไปสู่เสรีภาพทางการเงิน 💪",
             "spending_analysis": f"เดือนนี้คุณใช้จ่ายไป ฿{expense:,.0f} และมีรายรับ ฿{income:,.0f}"
         }
+    
+    def detect_anomaly(self, amount: float, category_name: str, history: list) -> dict:
+        """
+        Real-time anomaly detection for new expenses
+        
+        Args:
+            amount: New transaction amount
+            category_name: Category of the transaction
+            history: Past transactions in same category
+        
+        Returns:
+            dict with is_anomaly, severity, message
+        """
+        if not history:
+            return {"is_anomaly": False, "severity": "normal", "message": None}
+        
+        # Calculate stats for this category
+        amounts = [h.get('amount', 0) for h in history]
+        if not amounts:
+            return {"is_anomaly": False, "severity": "normal", "message": None}
+        
+        avg = sum(amounts) / len(amounts)
+        max_normal = avg * 2  # 200% of average
+        high_threshold = avg * 3  # 300% of average
+        
+        if amount <= max_normal:
+            return {"is_anomaly": False, "severity": "normal", "message": None}
+        elif amount <= high_threshold:
+            return {
+                "is_anomaly": True,
+                "severity": "warning",
+                "message": f"รายจ่ายนี้สูงกว่าปกติ {(amount/avg*100):.0f}% (เฉลี่ย ฿{avg:,.0f})",
+                "average": avg,
+                "percentage_above": (amount - avg) / avg * 100
+            }
+        else:
+            return {
+                "is_anomaly": True,
+                "severity": "alert",
+                "message": f"รายจ่ายนี้สูงผิดปกติ {(amount/avg*100):.0f}% (เฉลี่ย ฿{avg:,.0f})",
+                "average": avg,
+                "percentage_above": (amount - avg) / avg * 100
+            }
+    
+    def analyze_spending_patterns(self, transactions: list, period_days: int = 30) -> dict:
+        """
+        Analyze spending patterns from transaction history
+        
+        Args:
+            transactions: List of transactions with amount, category, date, type
+            period_days: Analysis period in days
+        
+        Returns:
+            dict with patterns, trends, and insights
+        """
+        if not transactions:
+            return {"patterns": [], "trends": [], "insights": [], "summary": "ไม่มีข้อมูลเพียงพอ"}
+        
+        # Calculate category totals
+        category_totals = {}
+        daily_totals = {}
+        total_expense = 0
+        total_income = 0
+        
+        for tx in transactions:
+            amount = tx.get('amount', 0)
+            tx_type = tx.get('type', 'expense')
+            category = tx.get('category_name', 'Other')
+            tx_date = str(tx.get('date', ''))[:10]
+            
+            if tx_type == 'expense':
+                total_expense += amount
+                category_totals[category] = category_totals.get(category, 0) + amount
+                daily_totals[tx_date] = daily_totals.get(tx_date, 0) + amount
+            else:
+                total_income += amount
+        
+        # Top spending categories
+        sorted_categories = sorted(category_totals.items(), key=lambda x: x[1], reverse=True)
+        patterns = []
+        for cat, amount in sorted_categories[:5]:
+            percentage = (amount / total_expense * 100) if total_expense > 0 else 0
+            patterns.append({
+                "category": cat,
+                "amount": amount,
+                "percentage": round(percentage, 1),
+                "status": "high" if percentage > 30 else "normal"
+            })
+        
+        # Daily average
+        daily_avg = total_expense / max(len(daily_totals), 1)
+        
+        # Find trends
+        trends = []
+        for cat, amount in category_totals.items():
+            if amount / max(total_expense, 1) > 0.25:
+                trends.append({
+                    "type": "high_spending",
+                    "category": cat,
+                    "message": f"หมวด {cat} ใช้จ่ายสูงถึง {amount/total_expense*100:.0f}% ของทั้งหมด"
+                })
+        
+        # Generate insights
+        insights = []
+        if total_expense > total_income and total_income > 0:
+            insights.append(f"รายจ่ายมากกว่ารายรับ {((total_expense-total_income)/total_income*100):.0f}%")
+        if daily_avg > 0:
+            insights.append(f"เฉลี่ยใช้จ่ายวันละ ฿{daily_avg:,.0f}")
+        if patterns and patterns[0]["percentage"] > 35:
+            insights.append(f"หมวด {patterns[0]['category']} ใช้จ่ายมากที่สุด")
+        
+        return {
+            "patterns": patterns,
+            "trends": trends,
+            "insights": insights,
+            "summary": {
+                "total_expense": total_expense,
+                "total_income": total_income,
+                "daily_average": daily_avg,
+                "top_category": patterns[0]["category"] if patterns else None,
+                "savings_rate": ((total_income - total_expense) / total_income * 100) if total_income > 0 else 0
+            }
+        }
+    
+    def generate_auto_insights(self, transactions: list, budgets: list = None) -> dict:
+        """
+        Generate zero-effort insights for dashboard display
+        
+        Returns insights that appear automatically without user action
+        """
+        if not transactions:
+            return {"cards": [], "alerts": [], "tips": []}
+        
+        # Analyze patterns
+        patterns = self.analyze_spending_patterns(transactions)
+        
+        cards = []
+        alerts = []
+        tips = []
+        
+        # Spending summary card
+        summary = patterns.get("summary", {})
+        if summary.get("total_expense"):
+            cards.append({
+                "type": "summary",
+                "title": "สรุปการใช้จ่าย",
+                "value": f"฿{summary['total_expense']:,.0f}",
+                "subtitle": f"เฉลี่ย ฿{summary.get('daily_average', 0):,.0f}/วัน",
+                "icon": "wallet"
+            })
+        
+        # Top category card
+        top_patterns = patterns.get("patterns", [])[:3]
+        for p in top_patterns:
+            cards.append({
+                "type": "category",
+                "title": p["category"],
+                "value": f"฿{p['amount']:,.0f}",
+                "subtitle": f"{p['percentage']}% ของทั้งหมด",
+                "status": p["status"],
+                "icon": "pie-chart"
+            })
+        
+        # Savings rate card
+        savings_rate = summary.get("savings_rate", 0)
+        if savings_rate != 0:
+            cards.append({
+                "type": "savings",
+                "title": "อัตราการออม",
+                "value": f"{savings_rate:.0f}%",
+                "subtitle": "ขาดทุน" if savings_rate < 0 else "เกินดุล",
+                "status": "warning" if savings_rate < 0 else "success",
+                "icon": "trending-up" if savings_rate >= 0 else "trending-down"
+            })
+        
+        # Budget alerts
+        if budgets:
+            for b in budgets:
+                used = b.get("used", 0)
+                limit = b.get("limit", 1)
+                if limit > 0 and used / limit > 0.8:
+                    alerts.append({
+                        "type": "budget_warning",
+                        "category": b.get("category"),
+                        "message": f"งบ {b.get('category')} ใช้ไป {used/limit*100:.0f}%",
+                        "severity": "alert" if used >= limit else "warning"
+                    })
+        
+        # Tips based on patterns
+        for trend in patterns.get("trends", []):
+            tips.append(trend.get("message", ""))
+        
+        return {
+            "cards": cards[:6],  # Max 6 cards
+            "alerts": alerts[:5],
+            "tips": tips[:3],
+            "last_updated": datetime.now().isoformat()
+        }
 
 
 # Singleton instance
 gemini_nlp = GeminiNLPService()
+

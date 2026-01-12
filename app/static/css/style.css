@@ -7346,3 +7346,211 @@ a:focus-visible {
 [data-theme="dark"] .ai-tip-item {
     background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(245, 158, 11, 0.1) 100%);
 }
+
+/* ===== AI INSIGHTS CARD (ZERO-EFFORT) ===== */
+
+.ai-insights-card {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(99, 102, 241, 0.05) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.ai-insights-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+.ai-insights-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.ai-insights-title i {
+    width: 18px;
+    height: 18px;
+    color: #8B5CF6;
+}
+
+.ai-auto-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+    color: white;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ai-insights-content {
+    padding: 14px 16px;
+}
+
+.ai-insights-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.ai-insights-loading i {
+    width: 18px;
+    height: 18px;
+    color: #8B5CF6;
+}
+
+.ai-insights-empty {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 14px;
+    padding: 16px;
+    margin: 0;
+}
+
+.ai-insights-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.ai-insight-mini-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.ai-insight-mini-card i {
+    width: 18px;
+    height: 18px;
+    color: #8B5CF6;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.ai-insight-mini-card.warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.08) 100%);
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
+.ai-insight-mini-card.warning i {
+    color: #f59e0b;
+}
+
+.ai-insight-mini-card.success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.08) 100%);
+    border-color: rgba(16, 185, 129, 0.2);
+}
+
+.ai-insight-mini-card.success i {
+    color: #10b981;
+}
+
+.ai-insight-mini-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.ai-insight-mini-title {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+
+.ai-insight-mini-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.ai-insight-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    border-radius: 10px;
+    font-size: 13px;
+}
+
+.ai-insight-alert i {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.ai-insight-alert.warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: #b45309;
+}
+
+.ai-insight-alert.warning i {
+    color: #f59e0b;
+}
+
+.ai-insight-alert.danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: #b91c1c;
+}
+
+.ai-insight-alert.danger i {
+    color: #ef4444;
+}
+
+.ai-insight-tips {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.ai-insight-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.ai-insight-tip i {
+    width: 14px;
+    height: 14px;
+    color: #f59e0b;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+/* Dark Mode */
+[data-theme="dark"] .ai-insights-card {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(99, 102, 241, 0.08) 100%);
+}
+
+[data-theme="dark"] .ai-insight-mini-card {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .ai-insight-alert.warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+}
+
+[data-theme="dark"] .ai-insight-alert.danger {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+}

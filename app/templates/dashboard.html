@@ -110,6 +110,25 @@
         </button>
     </div>
 
+    <!-- AI Insights Card (Zero-Effort) -->
+    <div class="section" id="ai-insights-section">
+        <div class="ai-insights-card">
+            <div class="ai-insights-header">
+                <div class="ai-insights-title">
+                    <i data-lucide="sparkles"></i>
+                    <span>AI Insights</span>
+                </div>
+                <span class="ai-auto-badge">Auto</span>
+            </div>
+            <div id="ai-insights-content" class="ai-insights-content">
+                <div class="ai-insights-loading">
+                    <i data-lucide="loader" class="spinning"></i>
+                    <span>กำลังวิเคราะห์...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Month Comparison -->
     <div class="section" id="month-comparison-section" style="display: none;">
         <div class="comparison-card">
@@ -2040,7 +2059,79 @@
         await loadCategories(); // Load categories first
         await loadDashboard(); // First load - no skeleton reset needed
         await loadQuickTemplates(); // Load quick templates
+        loadAIInsights(); // Load AI insights (async, no await)
         handleDeepLink();
     });
+
+    // ===== AUTO AI INSIGHTS =====
+    async function loadAIInsights() {
+        const contentEl = document.getElementById('ai-insights-content');
+
+        try {
+            const response = await fetch('/api/v1/ai/auto-insights');
+            const data = await response.json();
+
+            if (!data.success || !data.insights) {
+                contentEl.innerHTML = '<p class="ai-insights-empty">ยังไม่มีข้อมูลเพียงพอ</p>';
+                lucide.createIcons();
+                return;
+            }
+
+            const insights = data.insights;
+            let html = '';
+
+            // Cards
+            if (insights.cards && insights.cards.length > 0) {
+                html += '<div class="ai-insights-grid">';
+                insights.cards.forEach(card => {
+                    const statusClass = card.status === 'warning' ? 'warning' :
+                        card.status === 'success' ? 'success' : '';
+                    html += `
+                        <div class="ai-insight-mini-card ${statusClass}">
+                            <i data-lucide="${card.icon || 'info'}"></i>
+                            <div class="ai-insight-mini-content">
+                                <div class="ai-insight-mini-title">${card.title}</div>
+                                <div class="ai-insight-mini-value">${card.value}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            // Alerts
+            if (insights.alerts && insights.alerts.length > 0) {
+                insights.alerts.forEach(alert => {
+                    const alertClass = alert.severity === 'alert' ? 'danger' : 'warning';
+                    html += `
+                        <div class="ai-insight-alert ${alertClass}">
+                            <i data-lucide="alert-circle"></i>
+                            <span>${alert.message}</span>
+                        </div>
+                    `;
+                });
+            }
+
+            // Tips
+            if (insights.tips && insights.tips.length > 0) {
+                html += '<div class="ai-insight-tips">';
+                insights.tips.forEach(tip => {
+                    html += `<div class="ai-insight-tip"><i data-lucide="lightbulb"></i><span>${tip}</span></div>`;
+                });
+                html += '</div>';
+            }
+
+            if (!html) {
+                html = '<p class="ai-insights-empty">บันทึกรายการเพิ่มเพื่อดู insights</p>';
+            }
+
+            contentEl.innerHTML = html;
+            lucide.createIcons();
+
+        } catch (error) {
+            console.error('Load AI Insights error:', error);
+            contentEl.innerHTML = '<p class="ai-insights-empty">ไม่สามารถโหลด insights</p>';
+        }
+    }
 </script>
 {% endblock %}

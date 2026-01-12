@@ -3651,3 +3651,164 @@ def get_tax_estimation():
             "success": False,
             "error": str(e)
         }), 500
+
+
+# ============================================================
+# OPTION 2: SMART AUTO-CATEGORIZE & INSIGHTS
+# ============================================================
+
+@bp.route('/ai/check-anomaly', methods=['POST'])
+def check_anomaly():
+    """Real-time anomaly detection for new expenses"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.services.gemini_nlp_service import gemini_nlp
+        from app.models.transaction import Transaction
+        
+        user = get_current_user()
+        project_id = user.current_project_id
+        data = request.get_json()
+        
+        amount = data.get('amount', 0)
+        category_id = data.get('category_id')
+        
+        if not project_id or not category_id:
+            return jsonify({"success": True, "anomaly": {"is_anomaly": False}}), 200
+        
+        # Get past transactions in same category
+        three_months_ago = datetime.now() - timedelta(days=90)
+        history = Transaction.query.filter(
+            Transaction.project_id == project_id,
+            Transaction.category_id == category_id,
+            Transaction.type == 'expense',
+            Transaction.created_at >= three_months_ago
+        ).all()
+        
+        history_list = [{"amount": tx.amount / 100} for tx in history]
+        
+        # Detect anomaly
+        result = gemini_nlp.detect_anomaly(amount, "", history_list)
+        
+        return jsonify({
+            "success": True,
+            "anomaly": result
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@bp.route('/ai/spending-patterns', methods=['GET'])
+def get_spending_patterns():
+    """Get spending pattern analysis"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.services.gemini_nlp_service import gemini_nlp
+        from app.models.transaction import Transaction
+        
+        user = get_current_user()
+        project_id = user.current_project_id
+        
+        if not project_id:
+            return jsonify({"error": {"message": "No project selected"}}), 400
+        
+        # Get period from query
+        days = request.args.get('days', 30, type=int)
+        start_date = datetime.now() - timedelta(days=days)
+        
+        transactions = Transaction.query.filter(
+            Transaction.project_id == project_id,
+            Transaction.created_at >= start_date
+        ).all()
+        
+        tx_list = [{
+            "amount": tx.amount / 100,
+            "type": tx.type,
+            "category_name": tx.category.name if tx.category else "Other",
+            "date": tx.created_at.strftime("%Y-%m-%d")
+        } for tx in transactions]
+        
+        patterns = gemini_nlp.analyze_spending_patterns(tx_list, days)
+        
+        return jsonify({
+            "success": True,
+            "patterns": patterns
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@bp.route('/ai/auto-insights', methods=['GET'])
+def get_auto_insights():
+    """Get zero-effort auto-generated insights for dashboard"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.services.gemini_nlp_service import gemini_nlp
+        from app.models.transaction import Transaction
+        from app.models.budget import Budget
+        
+        user = get_current_user()
+        project_id = user.current_project_id
+        
+        if not project_id:
+            return jsonify({"success": True, "insights": {"cards": [], "alerts": [], "tips": []}}), 200
+        
+        # Get current month transactions
+        now = datetime.now()
+        start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        transactions = Transaction.query.filter(
+            Transaction.project_id == project_id,
+            Transaction.created_at >= start_of_month
+        ).all()
+        
+        tx_list = [{
+            "amount": tx.amount / 100,
+            "type": tx.type,
+            "category_name": tx.category.name if tx.category else "Other",
+            "date": tx.created_at.strftime("%Y-%m-%d")
+        } for tx in transactions]
+        
+        # Get budgets
+        budgets = Budget.query.filter_by(project_id=project_id).all()
+        budget_list = []
+        for b in budgets:
+            # Calculate used amount for this budget
+            used_amount = sum(
+                tx.amount / 100 for tx in transactions 
+                if tx.category_id == b.category_id and tx.type == 'expense'
+            )
+            budget_list.append({
+                "category": b.category.name if b.category else "Unknown",
+                "limit": b.amount / 100,
+                "used": used_amount
+            })
+        
+        insights = gemini_nlp.generate_auto_insights(tx_list, budget_list)
+        
+        return jsonify({
+            "success": True,
+            "insights": insights
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
