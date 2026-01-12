@@ -38,35 +38,84 @@
         </button>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="summary-section">
-        <div class="summary-card income">
-            <div class="summary-icon">
-                <i data-lucide="trending-up"></i>
+    <!-- Summary Cards with Recurring Breakdown -->
+    <div class="analytics-summary-grid">
+        <!-- Row 1: Income Breakdown -->
+        <div class="summary-row income-row">
+            <div class="summary-card regular-income">
+                <div class="summary-icon">
+                    <i data-lucide="circle"></i>
+                </div>
+                <div class="summary-content">
+                    <div class="summary-label">ปกติ รายรับ</div>
+                    <div class="summary-amount">฿0</div>
+                </div>
             </div>
-            <div class="summary-content">
-                <div class="summary-label">รายรับเดือนนี้</div>
-                <div class="summary-amount">฿0</div>
+
+            <div class="summary-card recurring-income">
+                <div class="summary-icon">
+                    <i data-lucide="repeat"></i>
+                </div>
+                <div class="summary-content">
+                    <div class="summary-label">ประจำ รายรับ</div>
+                    <div class="summary-amount">฿0</div>
+                </div>
+            </div>
+
+            <div class="summary-card total-income highlight">
+                <div class="summary-icon">
+                    <i data-lucide="trending-up"></i>
+                </div>
+                <div class="summary-content">
+                    <div class="summary-label">รวม รายรับ</div>
+                    <div class="summary-amount">฿0</div>
+                </div>
             </div>
         </div>
 
-        <div class="summary-card expense">
-            <div class="summary-icon">
-                <i data-lucide="trending-down"></i>
+        <!-- Row 2: Expense Breakdown -->
+        <div class="summary-row expense-row">
+            <div class="summary-card regular-expense">
+                <div class="summary-icon">
+                    <i data-lucide="circle"></i>
+                </div>
+                <div class="summary-content">
+                    <div class="summary-label">ปกติ รายจ่าย</div>
+                    <div class="summary-amount">฿0</div>
+                </div>
             </div>
-            <div class="summary-content">
-                <div class="summary-label">รายจ่ายเดือนนี้</div>
-                <div class="summary-amount">฿350</div>
+
+            <div class="summary-card recurring-expense">
+                <div class="summary-icon">
+                    <i data-lucide="repeat"></i>
+                </div>
+                <div class="summary-content">
+                    <div class="summary-label">ประจำ รายจ่าย</div>
+                    <div class="summary-amount">฿0</div>
+                </div>
+            </div>
+
+            <div class="summary-card total-expense highlight">
+                <div class="summary-icon">
+                    <i data-lucide="trending-down"></i>
+                </div>
+                <div class="summary-content">
+                    <div class="summary-label">รวม รายจ่าย</div>
+                    <div class="summary-amount">฿0</div>
+                </div>
             </div>
         </div>
 
-        <div class="summary-card balance">
-            <div class="summary-icon">
-                <i data-lucide="wallet"></i>
-            </div>
-            <div class="summary-content">
-                <div class="summary-label">คงเหลือ</div>
-                <div class="summary-amount">-฿350</div>
+        <!-- Row 3: Net Balance (Full Width) -->
+        <div class="summary-row balance-row">
+            <div class="summary-card net-balance highlight">
+                <div class="summary-icon">
+                    <i data-lucide="wallet"></i>
+                </div>
+                <div class="summary-content">
+                    <div class="summary-label">คงเหลือสุทธิ</div>
+                    <div class="summary-amount">฿0</div>
+                </div>
             </div>
         </div>
     </div>

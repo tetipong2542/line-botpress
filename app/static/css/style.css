@@ -8497,3 +8497,405 @@ a:focus-visible {
     background: #374151 !important;
     color: #9ca3af !important;
 }
+
+/* ============================================================================
+   ANALYTICS PAGE: SUMMARY GRID WITH RECURRING BREAKDOWN
+   ============================================================================ */
+
+.analytics-summary-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.summary-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+/* Balance row spans full width */
+.summary-row.balance-row {
+    grid-template-columns: 1fr;
+}
+
+.summary-row.balance-row .summary-card {
+    max-width: 100%;
+}
+
+/* Summary Card Base Styles */
+.analytics-summary-grid .summary-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    min-height: 90px;
+}
+
+.analytics-summary-grid .summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.analytics-summary-grid .summary-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.analytics-summary-grid .summary-icon i {
+    width: 24px;
+    height: 24px;
+}
+
+.analytics-summary-grid .summary-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.analytics-summary-grid .summary-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.analytics-summary-grid .summary-amount {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+}
+
+/* Highlight Cards (Total cards) */
+.analytics-summary-grid .summary-card.highlight {
+    border-width: 2px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.analytics-summary-grid .summary-card.highlight .summary-label {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.analytics-summary-grid .summary-card.highlight .summary-amount {
+    font-size: 24px;
+}
+
+/* Regular Income - Blue Light */
+.analytics-summary-grid .summary-card.regular-income {
+    background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+    border-color: #93c5fd;
+}
+
+.analytics-summary-grid .summary-card.regular-income .summary-icon {
+    background: #3b82f6;
+    color: #ffffff;
+}
+
+.analytics-summary-grid .summary-card.regular-income .summary-amount {
+    color: #1e40af;
+}
+
+/* Recurring Income - Purple Light */
+.analytics-summary-grid .summary-card.recurring-income {
+    background: linear-gradient(135deg, #ede9fe 0%, #f5f3ff 100%);
+    border-color: #c4b5fd;
+}
+
+.analytics-summary-grid .summary-card.recurring-income .summary-icon {
+    background: #8b5cf6;
+    color: #ffffff;
+}
+
+.analytics-summary-grid .summary-card.recurring-income .summary-amount {
+    color: #6d28d9;
+}
+
+/* Total Income - Green */
+.analytics-summary-grid .summary-card.total-income {
+    background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%);
+    border-color: #10b981;
+}
+
+.analytics-summary-grid .summary-card.total-income .summary-icon {
+    background: #10b981;
+    color: #ffffff;
+}
+
+.analytics-summary-grid .summary-card.total-income .summary-amount {
+    color: #047857;
+}
+
+/* Regular Expense - Orange Light */
+.analytics-summary-grid .summary-card.regular-expense {
+    background: linear-gradient(135deg, #fed7aa 0%, #ffedd5 100%);
+    border-color: #fdba74;
+}
+
+.analytics-summary-grid .summary-card.regular-expense .summary-icon {
+    background: #f97316;
+    color: #ffffff;
+}
+
+.analytics-summary-grid .summary-card.regular-expense .summary-amount {
+    color: #c2410c;
+}
+
+/* Recurring Expense - Pink Light */
+.analytics-summary-grid .summary-card.recurring-expense {
+    background: linear-gradient(135deg, #fce7f3 0%, #fdf2f8 100%);
+    border-color: #f9a8d4;
+}
+
+.analytics-summary-grid .summary-card.recurring-expense .summary-icon {
+    background: #ec4899;
+    color: #ffffff;
+}
+
+.analytics-summary-grid .summary-card.recurring-expense .summary-amount {
+    color: #be185d;
+}
+
+/* Total Expense - Red */
+.analytics-summary-grid .summary-card.total-expense {
+    background: linear-gradient(135deg, #fecaca 0%, #fee2e2 100%);
+    border-color: #ef4444;
+}
+
+.analytics-summary-grid .summary-card.total-expense .summary-icon {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+.analytics-summary-grid .summary-card.total-expense .summary-amount {
+    color: #b91c1c;
+}
+
+/* Net Balance - Dynamic Color */
+.analytics-summary-grid .summary-card.net-balance {
+    background: linear-gradient(135deg, #f3f4f6 0%, #ffffff 100%);
+    border-color: #9ca3af;
+}
+
+.analytics-summary-grid .summary-card.net-balance .summary-icon {
+    background: #6b7280;
+    color: #ffffff;
+}
+
+.analytics-summary-grid .summary-card.net-balance .summary-amount {
+    color: #374151;
+    font-size: 28px;
+}
+
+/* Net balance positive (green) */
+.analytics-summary-grid .summary-card.net-balance.positive {
+    background: linear-gradient(135deg, #d1fae5 0%, #ecfdf5 100%);
+    border-color: #10b981;
+}
+
+.analytics-summary-grid .summary-card.net-balance.positive .summary-icon {
+    background: #10b981;
+}
+
+.analytics-summary-grid .summary-card.net-balance.positive .summary-amount {
+    color: #047857;
+}
+
+/* Net balance negative (red) */
+.analytics-summary-grid .summary-card.net-balance.negative {
+    background: linear-gradient(135deg, #fecaca 0%, #fee2e2 100%);
+    border-color: #ef4444;
+}
+
+.analytics-summary-grid .summary-card.net-balance.negative .summary-icon {
+    background: #ef4444;
+}
+
+.analytics-summary-grid .summary-card.net-balance.negative .summary-amount {
+    color: #b91c1c;
+}
+
+/* ===== RESPONSIVE: MOBILE ===== */
+@media (max-width: 768px) {
+    .summary-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .analytics-summary-grid .summary-card {
+        padding: 14px;
+        min-height: 80px;
+    }
+
+    .analytics-summary-grid .summary-icon {
+        width: 44px;
+        height: 44px;
+    }
+
+    .analytics-summary-grid .summary-icon i {
+        width: 22px;
+        height: 22px;
+    }
+
+    .analytics-summary-grid .summary-label {
+        font-size: 12px;
+    }
+
+    .analytics-summary-grid .summary-amount {
+        font-size: 18px;
+    }
+
+    .analytics-summary-grid .summary-card.highlight .summary-amount {
+        font-size: 22px;
+    }
+
+    .analytics-summary-grid .summary-card.net-balance .summary-amount {
+        font-size: 24px;
+    }
+
+    /* Make highlight cards more prominent on mobile */
+    .analytics-summary-grid .summary-card.highlight {
+        border-width: 2px;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    }
+}
+
+/* ===== DARK MODE ===== */
+[data-theme="dark"] .analytics-summary-grid .summary-card {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .analytics-summary-grid .summary-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .analytics-summary-grid .summary-label {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .analytics-summary-grid .summary-amount {
+    color: #f9fafb;
+}
+
+/* Dark mode: Regular Income */
+[data-theme="dark"] .analytics-summary-grid .summary-card.regular-income {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+/* Dark mode: Recurring Income */
+[data-theme="dark"] .analytics-summary-grid .summary-card.recurring-income {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.05) 100%);
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+/* Dark mode: Total Income */
+[data-theme="dark"] .analytics-summary-grid .summary-card.total-income {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%);
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+/* Dark mode: Regular Expense */
+[data-theme="dark"] .analytics-summary-grid .summary-card.regular-expense {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(249, 115, 22, 0.05) 100%);
+    border-color: rgba(249, 115, 22, 0.3);
+}
+
+/* Dark mode: Recurring Expense */
+[data-theme="dark"] .analytics-summary-grid .summary-card.recurring-expense {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.15) 0%, rgba(236, 72, 153, 0.05) 100%);
+    border-color: rgba(236, 72, 153, 0.3);
+}
+
+/* Dark mode: Total Expense */
+[data-theme="dark"] .analytics-summary-grid .summary-card.total-expense {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* Dark mode: Net Balance */
+[data-theme="dark"] .analytics-summary-grid .summary-card.net-balance {
+    background: linear-gradient(135deg, rgba(107, 114, 128, 0.2) 0%, rgba(107, 114, 128, 0.1) 100%);
+    border-color: rgba(107, 114, 128, 0.3);
+}
+
+[data-theme="dark"] .analytics-summary-grid .summary-card.net-balance.positive {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%);
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+[data-theme="dark"] .analytics-summary-grid .summary-card.net-balance.negative {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* ============================================================================
+   ANALYTICS PAGE: CATEGORY BREAKDOWN (Regular + Recurring)
+   ============================================================================ */
+
+.category-stat-breakdown {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.category-stat-breakdown .breakdown-item {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.category-stat-breakdown .breakdown-item.regular {
+    background: rgba(59, 130, 246, 0.1);
+    color: #1e40af;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.category-stat-breakdown .breakdown-item.recurring {
+    background: rgba(139, 92, 246, 0.1);
+    color: #6d28d9;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+/* Dark mode */
+[data-theme="dark"] .category-stat-breakdown .breakdown-item.regular {
+    background: rgba(59, 130, 246, 0.15);
+    color: #93c5fd;
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .category-stat-breakdown .breakdown-item.recurring {
+    background: rgba(139, 92, 246, 0.15);
+    color: #c4b5fd;
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .category-stat-breakdown {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .category-stat-breakdown .breakdown-item {
+        font-size: 11px;
+        padding: 3px 8px;
+    }
+}

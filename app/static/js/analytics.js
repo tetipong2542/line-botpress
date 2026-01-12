@@ -1,8 +1,9 @@
-// Analytics Page JavaScript
+// Analytics Page JavaScript with Recurring Transactions Support
 // State
 let currentMonth = new Date().getMonth(); // 0-11
 let currentYear = new Date().getFullYear();
 let charts = {}; // Store chart instances
+let recurringData = null; // Store recurring rules
 
 // Thai month names
 const thaiMonths = [
@@ -18,28 +19,121 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupExportButton();
 });
 
-// Load all analytics data
+// Load all analytics data including recurring
 async function loadAnalytics() {
     const month = formatMonthParam();
 
     try {
         // Fetch all data in parallel
-        const [summary, categoryData, trendsData] = await Promise.all([
+        const [summary, categoryData, trendsData, recurringRules] = await Promise.all([
             API.get(buildApiUrl(`analytics/summary?month=${month}`)),
             API.get(buildApiUrl(`analytics/by-category?month=${month}&type=expense`)),
-            API.get(buildApiUrl(`analytics/trends?months=6`))
+            API.get(buildApiUrl(`analytics/trends?months=6`)),
+            loadRecurringData()
         ]);
 
-        // Update UI
-        updateSummaryCards(summary.summary);
-        renderCategoryChart(categoryData.categories);
-        renderTrendsChart(trendsData.trends);
-        updateTopCategories(categoryData.categories);
+        recurringData = recurringRules;
+
+        // Calculate recurring for current month
+        const recurringMonthly = calculateMonthlyRecurring(recurringRules, currentMonth, currentYear);
+
+        // Update UI with combined data
+        updateSummaryCardsWithRecurring(summary.summary, recurringMonthly);
+        renderCategoryChart(categoryData.categories, recurringMonthly.expense_by_category);
+        renderTrendsChart(trendsData.trends, recurringRules);
+        updateTopCategories(categoryData.categories, recurringMonthly.expense_by_category);
 
     } catch (error) {
         console.error('Analytics load error:', error);
         showToast(error.message || 'ไม่สามารถโหลดข้อมูลได้', 'error');
     }
+}
+
+// Load recurring rules
+async function loadRecurringData() {
+    try {
+        const response = await API.get(buildApiUrl('recurring?active_only=true'));
+        return response.success ? response.recurring : [];
+    } catch (error) {
+        console.error('Recurring load error:', error);
+        return [];
+    }
+}
+
+// Calculate recurring forecast for a specific month
+function calculateMonthlyRecurring(rules, month, year) {
+    const startDate = new Date(year, month, 1);
+    const endDate = new Date(year, month + 1, 0); // Last day of month
+
+    let totalIncome = 0;
+    let totalExpense = 0;
+    const expenseByCategory = {}; // {category_id: {amount, name, icon, color}}
+
+    rules.forEach(rule => {
+        let nextDate = new Date(rule.next_run_date);
+
+        // Generate occurrences within the month
+        while (nextDate <= endDate) {
+            if (nextDate >= startDate && nextDate <= endDate) {
+                // This occurrence falls within the target month
+                const amount = rule.amount / 100; // Convert satang to baht
+
+                if (rule.type === 'income') {
+                    totalIncome += amount;
+                } else {
+                    totalExpense += amount;
+
+                    // Track by category
+                    const catId = rule.category_id;
+                    if (!expenseByCategory[catId]) {
+                        expenseByCategory[catId] = {
+                            category_id: catId,
+                            category_name: rule.category ? rule.category.name : 'ไม่ระบุ',
+                            category_icon: rule.category ? rule.category.icon : 'help-circle',
+                            category_color: rule.category ? rule.category.color : '#6b7280',
+                            amount: 0,
+                            formatted: 0,
+                            count: 0
+                        };
+                    }
+                    expenseByCategory[catId].amount += amount;
+                    expenseByCategory[catId].formatted += amount;
+                    expenseByCategory[catId].count += 1;
+                }
+            }
+
+            // Calculate next occurrence
+            nextDate = getNextOccurrence(nextDate, rule.freq, rule.day_of_week, rule.day_of_month);
+        }
+    });
+
+    return {
+        income: totalIncome,
+        expense: totalExpense,
+        balance: totalIncome - totalExpense,
+        expense_by_category: Object.values(expenseByCategory)
+    };
+}
+
+// Get next occurrence date for recurring rule
+function getNextOccurrence(currentDate, freq, dayOfWeek, dayOfMonth) {
+    const next = new Date(currentDate);
+
+    if (freq === 'daily') {
+        next.setDate(next.getDate() + 1);
+    } else if (freq === 'weekly') {
+        next.setDate(next.getDate() + 7);
+    } else if (freq === 'monthly') {
+        next.setMonth(next.getMonth() + 1);
+        if (dayOfMonth) {
+            const lastDay = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate();
+            next.setDate(Math.min(dayOfMonth, lastDay));
+        }
+    } else if (freq === 'yearly') {
+        next.setFullYear(next.getFullYear() + 1);
+    }
+
+    return next;
 }
 
 // Format month parameter (YYYY-MM)
@@ -48,31 +142,55 @@ function formatMonthParam() {
     return `${currentYear}-${month}`;
 }
 
-// Update summary cards
-function updateSummaryCards(summary) {
-    // Income
-    const incomeEl = document.querySelector('.summary-card.income .summary-amount');
-    if (incomeEl) {
-        incomeEl.textContent = `฿${summary.income.formatted.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
-    }
+// Update summary cards with regular + recurring breakdown
+function updateSummaryCardsWithRecurring(summary, recurringMonthly) {
+    // Regular income
+    const regularIncome = summary.income.formatted;
+    const recurringIncome = recurringMonthly.income;
+    const totalIncome = regularIncome + recurringIncome;
 
-    // Expense
-    const expenseEl = document.querySelector('.summary-card.expense .summary-amount');
-    if (expenseEl) {
-        expenseEl.textContent = `฿${summary.expense.formatted.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
-    }
+    // Regular expense
+    const regularExpense = summary.expense.formatted;
+    const recurringExpense = recurringMonthly.expense;
+    const totalExpense = regularExpense + recurringExpense;
 
-    // Balance
-    const balanceEl = document.querySelector('.summary-card.balance .summary-amount');
-    if (balanceEl) {
-        balanceEl.textContent = `฿${summary.balance.formatted.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
-        // Update color based on positive/negative
-        balanceEl.style.color = summary.balance.total >= 0 ? 'var(--success)' : 'var(--error)';
+    // Net balance
+    const netBalance = totalIncome - totalExpense;
+
+    // Update cards
+    document.querySelector('.summary-card.regular-income .summary-amount').textContent =
+        `฿${regularIncome.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+
+    document.querySelector('.summary-card.recurring-income .summary-amount').textContent =
+        `฿${recurringIncome.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+
+    document.querySelector('.summary-card.total-income .summary-amount').textContent =
+        `฿${totalIncome.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+
+    document.querySelector('.summary-card.regular-expense .summary-amount').textContent =
+        `฿${regularExpense.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+
+    document.querySelector('.summary-card.recurring-expense .summary-amount').textContent =
+        `฿${recurringExpense.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+
+    document.querySelector('.summary-card.total-expense .summary-amount').textContent =
+        `฿${totalExpense.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+
+    const balanceCard = document.querySelector('.summary-card.net-balance');
+    const balanceAmount = balanceCard.querySelector('.summary-amount');
+    balanceAmount.textContent = `฿${netBalance.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
+
+    // Update balance card styling
+    balanceCard.classList.remove('positive', 'negative');
+    if (netBalance >= 0) {
+        balanceCard.classList.add('positive');
+    } else {
+        balanceCard.classList.add('negative');
     }
 }
 
-// Render Vertical Bar Chart (Category Breakdown)
-function renderCategoryChart(categories) {
+// Render Stacked Bar Chart (Category Breakdown: Regular + Recurring)
+function renderCategoryChart(regularCategories, recurringCategories) {
     const canvas = document.getElementById('categoryChart');
     if (!canvas) return;
 
@@ -82,6 +200,39 @@ function renderCategoryChart(categories) {
     if (charts.category) {
         charts.category.destroy();
     }
+
+    // Merge regular and recurring categories
+    const categoryMap = {};
+
+    // Add regular categories
+    regularCategories.forEach(cat => {
+        categoryMap[cat.category_id] = {
+            id: cat.category_id,
+            name: cat.category_name,
+            icon: cat.category_icon,
+            color: cat.category_color,
+            regular: cat.formatted,
+            recurring: 0
+        };
+    });
+
+    // Add recurring categories
+    recurringCategories.forEach(cat => {
+        if (categoryMap[cat.category_id]) {
+            categoryMap[cat.category_id].recurring = cat.formatted;
+        } else {
+            categoryMap[cat.category_id] = {
+                id: cat.category_id,
+                name: cat.category_name,
+                icon: cat.category_icon,
+                color: cat.category_color,
+                regular: 0,
+                recurring: cat.formatted
+            };
+        }
+    });
+
+    const categories = Object.values(categoryMap);
 
     if (categories.length === 0) {
         // Show empty state
@@ -96,45 +247,58 @@ function renderCategoryChart(categories) {
     }
 
     // Prepare data
-    const labels = categories.map(c => c.category_name);
-    const amounts = categories.map(c => c.formatted);
-    const colors = categories.map(c => c.category_color || '#ef4444');
+    const labels = categories.map(c => c.name);
+    const regularData = categories.map(c => c.regular);
+    const recurringData = categories.map(c => c.recurring);
 
-    // Create chart
+    // Create stacked chart
     charts.category = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
-            datasets: [{
-                label: 'จำนวนเงิน (฿)',
-                data: amounts,
-                backgroundColor: colors,
-                borderColor: colors,
-                borderWidth: 1
-            }]
+            datasets: [
+                {
+                    label: 'ปกติ',
+                    data: regularData,
+                    backgroundColor: '#3b82f6',
+                    borderColor: '#3b82f6',
+                    borderWidth: 1
+                },
+                {
+                    label: 'ประจำ',
+                    data: recurringData,
+                    backgroundColor: '#8b5cf6',
+                    borderColor: '#8b5cf6',
+                    borderWidth: 1
+                }
+            ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: false
+                    display: true,
+                    position: 'top'
                 },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
-                            const cat = categories[context.dataIndex];
-                            return [
-                                `จำนวน: ฿${cat.formatted.toLocaleString('th-TH')}`,
-                                `รายการ: ${cat.count} รายการ`,
-                                `สัดส่วน: ${cat.percentage}%`
-                            ];
+                        footer: function(context) {
+                            const index = context[0].dataIndex;
+                            const regular = regularData[index];
+                            const recurring = recurringData[index];
+                            const total = regular + recurring;
+                            return `รวม: ฿${total.toLocaleString('th-TH', {minimumFractionDigits: 2})}`;
                         }
                     }
                 }
             },
             scales: {
+                x: {
+                    stacked: true
+                },
                 y: {
+                    stacked: true,
                     beginAtZero: true,
                     ticks: {
                         callback: function(value) {
@@ -147,8 +311,8 @@ function renderCategoryChart(categories) {
     });
 }
 
-// Render Line Chart (Trends)
-function renderTrendsChart(trends) {
+// Render Stacked Line Chart (Trends: Regular + Recurring)
+function renderTrendsChart(trends, recurringRules) {
     const canvas = document.getElementById('trendsChart');
     if (!canvas) return;
 
@@ -171,32 +335,67 @@ function renderTrendsChart(trends) {
         return;
     }
 
-    // Prepare data
+    // Calculate recurring for each month in trends
     const labels = trends.map(t => t.month_label);
-    const incomeData = trends.map(t => t.income / 100); // Convert satang to baht
-    const expenseData = trends.map(t => t.expense / 100); // Convert satang to baht
+    const regularIncomeData = trends.map(t => t.income / 100);
+    const regularExpenseData = trends.map(t => t.expense / 100);
 
-    // Create chart
+    // Calculate recurring for each month
+    const recurringIncomeData = [];
+    const recurringExpenseData = [];
+
+    trends.forEach(trend => {
+        // Parse month from trend (format: "Jan 2026" -> month: 0, year: 2026)
+        const [monthName, yearStr] = trend.month_label.split(' ');
+        const monthIndex = thaiMonths.indexOf(monthName);
+        const year = parseInt(yearStr) - 543; // Convert BE to AD
+
+        const recurringMonthly = calculateMonthlyRecurring(recurringRules, monthIndex, year);
+        recurringIncomeData.push(recurringMonthly.income);
+        recurringExpenseData.push(recurringMonthly.expense);
+    });
+
+    // Create stacked chart
     charts.trends = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
             datasets: [
                 {
-                    label: 'รายรับ',
-                    data: incomeData,
+                    label: 'รายรับ (ปกติ)',
+                    data: regularIncomeData,
                     borderColor: '#10b981',
                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
                     tension: 0.4,
-                    fill: true
+                    fill: true,
+                    stack: 'income'
                 },
                 {
-                    label: 'รายจ่าย',
-                    data: expenseData,
+                    label: 'รายรับ (ประจำ)',
+                    data: recurringIncomeData,
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    stack: 'income'
+                },
+                {
+                    label: 'รายจ่าย (ปกติ)',
+                    data: regularExpenseData,
                     borderColor: '#ef4444',
                     backgroundColor: 'rgba(239, 68, 68, 0.1)',
                     tension: 0.4,
-                    fill: true
+                    fill: true,
+                    stack: 'expense'
+                },
+                {
+                    label: 'รายจ่าย (ประจำ)',
+                    data: recurringExpenseData,
+                    borderColor: '#ec4899',
+                    backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    stack: 'expense'
                 }
             ]
         },
@@ -209,6 +408,8 @@ function renderTrendsChart(trends) {
                     position: 'top'
                 },
                 tooltip: {
+                    mode: 'index',
+                    intersect: false,
                     callbacks: {
                         label: function(context) {
                             return context.dataset.label + ': ฿' +
@@ -231,10 +432,49 @@ function renderTrendsChart(trends) {
     });
 }
 
-// Update top categories list
-function updateTopCategories(categories) {
+// Update top categories list with regular + recurring
+function updateTopCategories(regularCategories, recurringCategories) {
     const container = document.getElementById('top-categories-list');
     if (!container) return;
+
+    // Merge regular and recurring
+    const categoryMap = {};
+
+    regularCategories.forEach(cat => {
+        categoryMap[cat.category_id] = {
+            id: cat.category_id,
+            name: cat.category_name,
+            icon: cat.category_icon,
+            color: cat.category_color,
+            regular: cat.formatted,
+            recurring: 0,
+            total: cat.formatted,
+            budget: cat.budget,
+            count: cat.count
+        };
+    });
+
+    recurringCategories.forEach(cat => {
+        if (categoryMap[cat.category_id]) {
+            categoryMap[cat.category_id].recurring = cat.formatted;
+            categoryMap[cat.category_id].total += cat.formatted;
+            categoryMap[cat.category_id].count += cat.count;
+        } else {
+            categoryMap[cat.category_id] = {
+                id: cat.category_id,
+                name: cat.category_name,
+                icon: cat.category_icon,
+                color: cat.category_color,
+                regular: 0,
+                recurring: cat.formatted,
+                total: cat.formatted,
+                budget: null,
+                count: cat.count
+            };
+        }
+    });
+
+    const categories = Object.values(categoryMap);
 
     if (categories.length === 0) {
         container.innerHTML = `
@@ -247,22 +487,35 @@ function updateTopCategories(categories) {
         return;
     }
 
-    // Render all categories (not just top 3)
+    // Sort by total amount
+    categories.sort((a, b) => b.total - a.total);
+
+    // Calculate percentage
+    const totalAmount = categories.reduce((sum, cat) => sum + cat.total, 0);
+    categories.forEach(cat => {
+        cat.percentage = totalAmount > 0 ? ((cat.total / totalAmount) * 100).toFixed(1) : 0;
+    });
+
+    // Render all categories
     container.innerHTML = categories.map(cat => `
         <div class="category-stat-item">
             <div class="category-stat-header">
                 <div class="category-stat-info">
-                    <i data-lucide="${cat.category_icon}" style="color: ${cat.category_color}"></i>
-                    <span class="category-stat-name">${cat.category_name}</span>
+                    <i data-lucide="${cat.icon}" style="color: ${cat.color}"></i>
+                    <span class="category-stat-name">${cat.name}</span>
                 </div>
                 <div class="category-stat-amount">
-                    <span class="amount">฿${cat.formatted.toLocaleString('th-TH')}</span>
+                    <span class="amount">฿${cat.total.toLocaleString('th-TH')}</span>
                     <span class="percentage">${cat.percentage}%</span>
                 </div>
             </div>
+            <div class="category-stat-breakdown">
+                <span class="breakdown-item regular">ปกติ: ฿${cat.regular.toLocaleString('th-TH')}</span>
+                <span class="breakdown-item recurring">ประจำ: ฿${cat.recurring.toLocaleString('th-TH')}</span>
+            </div>
             <div class="category-stat-bar">
                 <div class="category-stat-progress"
-                     style="width: ${cat.percentage}%; background: ${cat.category_color}"></div>
+                     style="width: ${cat.percentage}%; background: ${cat.color}"></div>
             </div>
             ${cat.budget ? `
                 <div class="category-stat-budget">
@@ -332,14 +585,14 @@ function setupExportButton() {
             // Get current month range
             const month = formatMonthParam();
             const [year, monthNum] = month.split('-');
-            
+
             // Calculate start and end dates
             const startDate = `${year}-${monthNum}-01`;
             const lastDay = new Date(parseInt(year), parseInt(monthNum), 0).getDate();
             const endDate = `${year}-${monthNum}-${lastDay}`;
 
             // Build export URL
-            const exportUrl = buildApiUrl(`export/transactions`) + 
+            const exportUrl = buildApiUrl(`export/transactions`) +
                             `?start_date=${startDate}&end_date=${endDate}`;
 
             // Download file
@@ -357,7 +610,7 @@ function setupExportButton() {
         } catch (error) {
             console.error('Export error:', error);
             showToast('ไม่สามารถ Export ได้', 'error');
-            
+
             exportBtn.disabled = false;
             exportBtn.innerHTML = originalContent;
             lucide.createIcons();
