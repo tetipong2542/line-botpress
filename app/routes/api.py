@@ -3045,3 +3045,209 @@ def ai_weekly_summary(project_id):
         return jsonify({
             "error": {"message": str(e)}
         }), 500
+
+
+# ============================================================
+# GEMINI API KEY MANAGEMENT
+# ============================================================
+
+@bp.route('/user/gemini-key', methods=['GET'])
+def get_gemini_key_status():
+    """Check if user has a custom Gemini API key"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        user = get_current_user()
+        
+        # Check if user has a custom key stored
+        # We store encrypted key in user settings or a separate table
+        has_key = bool(user.gemini_api_key if hasattr(user, 'gemini_api_key') else None)
+        key_suffix = ''
+        
+        if has_key and user.gemini_api_key:
+            # Show last 4 characters
+            key_suffix = '...' + user.gemini_api_key[-4:]
+        
+        return jsonify({
+            "has_key": has_key,
+            "key_suffix": key_suffix
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/user/gemini-key', methods=['POST'])
+def save_gemini_key():
+    """Save user's custom Gemini API key"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        user = get_current_user()
+        data = request.get_json()
+        api_key = data.get('api_key', '').strip()
+        
+        if not api_key:
+            return jsonify({
+                "error": {"message": "API Key is required"}
+            }), 400
+        
+        # Validate key format (starts with AIza)
+        if not api_key.startswith('AIza'):
+            return jsonify({
+                "error": {"message": "Invalid API Key format. Gemini keys start with 'AIza'"}
+            }), 400
+        
+        # Save to user
+        user.gemini_api_key = api_key
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": "API Key saved successfully"
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/user/gemini-key', methods=['DELETE'])
+def delete_gemini_key():
+    """Remove user's custom Gemini API key"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        user = get_current_user()
+        user.gemini_api_key = None
+        db.session.commit()
+        
+        return jsonify({
+            "success": True,
+            "message": "API Key removed"
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/user/gemini-key/test', methods=['POST'])
+def test_gemini_key():
+    """Test if a Gemini API key is valid"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        data = request.get_json()
+        api_key = data.get('api_key', '').strip()
+        
+        if not api_key:
+            return jsonify({
+                "success": False,
+                "error": "API Key is required"
+            }), 400
+        
+        # Test the key by making a simple API call
+        try:
+            import google.generativeai as genai
+            
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel('gemini-2.0-flash-exp')
+            
+            # Simple test prompt
+            response = model.generate_content(
+                "ตอบว่า 'สวัสดี' เท่านั้น",
+                generation_config={
+                    'temperature': 0.1,
+                    'max_output_tokens': 10,
+                }
+            )
+            
+            if response and response.text:
+                return jsonify({
+                    "success": True,
+                    "message": "API Key is valid"
+                }), 200
+            else:
+                return jsonify({
+                    "success": False,
+                    "error": "No response from API"
+                }), 200
+                
+        except Exception as api_error:
+            error_msg = str(api_error)
+            if 'API_KEY_INVALID' in error_msg or 'invalid' in error_msg.lower():
+                return jsonify({
+                    "success": False,
+                    "error": "API Key ไม่ถูกต้อง"
+                }), 200
+            elif 'quota' in error_msg.lower():
+                return jsonify({
+                    "success": False,
+                    "error": "API Key หมด quota"
+                }), 200
+            else:
+                return jsonify({
+                    "success": False,
+                    "error": f"Error: {error_msg[:100]}"
+                }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@bp.route('/user/ai-status', methods=['GET'])
+def get_ai_status():
+    """Get AI availability status"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        import os
+        user = get_current_user()
+        
+        # Check user's custom key first
+        user_key = getattr(user, 'gemini_api_key', None)
+        system_key = os.environ.get('GEMINI_API_KEY')
+        
+        if user_key:
+            return jsonify({
+                "is_available": True,
+                "source": "user",
+                "message": "ใช้ API Key ของคุณ"
+            }), 200
+        elif system_key:
+            return jsonify({
+                "is_available": True,
+                "source": "system",
+                "message": "ใช้ค่าเริ่มต้นของระบบ"
+            }), 200
+        else:
+            return jsonify({
+                "is_available": False,
+                "source": None,
+                "message": "ยังไม่มี API Key"
+            }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500

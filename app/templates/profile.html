@@ -140,6 +140,44 @@
         </div>
     </div>
 
+    <!-- AI Settings (Gemini) -->
+    <div class="section">
+        <div class="section-header">
+            <h2>
+                <i data-lucide="sparkles"></i>
+                ตั้งค่า AI (Gemini)
+            </h2>
+        </div>
+
+        <div class="settings-list">
+            <!-- AI Status -->
+            <div class="setting-item" id="ai-status-item">
+                <div class="setting-icon" id="ai-status-icon"
+                    style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%);">
+                    <i data-lucide="bot"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title" id="ai-status-title">กำลังตรวจสอบ...</div>
+                    <div class="setting-desc" id="ai-status-desc">ตรวจสอบสถานะ AI</div>
+                </div>
+            </div>
+
+            <!-- Configure API Key -->
+            <div class="setting-item" id="gemini-settings-btn" style="cursor: pointer;">
+                <div class="setting-icon" style="background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);">
+                    <i data-lucide="key"></i>
+                </div>
+                <div class="setting-info">
+                    <div class="setting-title">ตั้งค่า Gemini API Key</div>
+                    <div class="setting-desc">ใส่ API Key ของคุณเพื่อใช้ฟีเจอร์ AI</div>
+                </div>
+                <div class="setting-chevron">
+                    <i data-lucide="chevron-right"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- LINE Chatbot Connection -->
     <div class="section">
         <div class="section-header">
@@ -339,6 +377,84 @@
                 <button class="btn-primary" id="save-notification-settings">
                     <i data-lucide="check"></i>
                     <span>บันทึกการตั้งค่า</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Gemini API Settings -->
+<div class="modal" id="gemini-settings-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header" style="background: linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%); color: white;">
+            <h2>
+                <i data-lucide="sparkles"></i>
+                ตั้งค่า Gemini AI
+            </h2>
+            <button class="modal-close" style="color: white;">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <!-- Info Box -->
+            <div class="gemini-info-box">
+                <i data-lucide="info"></i>
+                <div>
+                    <strong>Gemini API Key คืออะไร?</strong>
+                    <p>API Key คือกุญแจที่ช่วยให้แอปเชื่อมต่อกับ AI ของ Google เพื่อใช้ฟีเจอร์อัจฉริยะต่างๆ เช่น:</p>
+                    <ul>
+                        <li>🤖 AI Financial Coach</li>
+                        <li>📊 Smart Auto-Categorization</li>
+                        <li>💬 Natural Language Processing</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- API Key Input -->
+            <div class="form-group" style="margin-top: 20px;">
+                <label class="form-label">Gemini API Key</label>
+                <div class="api-key-input-group">
+                    <input type="password" id="gemini-api-key-input" class="form-input"
+                        placeholder="ใส่ API Key ของคุณ..." autocomplete="off">
+                    <button type="button" id="toggle-key-visibility" class="btn-icon">
+                        <i data-lucide="eye"></i>
+                    </button>
+                </div>
+                <small class="form-help">
+                    รับ API Key ฟรีได้ที่
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">
+                        Google AI Studio →
+                    </a>
+                </small>
+            </div>
+
+            <!-- Test Button -->
+            <div style="margin-top: 20px;">
+                <button class="btn-secondary" id="test-gemini-key" style="width: 100%;">
+                    <i data-lucide="flask-conical"></i>
+                    <span>ทดสอบ API Key</span>
+                </button>
+            </div>
+
+            <!-- Test Result -->
+            <div id="gemini-test-result" class="test-result" style="display: none;">
+                <!-- Populated by JavaScript -->
+            </div>
+
+            <!-- Save Button -->
+            <div style="margin-top: 20px;">
+                <button class="btn-primary" id="save-gemini-key" style="width: 100%;">
+                    <i data-lucide="save"></i>
+                    <span>บันทึก API Key</span>
+                </button>
+            </div>
+
+            <!-- Remove Key -->
+            <div style="margin-top: 12px; text-align: center;">
+                <button class="btn-text-danger" id="remove-gemini-key">
+                    <i data-lucide="trash-2"></i>
+                    <span>ลบ API Key</span>
                 </button>
             </div>
         </div>
@@ -607,5 +723,221 @@
 
     // Check status on page load
     checkChatbotStatus();
+
+    // ========================================
+    // Gemini AI Settings
+    // ========================================
+    const geminiModal = document.getElementById('gemini-settings-modal');
+    const geminiCloseBtn = geminiModal.querySelector('.modal-close');
+    const geminiOverlay = geminiModal.querySelector('.modal-overlay');
+    const geminiApiKeyInput = document.getElementById('gemini-api-key-input');
+
+    function openGeminiSettings() {
+        geminiModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        loadGeminiApiKey();
+        lucide.createIcons();
+    }
+
+    function closeGeminiSettings() {
+        geminiModal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // Open modal
+    document.getElementById('gemini-settings-btn').addEventListener('click', openGeminiSettings);
+    geminiCloseBtn.addEventListener('click', closeGeminiSettings);
+    geminiOverlay.addEventListener('click', closeGeminiSettings);
+
+    // Toggle password visibility
+    document.getElementById('toggle-key-visibility').addEventListener('click', () => {
+        const input = geminiApiKeyInput;
+        const icon = document.querySelector('#toggle-key-visibility i');
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.setAttribute('data-lucide', 'eye-off');
+        } else {
+            input.type = 'password';
+            icon.setAttribute('data-lucide', 'eye');
+        }
+        lucide.createIcons();
+    });
+
+    // Load saved API Key
+    async function loadGeminiApiKey() {
+        try {
+            const response = await fetch('/api/v1/user/gemini-key');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.has_key) {
+                    geminiApiKeyInput.placeholder = '••••••••••••••••' + (data.key_suffix || '');
+                } else {
+                    geminiApiKeyInput.placeholder = 'ใส่ API Key ของคุณ...';
+                }
+            }
+        } catch (error) {
+            console.error('Error loading Gemini key:', error);
+        }
+    }
+
+    // Test API Key
+    document.getElementById('test-gemini-key').addEventListener('click', async () => {
+        const key = geminiApiKeyInput.value.trim();
+        const resultEl = document.getElementById('gemini-test-result');
+        const testBtn = document.getElementById('test-gemini-key');
+
+        if (!key) {
+            showToast('กรุณาใส่ API Key ก่อน', 'error');
+            return;
+        }
+
+        testBtn.disabled = true;
+        testBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i> <span>กำลังทดสอบ...</span>';
+        lucide.createIcons();
+
+        try {
+            const response = await fetch('/api/v1/user/gemini-key/test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ api_key: key })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                resultEl.className = 'test-result success';
+                resultEl.innerHTML = `
+                    <i data-lucide="check-circle"></i>
+                    <div>
+                        <strong>✅ API Key ใช้งานได้!</strong>
+                        <p>พร้อมใช้ฟีเจอร์ AI ทั้งหมด</p>
+                    </div>
+                `;
+            } else {
+                resultEl.className = 'test-result error';
+                resultEl.innerHTML = `
+                    <i data-lucide="x-circle"></i>
+                    <div>
+                        <strong>❌ API Key ไม่ถูกต้อง</strong>
+                        <p>${data.error || 'ตรวจสอบ key และลองอีกครั้ง'}</p>
+                    </div>
+                `;
+            }
+
+            resultEl.style.display = 'flex';
+            lucide.createIcons();
+
+        } catch (error) {
+            console.error('Error testing key:', error);
+            resultEl.className = 'test-result error';
+            resultEl.innerHTML = `
+                <i data-lucide="x-circle"></i>
+                <div>
+                    <strong>❌ เกิดข้อผิดพลาด</strong>
+                    <p>ไม่สามารถทดสอบได้ ลองอีกครั้ง</p>
+                </div>
+            `;
+            resultEl.style.display = 'flex';
+            lucide.createIcons();
+        } finally {
+            testBtn.disabled = false;
+            testBtn.innerHTML = '<i data-lucide="flask-conical"></i> <span>ทดสอบ API Key</span>';
+            lucide.createIcons();
+        }
+    });
+
+    // Save API Key
+    document.getElementById('save-gemini-key').addEventListener('click', async () => {
+        const key = geminiApiKeyInput.value.trim();
+        const saveBtn = document.getElementById('save-gemini-key');
+
+        if (!key) {
+            showToast('กรุณาใส่ API Key ก่อน', 'error');
+            return;
+        }
+
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i> <span>กำลังบันทึก...</span>';
+        lucide.createIcons();
+
+        try {
+            const response = await fetch('/api/v1/user/gemini-key', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ api_key: key })
+            });
+
+            if (response.ok) {
+                showToast('✅ บันทึก API Key เรียบร้อย!', 'success');
+                geminiApiKeyInput.value = '';
+                closeGeminiSettings();
+                checkAIStatus(); // Refresh status
+            } else {
+                const data = await response.json();
+                showToast(data.error?.message || 'ไม่สามารถบันทึกได้', 'error');
+            }
+        } catch (error) {
+            console.error('Error saving key:', error);
+            showToast('เกิดข้อผิดพลาด', 'error');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i data-lucide="save"></i> <span>บันทึก API Key</span>';
+            lucide.createIcons();
+        }
+    });
+
+    // Remove API Key
+    document.getElementById('remove-gemini-key').addEventListener('click', async () => {
+        if (!confirm('คุณต้องการลบ API Key ออกใช่หรือไม่?\n\nฟีเจอร์ AI จะใช้ค่าเริ่มต้นของระบบ')) return;
+
+        try {
+            const response = await fetch('/api/v1/user/gemini-key', {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                showToast('ลบ API Key แล้ว', 'success');
+                geminiApiKeyInput.value = '';
+                document.getElementById('gemini-test-result').style.display = 'none';
+                closeGeminiSettings();
+                checkAIStatus();
+            }
+        } catch (error) {
+            console.error('Error removing key:', error);
+            showToast('เกิดข้อผิดพลาด', 'error');
+        }
+    });
+
+    // Check AI Status
+    async function checkAIStatus() {
+        const statusTitle = document.getElementById('ai-status-title');
+        const statusDesc = document.getElementById('ai-status-desc');
+        const statusIcon = document.getElementById('ai-status-icon');
+
+        try {
+            const response = await fetch('/api/v1/user/ai-status');
+            if (response.ok) {
+                const data = await response.json();
+
+                if (data.is_available) {
+                    statusTitle.textContent = 'AI พร้อมใช้งาน ✅';
+                    statusDesc.textContent = data.source === 'user' ? 'ใช้ API Key ของคุณ' : 'ใช้ค่าเริ่มต้นของระบบ';
+                    statusIcon.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
+                } else {
+                    statusTitle.textContent = 'AI ยังไม่พร้อม ⚠️';
+                    statusDesc.textContent = 'ต้องใส่ API Key เพื่อใช้ฟีเจอร์ AI';
+                    statusIcon.style.background = 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)';
+                }
+            }
+        } catch (error) {
+            console.error('Error checking AI status:', error);
+            statusTitle.textContent = 'ไม่สามารถตรวจสอบได้';
+            statusDesc.textContent = 'ลองรีเฟรชหน้า';
+        }
+    }
+
+    // Check AI status on page load
+    checkAIStatus();
 </script>
 {% endblock %}

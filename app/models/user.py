@@ -18,6 +18,7 @@ class User(db.Model):
     picture_url = db.Column(db.Text, nullable=True)
     email = db.Column(db.String(200), nullable=True)
     current_project_id = db.Column(db.String(50), nullable=True)
+    gemini_api_key = db.Column(db.String(200), nullable=True)  # User's custom Gemini API key
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
