@@ -85,42 +85,47 @@ class AIPlannerService:
         # Prepare transaction summary for AI
         summary = self._summarize_transactions(transactions)
         
-        system_prompt = """You are a Thai financial advisor AI. Analyze the user's spending data and create a monthly budget plan.
+        system_prompt = """คุณคือที่ปรึกษาการเงินส่วนบุคคล AI ภาษาไทย วิเคราะห์ข้อมูลการใช้จ่ายและสร้างแผนการเงินรายเดือน
 
-Return JSON only (no markdown):
+ตอบกลับเป็น JSON เท่านั้น (ห้ามใช้ markdown):
 {
     "monthly_plan": {
         "budgets": [
-            {"category": "category_name", "amount": 5000, "reason": "based on past spending"}
+            {"category": "หมวดหมู่", "amount": 5000, "reason": "เหตุผลภาษาไทย"}
         ],
         "savings_target": 5000,
         "savings_percentage": 20,
         "allocation_rule": "50/30/20"
     },
     "recurring_detected": [
-        {"name": "Netflix", "amount": 350, "frequency": "monthly", "next_date": "2026-02-01"}
+        {"name": "ชื่อรายจ่าย", "amount": 350, "frequency": "รายเดือน", "next_date": "2026-02-01"}
     ],
     "alerts": [
-        "คำเตือนสำคัญ"
+        "คำเตือนสำคัญ เช่น ใช้เงินเกินงบ"
     ],
     "tips": [
-        "คำแนะนำประหยัดเงิน"
+        "คำแนะนำประหยัดเงินภาษาไทย"
     ],
-    "summary": "สรุปภาพรวมการเงิน 2-3 ประโยค"
-}"""
+    "summary": "สรุปภาพรวมสถานการณ์การเงินของคุณ 2-3 ประโยคภาษาไทย"
+}
 
-        user_message = f"""Analyze this financial data and create a monthly plan:
+หมายเหตุสำคัญ:
+- ตอบเป็นภาษาไทยทั้งหมด
+- ให้คำแนะนำที่เป็นประโยชน์และปฏิบัติได้จริง
+- budget ควรสมจริงตามพฤติกรรมการใช้จ่าย"""
 
-Transaction Summary (last 3 months):
+        user_message = f"""วิเคราะห์ข้อมูลการเงินและสร้างแผนรายเดือน:
+
+สรุปรายการ (3 เดือนล่าสุด):
 {json.dumps(summary, ensure_ascii=False, indent=2)}
 
-Available Categories:
+หมวดหมู่ที่มี:
 {json.dumps([c.get('name') for c in categories[:15]], ensure_ascii=False)}
 
-Current Goals:
+เป้าหมายการออม:
 {json.dumps(goals or [], ensure_ascii=False)}
 
-Create a realistic monthly budget plan based on this data."""
+สร้างแผนงบประมาณรายเดือนที่สมจริงตามข้อมูลนี้ โปรดตอบเป็นภาษาไทยทั้งหมด"""
 
         ai_response = self._call_ai(api_key, model, system_prompt, user_message)
         
@@ -196,12 +201,13 @@ Create a realistic monthly budget plan based on this data."""
             },
             "recurring_detected": [],
             "alerts": [
-                "This is a basic plan. Connect OpenRouter API for AI-powered planning."
+                "ยังไม่ได้เชื่อมต่อ AI - แผนนี้เป็นแผนพื้นฐาน"
             ] if not budgets else [],
             "tips": [
-                "Track spending daily for better insights"
+                "บันทึกรายรับ-รายจ่ายทุกวันเพื่อข้อมูลที่แม่นยำขึ้น",
+                "ตั้งงบประมาณตามหลัก 50/30/20"
             ],
-            "summary": f"Income: {income:,.0f}, Expense: {expense:,.0f}, Balance: {income-expense:,.0f}"
+            "summary": f"รายรับ: ฿{income:,.0f} | รายจ่าย: ฿{expense:,.0f} | คงเหลือ: ฿{income-expense:,.0f}"
         }
     
     def detect_recurring_expenses(self, user, transactions: list) -> list:
@@ -221,21 +227,23 @@ Create a realistic monthly budget plan based on this data."""
         tx_notes = [{"note": tx.get('note', ''), "amount": tx.get('amount', 0), 
                      "date": str(tx.get('date', ''))} for tx in transactions[:100]]
         
-        system_prompt = """Analyze transactions and identify recurring expenses.
+        system_prompt = """วิเคราะห์รายการและระบุรายจ่ายประจำ (recurring expenses)
 
-Return JSON only:
+ตอบเป็น JSON เท่านั้น:
 {
     "recurring": [
         {
-            "name": "expense name",
+            "name": "ชื่อรายจ่าย",
             "amount": 500,
-            "frequency": "monthly|weekly|yearly",
+            "frequency": "รายเดือน|รายสัปดาห์|รายปี",
             "confidence": 0.95,
             "next_date": "2026-02-15",
-            "category_suggestion": "Bills"
+            "category_suggestion": "หมวดหมู่ที่แนะนำ"
         }
     ]
-}"""
+}
+
+ตอบเป็นภาษาไทยทั้งหมด"""
 
         user_message = f"Find recurring patterns in these transactions:\n{json.dumps(tx_notes, ensure_ascii=False)}"
         
@@ -364,11 +372,10 @@ Return JSON only:
                 except:
                     pass
         
-        if not result["tips"]:
             result["tips"] = [
-                "Consider SSF/RMF funds for tax deduction",
-                "Keep receipts for medical and insurance expenses",
-                "Donate to registered charities for deductions"
+                "พิจารณาลงทุน SSF/RMF เพื่อลดหย่อนภาษี",
+                "เก็บใบเสร็จค่ารักษาพยาบาลและประกันเพื่อลดหย่อน",
+                "บริจาคให้มูลนิธิที่จดทะเบียนเพื่อลดหย่อนภาษี"
             ]
         
         return result

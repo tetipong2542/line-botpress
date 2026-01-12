@@ -519,7 +519,14 @@ function renderCard(rule) {
                     </span>
                 ` : ''}
             </div>
-            
+
+            ${rule.note ? `
+                <div class="card-note">
+                    <i data-lucide="sticky-note"></i>
+                    <span>${rule.note}</span>
+                </div>
+            ` : ''}
+
             <div class="card-actions">
                 <button class="card-action-btn" onclick="editRecurring('${rule.id}')" title="แก้ไข">
                     <i data-lucide="edit-2"></i>

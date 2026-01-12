@@ -352,7 +352,13 @@
 
             <!-- จำนวนเงิน -->
             <div class="form-group">
-                <label class="form-label">จำนวนเงิน (THB)</label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label class="form-label" style="margin-bottom: 0;">จำนวนเงิน (THB)</label>
+                    <button type="button" class="btn-auto-suggest" onclick="toggleSmartAmountHint()" title="แสดงคำแนะนำจากประวัติ">
+                        <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i>
+                        Auto Suggest
+                    </button>
+                </div>
 
                 <!-- Smart Amount Hint -->
                 <div id="amount-hint" class="amount-hint" style="display: none;">

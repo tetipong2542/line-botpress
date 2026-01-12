@@ -964,7 +964,7 @@ h2 i[data-lucide] {
 .modal-container {
     position: relative;
     z-index: 2;
-    background: var(--bg-primary);
+    background: #fff;
     border-radius: 16px;
     max-width: 500px;
     width: 90%;
@@ -3805,6 +3805,36 @@ input:checked+.slider:before {
     gap: 4px;
     font-size: 13px;
     color: var(--text-secondary);
+}
+
+/* Card Note - Highlighted */
+.card-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--primary);
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text);
+}
+
+.card-note i {
+    width: 16px;
+    height: 16px;
+    margin-top: 2px;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.card-note span {
+    flex: 1;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 /* Card Actions */
@@ -8089,4 +8119,17 @@ a:focus-visible {
 
 [data-theme="dark"] .modal-footer .btn-secondary:hover {
     background: #4b5563;
+}
+
+/* ===== DARK MODE: RECURRING CARD NOTE ===== */
+
+[data-theme="dark"] .card-note {
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+    border-left-color: #10b981 !important;
+    color: #f9fafb !important;
+}
+
+[data-theme="dark"] .card-note i {
+    color: #10b981 !important;
 }
