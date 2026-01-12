@@ -3812,3 +3812,225 @@ def get_auto_insights():
             "success": False,
             "error": str(e)
         }), 500
+
+
+# ============================================================
+# OPTION 3: FUTURE FINANCIAL FORECAST
+# ============================================================
+
+@bp.route('/ai/cash-flow-forecast', methods=['GET'])
+def get_cash_flow_forecast():
+    """Predict future cash flow for 3/6/12 months"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.services.ai_forecast_service import ai_forecast
+        from app.models.transaction import Transaction
+        
+        user = get_current_user()
+        project_id = user.current_project_id
+        
+        if not project_id:
+            return jsonify({"error": {"message": "No project selected"}}), 400
+        
+        months = request.args.get('months', 3, type=int)
+        if months not in [3, 6, 12]:
+            months = 3
+        
+        # Get last 12 months of transactions
+        one_year_ago = datetime.now() - timedelta(days=365)
+        transactions = Transaction.query.filter(
+            Transaction.project_id == project_id,
+            Transaction.created_at >= one_year_ago
+        ).all()
+        
+        tx_list = [{
+            "amount": tx.amount / 100,
+            "type": tx.type,
+            "date": tx.created_at.strftime("%Y-%m-%d")
+        } for tx in transactions]
+        
+        forecast = ai_forecast.predict_cash_flow(tx_list, months)
+        
+        return jsonify({
+            "success": True,
+            "forecast": forecast
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@bp.route('/ai/what-if-simulator', methods=['POST'])
+def simulate_what_if():
+    """Simulate what-if scenarios"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.services.ai_forecast_service import ai_forecast
+        from app.models.transaction import Transaction
+        
+        user = get_current_user()
+        project_id = user.current_project_id
+        data = request.get_json()
+        
+        if not project_id:
+            return jsonify({"error": {"message": "No project selected"}}), 400
+        
+        changes = data.get('changes', {})  # {"category": percent_change}
+        
+        # Get current month transactions
+        now = datetime.now()
+        start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        transactions = Transaction.query.filter(
+            Transaction.project_id == project_id,
+            Transaction.created_at >= start_of_month
+        ).all()
+        
+        tx_list = [{
+            "amount": tx.amount / 100,
+            "type": tx.type,
+            "category_name": tx.category.name if tx.category else "Other"
+        } for tx in transactions]
+        
+        simulation = ai_forecast.simulate_what_if(tx_list, changes)
+        
+        return jsonify({
+            "success": True,
+            "simulation": simulation
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@bp.route('/ai/goal-timeline/<int:goal_id>', methods=['GET'])
+def get_goal_timeline(goal_id):
+    """Calculate timeline to reach a specific goal"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.services.ai_forecast_service import ai_forecast
+        from app.models.goal import Goal
+        from app.models.transaction import Transaction
+        
+        user = get_current_user()
+        project_id = user.current_project_id
+        
+        if not project_id:
+            return jsonify({"error": {"message": "No project selected"}}), 400
+        
+        goal = Goal.query.filter_by(id=goal_id, project_id=project_id).first()
+        if not goal:
+            return jsonify({"error": {"message": "Goal not found"}}), 404
+        
+        # Calculate average monthly savings
+        three_months_ago = datetime.now() - timedelta(days=90)
+        transactions = Transaction.query.filter(
+            Transaction.project_id == project_id,
+            Transaction.created_at >= three_months_ago
+        ).all()
+        
+        total_income = sum(tx.amount / 100 for tx in transactions if tx.type == 'income')
+        total_expense = sum(tx.amount / 100 for tx in transactions if tx.type == 'expense')
+        monthly_savings = (total_income - total_expense) / 3  # 3 months average
+        
+        timeline = ai_forecast.calculate_goal_timeline(
+            goal.target_amount / 100,
+            goal.current_amount / 100,
+            monthly_savings
+        )
+        
+        timeline["goal_name"] = goal.name
+        
+        return jsonify({
+            "success": True,
+            "timeline": timeline
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@bp.route('/ai/financial-health-score', methods=['GET'])
+def get_financial_health_score():
+    """Calculate financial health score (0-100)"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.services.ai_forecast_service import ai_forecast
+        from app.models.transaction import Transaction
+        from app.models.budget import Budget
+        from app.models.goal import Goal
+        
+        user = get_current_user()
+        project_id = user.current_project_id
+        
+        if not project_id:
+            return jsonify({"success": True, "health": {"score": 50, "status": "unknown"}}), 200
+        
+        # Get current month data
+        now = datetime.now()
+        start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        transactions = Transaction.query.filter(
+            Transaction.project_id == project_id,
+            Transaction.created_at >= start_of_month
+        ).all()
+        
+        tx_list = [{
+            "amount": tx.amount / 100,
+            "type": tx.type,
+            "category_id": tx.category_id
+        } for tx in transactions]
+        
+        # Get budgets with used amounts
+        budgets = Budget.query.filter_by(project_id=project_id).all()
+        budget_list = []
+        for b in budgets:
+            used = sum(tx.amount / 100 for tx in transactions 
+                      if tx.category_id == b.category_id and tx.type == 'expense')
+            budget_list.append({
+                "category": b.category.name if b.category else "Unknown",
+                "limit": b.amount / 100,
+                "used": used
+            })
+        
+        # Get goals
+        goals = Goal.query.filter_by(project_id=project_id).all()
+        goal_list = [{
+            "name": g.name,
+            "target": g.target_amount / 100,
+            "current": g.current_amount / 100
+        } for g in goals]
+        
+        health = ai_forecast.calculate_financial_health_score(tx_list, budget_list, goal_list)
+        
+        return jsonify({
+            "success": True,
+            "health": health
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500

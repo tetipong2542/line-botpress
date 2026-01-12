@@ -7554,3 +7554,362 @@ a:focus-visible {
     background: rgba(239, 68, 68, 0.15);
     color: #f87171;
 }
+
+/* ===== FINANCIAL HEALTH SCORE ===== */
+
+.health-score-card {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.05) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.health-score-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(16, 185, 129, 0.15);
+}
+
+.health-score-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.health-score-title i {
+    width: 18px;
+    height: 18px;
+    color: #10b981;
+}
+
+.health-score-gauge {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+}
+
+.health-score-gauge .score-number {
+    font-size: 28px;
+    font-weight: 800;
+    color: #10b981;
+}
+
+.health-score-gauge .score-number.excellent {
+    color: #10b981;
+}
+
+.health-score-gauge .score-number.good {
+    color: #3b82f6;
+}
+
+.health-score-gauge .score-number.fair {
+    color: #f59e0b;
+}
+
+.health-score-gauge .score-number.poor {
+    color: #ef4444;
+}
+
+.health-score-gauge .score-max {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.health-score-content {
+    padding: 14px 16px;
+}
+
+.health-loading {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.health-message {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    text-align: center;
+}
+
+.health-message.excellent {
+    color: #10b981;
+}
+
+.health-message.good {
+    color: #3b82f6;
+}
+
+.health-message.fair {
+    color: #f59e0b;
+}
+
+.health-message.poor {
+    color: #ef4444;
+}
+
+.health-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.health-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.health-item-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.health-item-name {
+    color: var(--text);
+}
+
+.health-item-score {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.health-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.health-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.health-bar-fill.good {
+    background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.health-bar-fill.warning {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.health-bar-fill.poor {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+.health-recommendations {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.health-rec {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.health-rec i {
+    width: 14px;
+    height: 14px;
+    color: #f59e0b;
+    flex-shrink: 0;
+}
+
+.health-empty {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 16px;
+    margin: 0;
+}
+
+/* ===== FORECAST SECTION ===== */
+
+.forecast-card {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(37, 99, 235, 0.05) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.forecast-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+.forecast-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.forecast-title i {
+    width: 18px;
+    height: 18px;
+    color: #3b82f6;
+}
+
+.forecast-period-selector {
+    display: flex;
+    gap: 6px;
+}
+
+.period-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.period-btn.active {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border-color: transparent;
+}
+
+.period-btn:hover:not(.active) {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.forecast-content {
+    padding: 14px 16px;
+}
+
+.forecast-loading {
+    display: flex;
+    justify-content: center;
+    padding: 30px;
+}
+
+.forecast-summary {
+    font-size: 14px;
+    color: var(--text);
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.forecast-chart {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 10px 0;
+}
+
+.forecast-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+}
+
+.bar-container {
+    width: 100%;
+    height: 70px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.bar {
+    width: 24px;
+    border-radius: 4px 4px 0 0;
+    min-height: 4px;
+    transition: height 0.3s ease;
+}
+
+.bar.positive {
+    background: linear-gradient(to top, #10b981, #34d399);
+}
+
+.bar.negative {
+    background: linear-gradient(to top, #ef4444, #f87171);
+}
+
+.bar-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.bar-value {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.forecast-averages {
+    display: flex;
+    gap: 12px;
+}
+
+.forecast-avg-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+
+.avg-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.avg-value {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.avg-value.income {
+    color: #10b981;
+}
+
+.avg-value.expense {
+    color: #ef4444;
+}
+
+.forecast-empty {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 20px;
+    margin: 0;
+}
+
+/* Dark Mode */
+[data-theme="dark"] .health-score-card {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.08) 100%);
+}
+
+[data-theme="dark"] .forecast-card {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(37, 99, 235, 0.08) 100%);
+}
+
+[data-theme="dark"] .forecast-avg-item {
+    background: #1f2937;
+    border-color: #374151;
+}

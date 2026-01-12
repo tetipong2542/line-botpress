@@ -129,6 +129,49 @@
         </div>
     </div>
 
+    <!-- Financial Health Score -->
+    <div class="section" id="health-score-section">
+        <div class="health-score-card">
+            <div class="health-score-header">
+                <div class="health-score-title">
+                    <i data-lucide="heart-pulse"></i>
+                    <span>สุขภาพการเงิน</span>
+                </div>
+                <div class="health-score-gauge" id="health-score-value">
+                    <span class="score-number">--</span>
+                    <span class="score-max">/100</span>
+                </div>
+            </div>
+            <div id="health-score-content" class="health-score-content">
+                <div class="health-loading">
+                    <i data-lucide="loader" class="spinning"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forecast Section -->
+    <div class="section" id="forecast-section">
+        <div class="forecast-card">
+            <div class="forecast-header">
+                <div class="forecast-title">
+                    <i data-lucide="telescope"></i>
+                    <span>พยากรณ์การเงิน</span>
+                </div>
+                <div class="forecast-period-selector">
+                    <button class="period-btn active" data-months="3">3 เดือน</button>
+                    <button class="period-btn" data-months="6">6 เดือน</button>
+                    <button class="period-btn" data-months="12">1 ปี</button>
+                </div>
+            </div>
+            <div id="forecast-content" class="forecast-content">
+                <div class="forecast-loading">
+                    <i data-lucide="loader" class="spinning"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Month Comparison -->
     <div class="section" id="month-comparison-section" style="display: none;">
         <div class="comparison-card">
@@ -2133,5 +2176,156 @@
             contentEl.innerHTML = '<p class="ai-insights-empty">ไม่สามารถโหลด insights</p>';
         }
     }
+
+    // ===== FINANCIAL HEALTH SCORE =====
+    async function loadHealthScore() {
+        const valueEl = document.getElementById('health-score-value');
+        const contentEl = document.getElementById('health-score-content');
+
+        try {
+            const response = await fetch('/api/v1/ai/financial-health-score');
+            const data = await response.json();
+
+            if (!data.success || !data.health) {
+                contentEl.innerHTML = '<p class="health-empty">ไม่มีข้อมูล</p>';
+                return;
+            }
+
+            const health = data.health;
+            const score = health.score || 0;
+            const statusClass = score >= 80 ? 'excellent' : score >= 60 ? 'good' : score >= 40 ? 'fair' : 'poor';
+
+            // Update score
+            valueEl.innerHTML = `
+                <span class="score-number ${statusClass}">${Math.round(score)}</span>
+                <span class="score-max">/100</span>
+            `;
+
+            // Build breakdown
+            let html = `<div class="health-message ${statusClass}">${health.message || ''}</div>`;
+
+            if (health.breakdown && health.breakdown.length > 0) {
+                html += '<div class="health-breakdown">';
+                health.breakdown.forEach(item => {
+                    const pct = (item.score / item.max * 100);
+                    html += `
+                        <div class="health-item">
+                            <div class="health-item-header">
+                                <span class="health-item-name">${item.category}</span>
+                                <span class="health-item-score">${Math.round(item.score)}/${item.max}</span>
+                            </div>
+                            <div class="health-bar">
+                                <div class="health-bar-fill ${item.status}" style="width: ${pct}%"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            // Recommendations
+            if (health.recommendations && health.recommendations.length > 0) {
+                html += '<div class="health-recommendations">';
+                health.recommendations.forEach(rec => {
+                    html += `<div class="health-rec"><i data-lucide="lightbulb"></i><span>${rec}</span></div>`;
+                });
+                html += '</div>';
+            }
+
+            contentEl.innerHTML = html;
+            lucide.createIcons();
+
+        } catch (error) {
+            console.error('Load Health Score error:', error);
+            contentEl.innerHTML = '<p class="health-empty">เกิดข้อผิดพลาด</p>';
+        }
+    }
+
+    // ===== FORECAST =====
+    let currentForecastMonths = 3;
+
+    async function loadForecast(months = 3) {
+        currentForecastMonths = months;
+        const contentEl = document.getElementById('forecast-content');
+
+        // Update active button
+        document.querySelectorAll('.period-btn').forEach(btn => {
+            btn.classList.toggle('active', parseInt(btn.dataset.months) === months);
+        });
+
+        contentEl.innerHTML = '<div class="forecast-loading"><i data-lucide="loader" class="spinning"></i></div>';
+        lucide.createIcons();
+
+        try {
+            const response = await fetch(`/api/v1/ai/cash-flow-forecast?months=${months}`);
+            const data = await response.json();
+
+            if (!data.success || !data.forecast) {
+                contentEl.innerHTML = '<p class="forecast-empty">ไม่มีข้อมูลเพียงพอ</p>';
+                return;
+            }
+
+            const forecast = data.forecast;
+            let html = '';
+
+            // Summary
+            html += `<div class="forecast-summary">${forecast.summary || ''}</div>`;
+
+            // Predictions chart (simple bar)
+            if (forecast.predictions && forecast.predictions.length > 0) {
+                html += '<div class="forecast-chart">';
+                const maxValue = Math.max(...forecast.predictions.map(p => Math.abs(p.predicted_balance)));
+
+                forecast.predictions.forEach(p => {
+                    const barHeight = Math.abs(p.predicted_balance) / (maxValue || 1) * 60;
+                    const barClass = p.status === 'positive' ? 'positive' : 'negative';
+                    html += `
+                        <div class="forecast-bar">
+                            <div class="bar-container">
+                                <div class="bar ${barClass}" style="height: ${barHeight}px"></div>
+                            </div>
+                            <div class="bar-label">${p.month.split(' ')[0].substring(0, 3)}</div>
+                            <div class="bar-value">฿${(p.predicted_balance / 1000).toFixed(0)}k</div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            // Averages
+            if (forecast.averages) {
+                html += `
+                    <div class="forecast-averages">
+                        <div class="forecast-avg-item">
+                            <span class="avg-label">รายรับเฉลี่ย</span>
+                            <span class="avg-value income">฿${Number(forecast.averages.income).toLocaleString()}</span>
+                        </div>
+                        <div class="forecast-avg-item">
+                            <span class="avg-label">รายจ่ายเฉลี่ย</span>
+                            <span class="avg-value expense">฿${Number(forecast.averages.expense).toLocaleString()}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            contentEl.innerHTML = html;
+            lucide.createIcons();
+
+        } catch (error) {
+            console.error('Load Forecast error:', error);
+            contentEl.innerHTML = '<p class="forecast-empty">เกิดข้อผิดพลาด</p>';
+        }
+    }
+
+    // Period button listeners
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            loadForecast(parseInt(btn.dataset.months));
+        });
+    });
+
+    // Load on page ready
+    loadHealthScore();
+    loadForecast(3);
 </script>
 {% endblock %}
