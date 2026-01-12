@@ -416,11 +416,11 @@
                 <label class="form-label">เลือก AI Provider</label>
                 <div class="provider-tabs">
                     <button type="button" class="provider-tab active" data-provider="gemini">
-                        <span class="provider-icon">🔮</span>
+                        <i data-lucide="sparkles" class="provider-icon"></i>
                         <span>Google Gemini</span>
                     </button>
                     <button type="button" class="provider-tab" data-provider="openrouter">
-                        <span class="provider-icon">🌐</span>
+                        <i data-lucide="globe" class="provider-icon"></i>
                         <span>OpenRouter</span>
                     </button>
                 </div>
@@ -475,13 +475,17 @@
 
                 <!-- Model Selector -->
                 <div class="form-group" style="margin-top: 16px;">
-                    <label class="form-label">เลือก AI Model</label>
+                    <label class="form-label">
+                        <i data-lucide="cpu"
+                            style="width: 16px; height: 16px; display: inline; vertical-align: middle;"></i>
+                        เลือก AI Model
+                    </label>
                     <select id="openrouter-model-select" class="form-select">
-                        <option value="google/gemini-2.0-flash-exp:free">🔮 Gemini 2.0 Flash (Free)</option>
-                        <option value="google/gemini-3-flash-preview">🔮 Gemini 3 Flash Preview</option>
-                        <option value="anthropic/claude-sonnet-4.5">🧠 Claude Sonnet 4.5</option>
-                        <option value="openai/gpt-5.1">💬 OpenAI GPT-5.1</option>
-                        <option value="z-ai/glm-4.7">🌐 GLM 4.7</option>
+                        <option value="google/gemini-2.0-flash-exp:free">Gemini 2.0 Flash (Free)</option>
+                        <option value="google/gemini-3-flash-preview">Gemini 3 Flash Preview</option>
+                        <option value="anthropic/claude-sonnet-4.5">Claude Sonnet 4.5</option>
+                        <option value="openai/gpt-5.1">OpenAI GPT-5.1</option>
+                        <option value="z-ai/glm-4.7">GLM 4.7</option>
                     </select>
                     <small class="form-help">Model ที่จะใช้สำหรับฟีเจอร์ AI</small>
                 </div>
@@ -845,6 +849,16 @@
         });
     });
 
+    // Clear savedKey flag when user types new key
+    ['gemini-api-key-input', 'openrouter-api-key-input'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('input', () => {
+                input.dataset.savedKey = 'false';
+            });
+        }
+    });
+
     // Load all saved API Keys
     async function loadAllApiKeys() {
         try {
@@ -900,9 +914,15 @@
         const resultEl = document.getElementById('api-test-result');
         const testBtn = document.getElementById('test-api-key');
 
-        // Skip if using saved key (masked)
-        if (!key || key.startsWith('••••')) {
-            showToast('กรุณาใส่ API Key ใหม่ก่อนทดสอบ', 'error');
+        // Skip if empty  
+        if (!key) {
+            showToast('Please enter an API Key first', 'error');
+            return;
+        }
+
+        // Skip if using saved key (masked with bullet characters)
+        if (key.includes('•') || input.dataset.savedKey === 'true') {
+            showToast('Please enter a new API Key to test', 'info');
             return;
         }
 

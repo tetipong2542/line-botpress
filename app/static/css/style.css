@@ -6934,3 +6934,62 @@ a:focus-visible {
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.15) 100%);
     color: #34d399;
 }
+
+/* ===== AI SETTINGS BUTTON STYLES ===== */
+
+#test-api-key,
+#save-api-key {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 24px;
+    min-height: 52px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 12px;
+}
+
+#test-api-key i,
+#save-api-key i {
+    width: 20px;
+    height: 20px;
+}
+
+.provider-icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* Form Select */
+.form-select {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 15px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.form-select:hover {
+    border-color: var(--primary);
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+}
+
+/* Dark Mode */
+[data-theme="dark"] .form-select {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .form-select:hover {
+    border-color: #8B5CF6;
+}
