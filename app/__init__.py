@@ -41,6 +41,15 @@ def run_auto_migrations():
                 print("✅ Auto-migration: Unique index created")
             except Exception:
                 pass  # Index may already exist
+        
+        # Migration: Add gemini_api_key if not exists
+        if 'gemini_api_key' not in columns:
+            print("📝 Auto-migration: Adding 'gemini_api_key' column...")
+            db.session.execute(text(
+                "ALTER TABLE user ADD COLUMN gemini_api_key VARCHAR(200)"
+            ))
+            db.session.commit()
+            print("✅ Auto-migration: 'gemini_api_key' column added!")
                 
     except Exception as e:
         print(f"⚠️ Auto-migration check: {e}")
