@@ -3289,7 +3289,8 @@ def get_all_ai_keys():
             },
             "openrouter": {
                 "has_key": bool(getattr(user, 'openrouter_api_key', None)),
-                "masked_key": mask_key(getattr(user, 'openrouter_api_key', None))
+                "masked_key": mask_key(getattr(user, 'openrouter_api_key', None)),
+                "model": getattr(user, 'openrouter_model', None) or 'google/gemini-2.0-flash-exp:free'
             }
         }
         
@@ -3343,6 +3344,7 @@ def save_openrouter_key():
         user = get_current_user()
         data = request.get_json()
         api_key = data.get('api_key', '').strip()
+        model = data.get('model', 'google/gemini-2.0-flash-exp:free').strip()
         
         if not api_key:
             return jsonify({
@@ -3357,6 +3359,7 @@ def save_openrouter_key():
         
         # Save to user
         user.openrouter_api_key = api_key
+        user.openrouter_model = model
         db.session.commit()
         
         return jsonify({

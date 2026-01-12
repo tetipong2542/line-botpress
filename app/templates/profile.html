@@ -466,12 +466,24 @@
                         <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">
                             OpenRouter →
                         </a>
-                        (รองรับ GPT-4, Claude, Llama และอื่นๆ)
                     </small>
                     <div id="openrouter-saved-status" class="saved-status" style="display: none;">
                         <i data-lucide="check-circle"></i>
                         <span>บันทึกแล้ว</span>
                     </div>
+                </div>
+
+                <!-- Model Selector -->
+                <div class="form-group" style="margin-top: 16px;">
+                    <label class="form-label">เลือก AI Model</label>
+                    <select id="openrouter-model-select" class="form-select">
+                        <option value="google/gemini-2.0-flash-exp:free">🔮 Gemini 2.0 Flash (Free)</option>
+                        <option value="google/gemini-3-flash-preview">🔮 Gemini 3 Flash Preview</option>
+                        <option value="anthropic/claude-sonnet-4.5">🧠 Claude Sonnet 4.5</option>
+                        <option value="openai/gpt-5.1">💬 OpenAI GPT-5.1</option>
+                        <option value="z-ai/glm-4.7">🌐 GLM 4.7</option>
+                    </select>
+                    <small class="form-help">Model ที่จะใช้สำหรับฟีเจอร์ AI</small>
                 </div>
             </div>
 
@@ -856,6 +868,8 @@
                 // OpenRouter
                 const openrouterInput = document.getElementById('openrouter-api-key-input');
                 const openrouterStatus = document.getElementById('openrouter-saved-status');
+                const modelSelect = document.getElementById('openrouter-model-select');
+
                 if (data.openrouter?.has_key) {
                     openrouterInput.value = data.openrouter.masked_key || '';
                     openrouterInput.dataset.savedKey = 'true';
@@ -864,6 +878,11 @@
                     openrouterInput.value = '';
                     openrouterInput.dataset.savedKey = 'false';
                     openrouterStatus.style.display = 'none';
+                }
+
+                // Load saved model
+                if (data.openrouter?.model && modelSelect) {
+                    modelSelect.value = data.openrouter.model;
                 }
 
                 lucide.createIcons();
@@ -960,10 +979,21 @@
         lucide.createIcons();
 
         try {
+            // Build request body
+            const body = { api_key: key };
+
+            // For OpenRouter, include selected model
+            if (currentProvider === 'openrouter') {
+                const modelSelect = document.getElementById('openrouter-model-select');
+                if (modelSelect) {
+                    body.model = modelSelect.value;
+                }
+            }
+
             const response = await fetch(`/api/v1/user/${currentProvider}-key`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ api_key: key })
+                body: JSON.stringify(body)
             });
 
             if (response.ok) {

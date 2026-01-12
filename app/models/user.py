@@ -20,6 +20,7 @@ class User(db.Model):
     current_project_id = db.Column(db.String(50), nullable=True)
     gemini_api_key = db.Column(db.String(200), nullable=True)  # User's custom Gemini API key
     openrouter_api_key = db.Column(db.String(200), nullable=True)  # User's custom OpenRouter API key
+    openrouter_model = db.Column(db.String(100), nullable=True, default='google/gemini-2.0-flash-exp:free')  # Selected OpenRouter model
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
