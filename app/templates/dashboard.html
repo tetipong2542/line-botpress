@@ -2178,7 +2178,26 @@
         const suggestions = data.suggestions || [];
 
         // Combine templates and suggestions (max 6)
-        const allItems = [...templates, ...suggestions.map(s => ({ ...s, isSuggestion: true }))].slice(0, 6);
+        let allItems = [...templates, ...suggestions.map(s => ({ ...s, isSuggestion: true }))];
+
+        // If no items, show default example templates
+        if (allItems.length === 0) {
+            allItems = [
+                {
+                    id: 'demo-1',
+                    name: 'ค่าอาหารเช้า',
+                    icon: '🍳',
+                    amount: 5000, // 50 THB
+                    amount_formatted: 50,
+                    note: 'ค่าอาหารเช้าประจำวัน',
+                    type: 'expense',
+                    isDemo: true,
+                    isSuggestion: true
+                }
+            ];
+        }
+
+        allItems = allItems.slice(0, 6);
 
         if (allItems.length === 0) {
             emptyEl.style.display = 'flex';
@@ -2188,16 +2207,23 @@
         emptyEl.style.display = 'none';
 
         // Render template buttons
-        container.innerHTML = allItems.map(t => `
-            <button class="quick-template-btn ${t.isSuggestion ? 'suggestion' : ''}" 
-                    onclick="${t.isSuggestion ? `saveSuggestedTemplate('${escapeHtml(JSON.stringify(t))}')` : `useQuickTemplate('${t.id}')`}"
-                    title="${t.note || t.name}">
-                <span class="template-icon">${t.icon || '📝'}</span>
-                <span class="template-name">${t.name}</span>
-                <span class="template-amount">฿${(t.amount_formatted || t.amount / 100).toLocaleString('th-TH')}</span>
-                ${t.isSuggestion ? '<span class="suggestion-badge">แนะนำ</span>' : ''}
-            </button>
-        `).join('') + `<div class="quick-template-empty" id="quick-templates-empty" style="display: none;">
+        container.innerHTML = allItems.map(t => {
+            const isDemo = t.isDemo === true;
+            const onclickHandler = isDemo
+                ? `showQuickTemplateInfo()`
+                : (t.isSuggestion ? `saveSuggestedTemplate('${escapeHtml(JSON.stringify(t))}')` : `useQuickTemplate('${t.id}')`);
+
+            return `
+                <button class="quick-template-btn ${t.isSuggestion ? 'suggestion' : ''}"
+                        onclick="${onclickHandler}"
+                        title="${t.note || t.name}">
+                    <span class="template-icon">${t.icon || '📝'}</span>
+                    <span class="template-name">${t.name}</span>
+                    <span class="template-amount">฿${(t.amount_formatted || t.amount / 100).toLocaleString('th-TH')}</span>
+                    ${isDemo ? '<span class="suggestion-badge" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">ตัวอย่าง</span>' : (t.isSuggestion ? '<span class="suggestion-badge">แนะนำ</span>' : '')}
+                </button>
+            `;
+        }).join('') + `<div class="quick-template-empty" id="quick-templates-empty" style="display: none;">
                 <i data-lucide="sparkles"></i>
                 <span>ยังไม่มี template<br>ระบบจะสร้างอัตโนมัติจากรายการที่ใช้บ่อย</span>
             </div>`;
@@ -2241,10 +2267,50 @@
     }
 
     function openCreateTemplateModal() {
-        // Open Add Expense modal to create a template
-        // User can create transaction and it will auto-suggest as template if used frequently
-        openAddExpenseModal();
-        showToast('info', 'บันทึกรายการที่ใช้บ่อย ระบบจะสร้าง Template อัตโนมัติ');
+        // Show info first
+        showQuickTemplateInfo();
+
+        // Open Add Expense modal after a short delay
+        setTimeout(() => {
+            openModal('expense');
+        }, 100);
+    }
+
+    function showQuickTemplateInfo() {
+        const infoHTML = `
+            <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 16px; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                <div style="display: flex; align-items: start; gap: 12px;">
+                    <i data-lucide="info" style="width: 20px; height: 20px; flex-shrink: 0; margin-top: 2px;"></i>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; margin-bottom: 8px; font-size: 15px;">💡 วิธีสร้างบันทึกด่วน</div>
+                        <ol style="margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.6; opacity: 0.95;">
+                            <li>บันทึกรายจ่าย/รายรับที่ใช้บ่อย (เช่น ค่าอาหารเช้า, ค่ารถ)</li>
+                            <li>ระบบจะจดจำและแนะนำให้สร้าง Template อัตโนมัติ</li>
+                            <li>ครั้งต่อไปแค่แตะเดียว ระบบจะบันทึกให้อัตโนมัติ! ⚡</li>
+                        </ol>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 18px; line-height: 1;">×</button>
+                </div>
+            </div>
+        `;
+
+        const container = document.querySelector('.quick-templates-list');
+        if (container && !document.querySelector('.quick-template-info')) {
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'quick-template-info';
+            infoDiv.innerHTML = infoHTML;
+            container.parentElement.insertBefore(infoDiv, container);
+            lucide.createIcons();
+
+            // Auto remove after 15 seconds
+            setTimeout(() => {
+                if (infoDiv.parentElement) {
+                    infoDiv.style.transition = 'opacity 0.5s ease';
+                    infoDiv.style.opacity = '0';
+                    setTimeout(() => infoDiv.remove(), 500);
+                }
+            }, 15000);
+        }
     }
 
     function showToast(type, message) {
