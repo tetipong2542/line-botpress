@@ -2671,7 +2671,11 @@
             // Fetch recurring rules
             const response = await API.get(buildApiUrl('recurring') + '?active_only=true');
 
+            // Debug logging
+            console.log('[RF] API Response:', response);
+
             if (!response.recurring_rules || response.recurring_rules.length === 0) {
+                console.log('[RF] No recurring rules found');
                 // Show empty state
                 timeline.style.display = 'none';
                 emptyState.style.display = 'flex';
@@ -2681,17 +2685,23 @@
             }
 
             const rules = response.recurring_rules;
+            console.log('[RF] Rules count:', rules.length);
+            console.log('[RF] Rules with next_run_date:', rules.filter(r => r.next_run_date).length);
+            rules.forEach((r, i) => {
+                console.log(`[RF] Rule ${i}: type=${r.type}, amount=${r.amount_formatted}, freq=${r.freq}, next_run=${r.next_run_date}`);
+            });
 
             // Calculate totals and generate 30-day forecast
             const forecast = generateRecurringForecast(rules, 30);
+            console.log('[RF] Forecast result:', forecast);
 
             // Update summary cards
             document.getElementById('rf-income-total').textContent =
-                '฿' + Number(forecast.totalIncome).toLocaleString('th-TH', {minimumFractionDigits: 0});
+                '฿' + Number(forecast.totalIncome).toLocaleString('th-TH', { minimumFractionDigits: 0 });
             document.getElementById('rf-expense-total').textContent =
-                '฿' + Number(forecast.totalExpense).toLocaleString('th-TH', {minimumFractionDigits: 0});
+                '฿' + Number(forecast.totalExpense).toLocaleString('th-TH', { minimumFractionDigits: 0 });
             document.getElementById('rf-balance').textContent =
-                '฿' + Number(forecast.netBalance).toLocaleString('th-TH', {minimumFractionDigits: 0});
+                '฿' + Number(forecast.netBalance).toLocaleString('th-TH', { minimumFractionDigits: 0 });
 
             // Render timeline
             renderRecurringTimeline(forecast.timeline);
@@ -2704,7 +2714,7 @@
             lucide.createIcons();
 
         } catch (error) {
-            console.error('Load Recurring Forecast error:', error);
+            console.error('[RF] Load Recurring Forecast error:', error);
             // Don't show section on error
         }
     }
@@ -2834,10 +2844,10 @@
                         <span class="rf-day-label">${dayName}</span>
                     </div>
                     ${items.map(item => {
-                        const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(item.icon);
-                        const iconHTML = isEmoji ? item.icon : '<i data-lucide="circle-dashed"></i>';
+                const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(item.icon);
+                const iconHTML = isEmoji ? item.icon : '<i data-lucide="circle-dashed"></i>';
 
-                        return `
+                return `
                             <div class="rf-timeline-item ${item.type}">
                                 <div class="rf-item-icon">${iconHTML}</div>
                                 <div class="rf-item-info">
@@ -2845,11 +2855,11 @@
                                     <div class="rf-item-frequency">${item.frequency}</div>
                                 </div>
                                 <div class="rf-item-amount">
-                                    ${item.type === 'expense' ? '-' : '+'}฿${(item.amount / 100).toLocaleString('th-TH', {minimumFractionDigits: 0})}
+                                    ${item.type === 'expense' ? '-' : '+'}฿${(item.amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 0 })}
                                 </div>
                             </div>
                         `;
-                    }).join('')}
+            }).join('')}
                 </div>
             `;
         });
