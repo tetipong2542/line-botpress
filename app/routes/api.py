@@ -3460,6 +3460,12 @@ def test_openrouter_key():
                         "success": False,
                         "error": "No credits"
                     }), 200
+                elif e.code == 429:
+                    # Rate limit means key is valid but hit limit
+                    return jsonify({
+                        "success": True,
+                        "message": "API Key is valid (rate limited)"
+                    }), 200
                 else:
                     return jsonify({
                         "success": False,
