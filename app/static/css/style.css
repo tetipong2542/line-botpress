@@ -958,6 +958,30 @@ h2 i[data-lucide] {
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
+    z-index: 1;
+}
+
+.modal-container {
+    position: relative;
+    z-index: 2;
+    background: var(--bg-primary);
+    border-radius: 16px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-container.modal-lg {
+    max-width: 600px;
+}
+
+[data-theme="dark"] .modal-container {
+    background: #1a1a2e;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 
 .modal-content {
@@ -8032,9 +8056,37 @@ a:focus-visible {
 .modal-footer button {
     position: relative;
     z-index: 11;
+    min-width: 100px;
+    padding: 12px 20px;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modal-footer .btn-secondary {
+    background: var(--bg-secondary);
+    color: var(--text);
+    border: 1px solid var(--border);
+    margin-top: 0;
+}
+
+.modal-footer .btn-secondary:hover {
+    background: var(--bg-primary);
+    border-color: var(--text-secondary);
 }
 
 [data-theme="dark"] .modal-footer {
     background: #1f2937;
     border-top-color: #374151;
+}
+
+[data-theme="dark"] .modal-footer .btn-secondary {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+}
+
+[data-theme="dark"] .modal-footer .btn-secondary:hover {
+    background: #4b5563;
 }
