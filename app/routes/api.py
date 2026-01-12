@@ -3193,12 +3193,12 @@ def test_gemini_key():
             if 'API_KEY_INVALID' in error_msg or 'invalid' in error_msg.lower():
                 return jsonify({
                     "success": False,
-                    "error": "API Key ไม่ถูกต้อง"
+                    "error": "API Key invalid"
                 }), 200
             elif 'quota' in error_msg.lower():
                 return jsonify({
                     "success": False,
-                    "error": "API Key หมด quota"
+                    "error": "API Key quota exceeded"
                 }), 200
             else:
                 return jsonify({
