@@ -323,6 +323,47 @@
             </button>
         </div>
         <div class="modal-body">
+            <!-- AI Financial Coach Section -->
+            <div id="ai-coach-container" class="ai-coach-section">
+                <div class="ai-coach-header">
+                    <div class="ai-avatar">🤖</div>
+                    <div class="ai-intro">
+                        <h3>AI Financial Coach</h3>
+                        <span id="ai-coach-loading">กำลังวิเคราะห์...</span>
+                    </div>
+                </div>
+
+                <!-- Motivational Message -->
+                <div id="ai-motivational" class="ai-motivational" style="display: none;">
+                    <i data-lucide="heart"></i>
+                    <span id="ai-motivational-text"></span>
+                </div>
+
+                <!-- AI Insights -->
+                <div id="ai-insights-list" class="ai-insights-list" style="display: none;">
+                    <!-- Populated by JavaScript -->
+                </div>
+
+                <!-- AI Recommendations -->
+                <div id="ai-recommendations-list" class="ai-recommendations-list" style="display: none;">
+                    <h4><i data-lucide="lightbulb"></i> คำแนะนำ</h4>
+                    <div id="ai-recommendations-content"></div>
+                </div>
+
+                <!-- AI Alerts -->
+                <div id="ai-alerts-list" class="ai-alerts-list" style="display: none;">
+                    <!-- Populated by JavaScript -->
+                </div>
+
+                <!-- Spending Analysis -->
+                <div id="ai-spending-analysis" class="ai-spending-analysis" style="display: none;">
+                    <h4><i data-lucide="pie-chart"></i> วิเคราะห์การใช้จ่าย</h4>
+                    <p id="ai-spending-text"></p>
+                </div>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid var(--border); margin: 20px 0;">
+
             <!-- Budget Alerts -->
             <div id="insights-alerts-container" style="display: none;">
                 <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text);">
@@ -1379,8 +1420,81 @@
             }
         }
 
+        // Load both insights and AI Coach
         loadInsightsData();
+        loadAICoachData();
     }
+
+    // ===== AI FINANCIAL COACH =====
+    async function loadAICoachData() {
+        const loadingEl = document.getElementById('ai-coach-loading');
+        const motivationalEl = document.getElementById('ai-motivational');
+        const insightsListEl = document.getElementById('ai-insights-list');
+        const recommendationsListEl = document.getElementById('ai-recommendations-list');
+        const alertsListEl = document.getElementById('ai-alerts-list');
+        const spendingAnalysisEl = document.getElementById('ai-spending-analysis');
+
+        try {
+            loadingEl.textContent = 'กำลังวิเคราะห์...';
+
+            const data = await API.get(buildApiUrl('ai/financial-coach'));
+            const coach = data.coach;
+
+            loadingEl.style.display = 'none';
+
+            // Motivational message
+            if (coach.motivational_message) {
+                document.getElementById('ai-motivational-text').textContent = coach.motivational_message;
+                motivationalEl.style.display = 'flex';
+            }
+
+            // Insights
+            if (coach.insights && coach.insights.length > 0) {
+                insightsListEl.innerHTML = coach.insights.map(i => `
+                    <div class="ai-insight-item">
+                        <i data-lucide="info"></i>
+                        <span>${i}</span>
+                    </div>
+                `).join('');
+                insightsListEl.style.display = 'block';
+            }
+
+            // Recommendations
+            if (coach.recommendations && coach.recommendations.length > 0) {
+                document.getElementById('ai-recommendations-content').innerHTML = coach.recommendations.map(r => `
+                    <div class="ai-recommendation-item">
+                        <i data-lucide="check-circle"></i>
+                        <span>${r}</span>
+                    </div>
+                `).join('');
+                recommendationsListEl.style.display = 'block';
+            }
+
+            // Alerts
+            if (coach.alerts && coach.alerts.length > 0) {
+                alertsListEl.innerHTML = coach.alerts.map(a => `
+                    <div class="ai-alert-item">
+                        <i data-lucide="alert-triangle"></i>
+                        <span>${a}</span>
+                    </div>
+                `).join('');
+                alertsListEl.style.display = 'block';
+            }
+
+            // Spending analysis
+            if (coach.spending_analysis) {
+                document.getElementById('ai-spending-text').textContent = coach.spending_analysis;
+                spendingAnalysisEl.style.display = 'block';
+            }
+
+            lucide.createIcons();
+
+        } catch (error) {
+            console.error('Error loading AI Coach:', error);
+            loadingEl.textContent = 'ไม่สามารถโหลดข้อมูล AI ได้';
+        }
+    }
+
 
     function closeInsightsModal() {
         insightsModal.classList.remove('active');

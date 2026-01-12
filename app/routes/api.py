@@ -2824,3 +2824,224 @@ def use_quick_template(project_id, template_id):
         return jsonify({
             "error": {"message": str(e)}
         }), 500
+
+
+# ============================================================
+# AI-POWERED FEATURES (Bundle B)
+# ============================================================
+
+@bp.route('/projects/<project_id>/ai/suggest-category', methods=['POST'])
+def ai_suggest_category(project_id):
+    """Smart Auto-Categorization - Suggest category for transaction"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.services.gemini_nlp_service import gemini_nlp
+        from app.models.category import Category
+        from app.models.transaction import Transaction
+        
+        data = request.get_json()
+        note = data.get('note', '')
+        type = data.get('type', 'expense')
+        
+        if not note:
+            return jsonify({
+                "error": {"message": "Note is required"}
+            }), 400
+        
+        # Get categories for this project
+        categories = Category.query.filter_by(
+            project_id=project_id,
+            type=type,
+            is_active=True
+        ).all()
+        
+        cat_list = [c.to_dict() for c in categories]
+        
+        # Get history for learning (last 50 similar transactions)
+        history = []
+        similar_transactions = Transaction.query.filter(
+            Transaction.project_id == project_id,
+            Transaction.type == type,
+            Transaction.note.isnot(None),
+            Transaction.deleted_at.is_(None)
+        ).order_by(Transaction.created_at.desc()).limit(50).all()
+        
+        for t in similar_transactions:
+            if t.category:
+                history.append({
+                    'note': t.note,
+                    'category_name': t.category.name_th,
+                    'category_id': t.category_id
+                })
+        
+        # Get AI suggestion
+        suggestion = gemini_nlp.suggest_category(note, cat_list, history)
+        
+        return jsonify({
+            "suggestion": suggestion
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/ai/financial-coach', methods=['GET'])
+def ai_financial_coach(project_id):
+    """AI Financial Coach - Get personalized insights and recommendations"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.services.gemini_nlp_service import gemini_nlp
+        from app.services.analytics_service import AnalyticsService
+        from app.models.savings_goal import SavingsGoal
+        from datetime import datetime
+        
+        month = request.args.get('month', datetime.now().strftime('%Y-%m'))
+        
+        # Get monthly summary
+        summary = AnalyticsService.get_monthly_summary(project_id, month)
+        
+        # Get category breakdown
+        category_data = AnalyticsService.get_category_breakdown(project_id, month, 'expense')
+        spending_data = category_data.get('categories', [])
+        
+        # Get goals progress
+        goals = SavingsGoal.query.filter_by(
+            project_id=project_id,
+            is_active=True
+        ).all()
+        
+        goals_data = []
+        for g in goals:
+            progress_pct = (g.current_amount / g.target_amount * 100) if g.target_amount > 0 else 0
+            goals_data.append({
+                'name': g.name,
+                'current': g.current_amount / 100,  # satang to baht
+                'target': g.target_amount / 100,
+                'progress': progress_pct
+            })
+        
+        # Get AI insights
+        insights = gemini_nlp.generate_financial_insights(
+            summary.get('summary', {}),
+            spending_data,
+            goals_data
+        )
+        
+        return jsonify({
+            "coach": insights,
+            "summary": summary.get('summary', {}),
+            "month": month
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/ai/weekly-summary', methods=['GET'])
+def ai_weekly_summary(project_id):
+    """AI Weekly Summary - Get weekly financial summary with insights"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.services.gemini_nlp_service import gemini_nlp
+        from app.models.transaction import Transaction
+        from datetime import datetime, timedelta
+        from sqlalchemy import func
+        from app.utils.helpers import satang_to_baht
+        
+        # Get date range (last 7 days)
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=7)
+        
+        # Get transactions for the week
+        transactions = Transaction.query.filter(
+            Transaction.project_id == project_id,
+            Transaction.occurred_at >= start_date,
+            Transaction.occurred_at <= end_date,
+            Transaction.deleted_at.is_(None)
+        ).all()
+        
+        # Calculate totals
+        total_income = sum(t.amount for t in transactions if t.type == 'income')
+        total_expense = sum(t.amount for t in transactions if t.type == 'expense')
+        
+        # Get daily breakdown
+        daily_data = {}
+        for t in transactions:
+            day_key = t.occurred_at.strftime('%Y-%m-%d')
+            if day_key not in daily_data:
+                daily_data[day_key] = {'income': 0, 'expense': 0}
+            if t.type == 'income':
+                daily_data[day_key]['income'] += t.amount
+            else:
+                daily_data[day_key]['expense'] += t.amount
+        
+        # Get top spending categories
+        category_totals = {}
+        for t in transactions:
+            if t.type == 'expense' and t.category:
+                cat_name = t.category.name_th
+                category_totals[cat_name] = category_totals.get(cat_name, 0) + t.amount
+        
+        top_categories = sorted(category_totals.items(), key=lambda x: x[1], reverse=True)[:5]
+        
+        # Format data
+        summary_data = {
+            'income': {'formatted': satang_to_baht(total_income)},
+            'expense': {'formatted': satang_to_baht(total_expense)},
+            'balance': {'formatted': satang_to_baht(total_income - total_expense)}
+        }
+        
+        spending_data = [
+            {
+                'category_name': cat,
+                'formatted': satang_to_baht(amount),
+                'percentage': (amount / total_expense * 100) if total_expense > 0 else 0
+            }
+            for cat, amount in top_categories
+        ]
+        
+        # Get AI insights
+        insights = gemini_nlp.generate_financial_insights(summary_data, spending_data)
+        
+        # Add weekly specific data
+        insights['period'] = {
+            'start': start_date.strftime('%Y-%m-%d'),
+            'end': end_date.strftime('%Y-%m-%d'),
+            'days': 7
+        }
+        insights['totals'] = {
+            'income': satang_to_baht(total_income),
+            'expense': satang_to_baht(total_expense),
+            'balance': satang_to_baht(total_income - total_expense),
+            'transaction_count': len(transactions)
+        }
+        insights['daily_breakdown'] = [
+            {
+                'date': day,
+                'income': satang_to_baht(data['income']),
+                'expense': satang_to_baht(data['expense'])
+            }
+            for day, data in sorted(daily_data.items())
+        ]
+        
+        return jsonify({
+            "weekly_summary": insights
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500

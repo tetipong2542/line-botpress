@@ -6180,6 +6180,10 @@ a:focus-visible {
     margin-bottom: 12px;
 }
 
+[data-theme="dark"] span.budget-name {
+    color: #10b981;
+}
+
 .quick-amount-btn {
     flex: 1;
     min-width: calc(33.333% - 6px);
@@ -6453,4 +6457,206 @@ a:focus-visible {
 [data-theme="dark"] .quick-template-btn.suggestion {
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
     border-color: #374151;
+}
+
+/* ===== AI FINANCIAL COACH ===== */
+
+.ai-coach-section {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1px solid #7dd3fc;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.ai-coach-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.ai-avatar {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.ai-intro h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e40af;
+    margin: 0;
+}
+
+.ai-intro span {
+    font-size: 13px;
+    color: #3b82f6;
+}
+
+.ai-motivational {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #fcd34d;
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+.ai-motivational i {
+    width: 20px;
+    height: 20px;
+    color: #d97706;
+    flex-shrink: 0;
+}
+
+.ai-motivational span {
+    font-size: 14px;
+    font-weight: 500;
+    color: #92400e;
+}
+
+.ai-insights-list,
+.ai-recommendations-list,
+.ai-alerts-list,
+.ai-spending-analysis {
+    margin-top: 12px;
+}
+
+.ai-insights-list h4,
+.ai-recommendations-list h4,
+.ai-spending-analysis h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e40af;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ai-insights-list h4 i,
+.ai-recommendations-list h4 i,
+.ai-spending-analysis h4 i {
+    width: 16px;
+    height: 16px;
+}
+
+.ai-insight-item,
+.ai-recommendation-item,
+.ai-alert-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    background: white;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    border: 1px solid #e0f2fe;
+}
+
+.ai-insight-item i {
+    width: 18px;
+    height: 18px;
+    color: #3b82f6;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.ai-recommendation-item i {
+    width: 18px;
+    height: 18px;
+    color: #10b981;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.ai-alert-item i {
+    width: 18px;
+    height: 18px;
+    color: #f59e0b;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.ai-insight-item span,
+.ai-recommendation-item span,
+.ai-alert-item span {
+    font-size: 14px;
+    color: #1e3a5f;
+    line-height: 1.5;
+}
+
+.ai-alert-item {
+    background: linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%);
+    border-color: #fcd34d;
+}
+
+.ai-spending-analysis p {
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.6;
+    background: white;
+    padding: 14px;
+    border-radius: 10px;
+    border: 1px solid #e0f2fe;
+}
+
+/* Dark Mode */
+[data-theme="dark"] .ai-coach-section {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
+    border-color: rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="dark"] .ai-intro h3 {
+    color: #93c5fd;
+}
+
+[data-theme="dark"] .ai-intro span {
+    color: #60a5fa;
+}
+
+[data-theme="dark"] .ai-motivational {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(245, 158, 11, 0.1) 100%);
+    border-color: rgba(251, 191, 36, 0.3);
+}
+
+[data-theme="dark"] .ai-motivational span {
+    color: #fcd34d;
+}
+
+[data-theme="dark"] .ai-insight-item,
+[data-theme="dark"] .ai-recommendation-item {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .ai-insight-item span,
+[data-theme="dark"] .ai-recommendation-item span,
+[data-theme="dark"] .ai-alert-item span {
+    color: #f9fafb;
+}
+
+[data-theme="dark"] .ai-alert-item {
+    background: rgba(251, 191, 36, 0.15);
+    border-color: rgba(251, 191, 36, 0.3);
+}
+
+[data-theme="dark"] .ai-spending-analysis p {
+    background: #1f2937;
+    border-color: #374151;
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .ai-insights-list h4,
+[data-theme="dark"] .ai-recommendations-list h4,
+[data-theme="dark"] .ai-spending-analysis h4 {
+    color: #93c5fd;
 }

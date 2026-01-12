@@ -515,6 +515,271 @@ class GeminiNLPService:
             return "กรุณาระบุ:\n" + "\n".join([f"• {q}" for q in questions])
         return None
 
+    def suggest_category(self, note: str, categories: list, history: list = None) -> dict:
+        """
+        Smart Auto-Categorization using AI
+        
+        Args:
+            note: Transaction note/description
+            categories: List of available categories with id, name, icon
+            history: Optional list of past transactions for learning
+            
+        Returns:
+            dict: {
+                "category_id": "cat_xxx",
+                "category_name": "อาหาร",
+                "confidence": 0.95,
+                "reason": "รายการนี้เกี่ยวกับอาหาร"
+            }
+        """
+        if not self.is_available():
+            return self._rule_based_categorize(note, categories)
+        
+        try:
+            # Build category list for prompt
+            cat_list = "\n".join([
+                f"- id: {c['id']}, name: {c.get('name_th', c.get('name', ''))}, icon: {c.get('icon', '')}"
+                for c in categories
+            ])
+            
+            # Build history context if available
+            history_context = ""
+            if history:
+                history_examples = []
+                for h in history[:10]:  # Last 10 similar
+                    history_examples.append(f"- \"{h.get('note', '')}\" → {h.get('category_name', '')}")
+                if history_examples:
+                    history_context = f"\n\nประวัติการจัดหมวดหมู่ที่ผ่านมา:\n" + "\n".join(history_examples)
+            
+            prompt = f"""จัดหมวดหมู่รายการนี้:
+รายการ: "{note}"
+
+หมวดหมู่ที่มีให้เลือก:
+{cat_list}
+{history_context}
+
+ตอบเป็น JSON:
+{{"category_id": "xxx", "category_name": "xxx", "confidence": 0.0-1.0, "reason": "เหตุผลสั้นๆ"}}"""
+            
+            response = self.model.generate_content(
+                prompt,
+                generation_config={
+                    'temperature': 0.1,
+                    'max_output_tokens': 200,
+                }
+            )
+            
+            text = response.text.strip()
+            
+            # Extract JSON
+            if '```json' in text:
+                text = text.split('```json')[1].split('```')[0].strip()
+            elif '```' in text:
+                text = text.split('```')[1].split('```')[0].strip()
+            
+            result = json.loads(text)
+            
+            # Validate category exists
+            valid_ids = [c['id'] for c in categories]
+            if result.get('category_id') in valid_ids:
+                return result
+            else:
+                return self._rule_based_categorize(note, categories)
+            
+        except Exception as e:
+            print(f"Gemini categorization error: {e}")
+            return self._rule_based_categorize(note, categories)
+    
+    def _rule_based_categorize(self, note: str, categories: list) -> dict:
+        """Fallback rule-based categorization"""
+        note_lower = note.lower()
+        
+        # Category keywords mapping
+        keywords_map = {
+            'อาหาร': ['กิน', 'ข้าว', 'อาหาร', 'กาแฟ', 'ชา', 'เครื่องดื่ม', 'ร้านอาหาร', 'อร่อย', 'มื้อ', 'breakfast', 'lunch', 'dinner', 'food'],
+            'เดินทาง': ['รถ', 'taxi', 'grab', 'น้ำมัน', 'เดินทาง', 'ค่าเดินทาง', 'bts', 'mrt', 'ตั๋ว', 'ค่าทางด่วน'],
+            'ช้อปปิ้ง': ['ซื้อ', 'ช้อป', 'shopping', 'lazada', 'shopee', 'เสื้อผ้า', 'รองเท้า'],
+            'ความบันเทิง': ['หนัง', 'netflix', 'spotify', 'game', 'เกม', 'ดูหนัง', 'คอนเสิร์ต'],
+            'สุขภาพ': ['หมอ', 'ยา', 'โรงพยาบาล', 'คลินิก', 'ฟิตเนส', 'gym', 'สุขภาพ'],
+            'ค่าใช้จ่าย': ['ค่าเช่า', 'ค่าน้ำ', 'ค่าไฟ', 'อินเทอร์เน็ต', 'โทรศัพท์', 'ค่าบ้าน'],
+            'การศึกษา': ['เรียน', 'คอร์ส', 'หนังสือ', 'udemy', 'course'],
+            'สังคม': ['งานแต่ง', 'บวช', 'ซอง', 'ของขวัญ', 'gift'],
+            'เงินเดือน': ['เงินเดือน', 'salary', 'bonus', 'โบนัส'],
+            'รายได้เสริม': ['freelance', 'ขาย', 'รายได้', 'ปันผล']
+        }
+        
+        best_match = None
+        best_score = 0
+        
+        for cat in categories:
+            cat_name = cat.get('name_th', cat.get('name', '')).lower()
+            score = 0
+            
+            # Check if category name in note
+            if cat_name in note_lower:
+                score = 0.9
+            
+            # Check keywords
+            for kw_cat, keywords in keywords_map.items():
+                if kw_cat.lower() in cat_name:
+                    for kw in keywords:
+                        if kw in note_lower:
+                            score = max(score, 0.7)
+                            break
+            
+            if score > best_score:
+                best_score = score
+                best_match = cat
+        
+        if best_match and best_score > 0:
+            return {
+                "category_id": best_match['id'],
+                "category_name": best_match.get('name_th', best_match.get('name', '')),
+                "confidence": best_score,
+                "reason": "จัดหมวดหมู่ด้วย keyword matching"
+            }
+        
+        # Return first expense category as default
+        for cat in categories:
+            if cat.get('type') == 'expense':
+                return {
+                    "category_id": cat['id'],
+                    "category_name": cat.get('name_th', cat.get('name', '')),
+                    "confidence": 0.3,
+                    "reason": "ไม่พบ keyword ที่ตรงกัน ใช้หมวดหมู่เริ่มต้น"
+                }
+        
+        return {
+            "category_id": None,
+            "category_name": None,
+            "confidence": 0,
+            "reason": "ไม่พบหมวดหมู่ที่เหมาะสม"
+        }
+    
+    def generate_financial_insights(self, summary_data: dict, spending_data: list, goals_data: list = None) -> dict:
+        """
+        AI Financial Coach - Generate personalized insights
+        
+        Args:
+            summary_data: Monthly summary {income, expense, balance}
+            spending_data: Category breakdown [{category, amount, percentage}]
+            goals_data: Savings goals progress
+            
+        Returns:
+            dict: {
+                "insights": ["..."],
+                "recommendations": ["..."],
+                "alerts": ["..."],
+                "motivational_message": "...",
+                "spending_analysis": "..."
+            }
+        """
+        if not self.is_available():
+            return self._basic_insights(summary_data, spending_data)
+        
+        try:
+            # Build context
+            income = summary_data.get('income', {}).get('formatted', 0)
+            expense = summary_data.get('expense', {}).get('formatted', 0)
+            balance = summary_data.get('balance', {}).get('formatted', 0)
+            
+            top_spending = "\n".join([
+                f"- {s.get('category_name', 'ไม่ระบุ')}: ฿{s.get('formatted', 0):,.0f} ({s.get('percentage', 0):.1f}%)"
+                for s in spending_data[:5]
+            ])
+            
+            goals_context = ""
+            if goals_data:
+                goals_context = "\n\nเป้าหมายการออม:\n" + "\n".join([
+                    f"- {g.get('name', '')}: {g.get('progress', 0):.0f}% (฿{g.get('current', 0):,.0f}/฿{g.get('target', 0):,.0f})"
+                    for g in goals_data[:3]
+                ])
+            
+            prompt = f"""คุณเป็น AI Financial Coach ช่วยวิเคราะห์การเงินและให้คำแนะนำ
+
+สรุปเดือนนี้:
+- รายรับ: ฿{income:,.0f}
+- รายจ่าย: ฿{expense:,.0f}
+- คงเหลือ: ฿{balance:,.0f}
+- อัตราการออม: {((income - expense) / income * 100) if income > 0 else 0:.1f}%
+
+หมวดหมู่ที่ใช้จ่ายสูงสุด:
+{top_spending}
+{goals_context}
+
+ให้คำแนะนำเป็น JSON:
+{{
+  "insights": ["ข้อสังเกตสำคัญ 2-3 ข้อ"],
+  "recommendations": ["คำแนะนำปฏิบัติได้ 2-3 ข้อ"],
+  "alerts": ["แจ้งเตือนถ้าใช้จ่ายเกิน 0-2 ข้อ"],
+  "motivational_message": "ข้อความให้กำลังใจ 1 ประโยค",
+  "spending_analysis": "วิเคราะห์รูปแบบการใช้จ่ายสั้นๆ 2-3 ประโยค"
+}}"""
+            
+            response = self.model.generate_content(
+                prompt,
+                generation_config={
+                    'temperature': 0.7,
+                    'max_output_tokens': 800,
+                }
+            )
+            
+            text = response.text.strip()
+            
+            # Extract JSON
+            if '```json' in text:
+                text = text.split('```json')[1].split('```')[0].strip()
+            elif '```' in text:
+                text = text.split('```')[1].split('```')[0].strip()
+            
+            return json.loads(text)
+            
+        except Exception as e:
+            print(f"Gemini insights error: {e}")
+            return self._basic_insights(summary_data, spending_data)
+    
+    def _basic_insights(self, summary_data: dict, spending_data: list) -> dict:
+        """Fallback basic insights without AI"""
+        income = summary_data.get('income', {}).get('formatted', 0)
+        expense = summary_data.get('expense', {}).get('formatted', 0)
+        balance = income - expense
+        savings_rate = (balance / income * 100) if income > 0 else 0
+        
+        insights = []
+        recommendations = []
+        alerts = []
+        
+        # Basic insights
+        if savings_rate >= 20:
+            insights.append(f"คุณออมได้ {savings_rate:.0f}% ของรายรับ - ยอดเยี่ยม! 👏")
+        elif savings_rate >= 10:
+            insights.append(f"อัตราการออม {savings_rate:.0f}% - พอใช้ ควรพยายามเพิ่ม")
+        else:
+            insights.append(f"อัตราการออมต่ำเพียง {savings_rate:.0f}% - ควรลดรายจ่าย")
+            alerts.append("⚠️ อัตราการออมต่ำกว่า 10%")
+        
+        # Top spending analysis
+        if spending_data:
+            top = spending_data[0]
+            if top.get('percentage', 0) > 30:
+                insights.append(f"หมวด{top.get('category_name', '')}ใช้ไป {top.get('percentage', 0):.0f}% ของรายจ่าย")
+                recommendations.append(f"ลองหาทางลดค่าใช้จ่ายหมวด{top.get('category_name', '')}")
+        
+        # Basic recommendations
+        if balance < 0:
+            alerts.append("🔴 รายจ่ายมากกว่ารายรับ!")
+            recommendations.append("ควรลดรายจ่ายไม่จำเป็นอย่างเร่งด่วน")
+        elif balance < income * 0.1:
+            recommendations.append("พยายามออมเงินให้ได้อย่างน้อย 10% ของรายรับ")
+        
+        return {
+            "insights": insights or ["บันทึกรายรับรายจ่ายสม่ำเสมอต่อไปนะคะ"],
+            "recommendations": recommendations or ["ตั้งเป้าหมายการออมเพื่อความมั่นคงทางการเงิน"],
+            "alerts": alerts,
+            "motivational_message": "ทุกก้าวเล็กๆ ในการจัดการเงินนำไปสู่เสรีภาพทางการเงิน 💪",
+            "spending_analysis": f"เดือนนี้คุณใช้จ่ายไป ฿{expense:,.0f} และมีรายรับ ฿{income:,.0f}"
+        }
+
 
 # Singleton instance
 gemini_nlp = GeminiNLPService()
