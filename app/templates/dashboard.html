@@ -1584,11 +1584,149 @@
     // ===== AI AUTO-PILOT PLANNER =====
     const aiPlannerModal = document.getElementById('ai-planner-modal');
 
-    function openAIPlannerModal() {
+    async function openAIPlannerModal() {
+        // Check if there's enough data before opening modal
+        const isReady = await checkAIPlannerReadiness();
+
+        if (!isReady) {
+            return; // Alert already shown in checkAIPlannerReadiness
+        }
+
         aiPlannerModal.classList.add('active');
         document.body.style.overflow = 'hidden';
         generateAIPlan();
         lucide.createIcons();
+    }
+
+    async function checkAIPlannerReadiness() {
+        try {
+            // Check if user has enough transactions
+            const response = await API.get(buildApiUrl('transactions') + '?limit=1');
+
+            if (!response.success || !response.transactions || response.transactions.length === 0) {
+                showAIPlannerAlert(
+                    'ยังไม่มีข้อมูลเพียงพอ',
+                    [
+                        '• บันทึกรายการอย่างน้อย <strong>10 รายการ</strong>',
+                        '• ควรมีข้อมูล <strong>หลายวัน/หลายสัปดาห์</strong>',
+                        '• มีทั้ง <strong>รายรับและรายจ่าย</strong> จะได้แผนที่ดีขึ้น'
+                    ],
+                    'info'
+                );
+                return false;
+            }
+
+            // Get total count of transactions (check pagination metadata)
+            const totalTransactions = response.pagination?.total || response.transactions.length;
+
+            if (totalTransactions < 5) {
+                showAIPlannerAlert(
+                    'ข้อมูลยังน้อยไป',
+                    [
+                        `• ปัจจุบันมีข้อมูล <strong>${totalTransactions} รายการ</strong>`,
+                        '• ควรมีอย่างน้อย <strong>5-10 รายการ</strong> เพื่อความแม่นยำ',
+                        '• กดปุ่ม <strong>"+ เพิ่มรายการ"</strong> เพื่อเริ่มบันทึก'
+                    ],
+                    'warning',
+                    totalTransactions
+                );
+                return false;
+            }
+
+            return true;
+
+        } catch (error) {
+            console.error('Error checking AI readiness:', error);
+            // If check fails, let user try anyway
+            return true;
+        }
+    }
+
+    function showAIPlannerAlert(title, messages, type = 'info', count = 0) {
+        const iconMap = {
+            'info': 'info',
+            'warning': 'alert-triangle',
+            'error': 'x-circle',
+            'success': 'check-circle'
+        };
+
+        const colorMap = {
+            'info': '#3b82f6',
+            'warning': '#f59e0b',
+            'error': '#ef4444',
+            'success': '#10b981'
+        };
+
+        const alertHTML = `
+            <div class="ai-readiness-alert" style="
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: var(--bg);
+                border: 2px solid ${colorMap[type]};
+                border-radius: 16px;
+                padding: 24px;
+                max-width: 400px;
+                width: 90%;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+                z-index: 10000;
+                animation: slideDown 0.3s ease;
+            ">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                    <i data-lucide="${iconMap[type]}" style="width: 32px; height: 32px; color: ${colorMap[type]};"></i>
+                    <h3 style="font-size: 18px; font-weight: 600; color: var(--text); margin: 0;">${title}</h3>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    ${messages.map(msg => `
+                        <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.6; margin: 8px 0;">
+                            ${msg}
+                        </p>
+                    `).join('')}
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="closeAIReadinessAlert()" class="btn-primary" style="flex: 1;">
+                        <i data-lucide="check"></i>
+                        <span>เข้าใจแล้ว</span>
+                    </button>
+                    ${count > 0 && count < 5 ? `
+                        <button onclick="closeAIReadinessAlert(); openModal('expense');" class="btn-secondary" style="flex: 1;">
+                            <i data-lucide="plus"></i>
+                            <span>เพิ่มรายการ</span>
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+            <div class="ai-readiness-overlay" onclick="closeAIReadinessAlert()" style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(4px);
+                z-index: 9999;
+            "></div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', alertHTML);
+        document.body.style.overflow = 'hidden';
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    function closeAIReadinessAlert() {
+        const alert = document.querySelector('.ai-readiness-alert');
+        const overlay = document.querySelector('.ai-readiness-overlay');
+
+        if (alert) alert.remove();
+        if (overlay) overlay.remove();
+
+        document.body.style.overflow = '';
     }
 
     function closeAIPlannerModal() {
