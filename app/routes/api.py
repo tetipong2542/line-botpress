@@ -3416,51 +3416,58 @@ def test_openrouter_key():
         
         # Test the key by making a simple API call
         try:
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "HTTP-Referer": "https://line-botpress.app",
-                "Content-Type": "application/json"
-            }
+            import urllib.request
+            import urllib.error
+            import json as json_lib
             
-            # Simple test with minimal tokens
-            response = requests.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                headers=headers,
-                json={
-                    "model": "google/gemini-flash-1.5",
-                    "messages": [{"role": "user", "content": "test"}],
-                    "max_tokens": 5
-                },
-                timeout=10
-            )
+            # Use urllib to avoid encoding issues with requests library
+            url = "https://openrouter.ai/api/v1/chat/completions"
             
-            if response.status_code == 200:
-                return jsonify({
-                    "success": True,
-                    "message": "API Key is valid"
-                }), 200
-            elif response.status_code == 401:
+            payload = json_lib.dumps({
+                "model": "google/gemini-flash-1.5",
+                "messages": [{"role": "user", "content": "hi"}],
+                "max_tokens": 5
+            }).encode('utf-8')
+            
+            req = urllib.request.Request(url, data=payload, method='POST')
+            req.add_header('Authorization', f'Bearer {api_key}')
+            req.add_header('Content-Type', 'application/json')
+            req.add_header('HTTP-Referer', 'https://promptjod.app')
+            
+            try:
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    if resp.status == 200:
+                        return jsonify({
+                            "success": True,
+                            "message": "API Key is valid"
+                        }), 200
+                    else:
+                        return jsonify({
+                            "success": False,
+                            "error": f"HTTP Error: {resp.status}"
+                        }), 200
+            except urllib.error.HTTPError as e:
+                if e.code == 401:
+                    return jsonify({
+                        "success": False,
+                        "error": "API Key invalid"
+                    }), 200
+                elif e.code == 402:
+                    return jsonify({
+                        "success": False,
+                        "error": "No credits"
+                    }), 200
+                else:
+                    return jsonify({
+                        "success": False,
+                        "error": f"HTTP {e.code}"
+                    }), 200
+            except urllib.error.URLError as e:
                 return jsonify({
                     "success": False,
-                    "error": "API Key ไม่ถูกต้อง"
-                }), 200
-            elif response.status_code == 402:
-                return jsonify({
-                    "success": False,
-                    "error": "ไม่มี credit ในบัญชี"
-                }), 200
-            else:
-                error_data = response.json() if response.text else {}
-                return jsonify({
-                    "success": False,
-                    "error": error_data.get('error', {}).get('message', f'Error: {response.status_code}')
+                    "error": f"Connection error: {str(e.reason)[:50]}"
                 }), 200
                 
-        except requests.exceptions.Timeout:
-            return jsonify({
-                "success": False,
-                "error": "Connection timeout"
-            }), 200
         except Exception as api_error:
             return jsonify({
                 "success": False,
