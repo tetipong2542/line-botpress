@@ -182,9 +182,8 @@ class RecurringService:
         if 'amount' in updates:
             amount = updates['amount']
             # Convert amount to satang (handle both int and float from JSON)
-            # If amount < 10000, treat as Baht and convert to satang
-            # If amount >= 10000, assume already in satang
-            if isinstance(amount, (int, float)) and amount < 10000:
+            # Frontend always sends in Baht, so convert to satang
+            if isinstance(amount, (int, float)):
                 amount = baht_to_satang(amount)
             recurring_rule.amount = validate_amount(amount)
 
