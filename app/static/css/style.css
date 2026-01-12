@@ -8015,3 +8015,26 @@ a:focus-visible {
 .spinning {
     animation: spin 1s linear infinite;
 }
+
+/* ===== MODAL FOOTER FIX ===== */
+
+.modal-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-primary);
+    position: relative;
+    z-index: 10;
+}
+
+.modal-footer button {
+    position: relative;
+    z-index: 11;
+}
+
+[data-theme="dark"] .modal-footer {
+    background: #1f2937;
+    border-top-color: #374151;
+}
