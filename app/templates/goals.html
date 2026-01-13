@@ -452,7 +452,8 @@
 
     // Close menu when clicking outside
     document.addEventListener('click', (e) => {
-        if (!e.target.closest('.goal-menu-wrapper')) {
+        // Check if click is on menu button or inside dropdown
+        if (!e.target.closest('.goal-menu-btn') && !e.target.closest('.dropdown-menu')) {
             closeAllMenus();
         }
     });

@@ -544,34 +544,39 @@ function updateTopCategories(regularCategories, recurringCategories) {
         cat.percentage = totalAmount > 0 ? ((cat.total / totalAmount) * 100).toFixed(1) : 0;
     });
 
-    // Render all categories
+    // Render all categories with enhanced card layout
     container.innerHTML = categories.map(cat => `
-        <div class="category-stat-item">
-            <div class="category-stat-header">
-                <div class="category-stat-info">
-                    <i data-lucide="${cat.icon}" style="color: ${cat.color}"></i>
-                    <span class="category-stat-name">${cat.name}</span>
+        <div class="category-card-enhanced">
+            <div class="category-card-header">
+                <div class="category-icon-circle" style="background: ${cat.color}20; color: ${cat.color};">
+                    <i data-lucide="${cat.icon}"></i>
                 </div>
-                <div class="category-stat-amount">
-                    <span class="amount">฿${cat.total.toLocaleString('th-TH')}</span>
-                    <span class="percentage">${cat.percentage}%</span>
+                <div class="category-info">
+                    <span class="category-name">${cat.name}</span>
+                    <div class="category-amounts-row">
+                        <span class="category-total">฿${cat.total.toLocaleString('th-TH')}</span>
+                        <span class="category-percentage-badge" style="background: ${cat.color}15; color: ${cat.color};">${cat.percentage}%</span>
+                    </div>
                 </div>
             </div>
-            <div class="category-stat-breakdown">
-                <span class="breakdown-item regular">ปกติ: ฿${cat.regular.toLocaleString('th-TH')}</span>
-                <span class="breakdown-item recurring">ประจำ: ฿${cat.recurring.toLocaleString('th-TH')}</span>
+            <div class="category-breakdown-tags">
+                <span class="tag regular">
+                    <i data-lucide="circle" class="tag-icon"></i>
+                    ปกติ ฿${cat.regular.toLocaleString('th-TH')}
+                </span>
+                <span class="tag recurring">
+                    <i data-lucide="repeat" class="tag-icon"></i>
+                    ประจำ ฿${cat.recurring.toLocaleString('th-TH')}
+                </span>
             </div>
-            <div class="category-stat-bar">
-                <div class="category-stat-progress"
-                     style="width: ${cat.percentage}%; background: ${cat.color}"></div>
+            <div class="category-progress-bar">
+                <div class="category-progress-fill" style="width: ${cat.percentage}%; background: ${cat.color};"></div>
             </div>
             ${cat.budget ? `
-                <div class="category-stat-budget">
-                    <span>งบ: ฿${cat.budget.formatted.toLocaleString('th-TH')}</span>
-                    <span>เหลือ: ฿${((cat.budget.remaining || 0) / 100).toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>
-                    <span class="${cat.budget.usage_percentage > 100 ? 'over-budget' : ''}">
-                        ${cat.budget.usage_percentage}%
-                    </span>
+                <div class="category-budget-info ${cat.budget.usage_percentage > 100 ? 'over-budget' : ''}">
+                    <span>งบ ฿${cat.budget.formatted.toLocaleString('th-TH')}</span>
+                    <span>เหลือ ฿${((cat.budget.remaining || 0) / 100).toLocaleString('th-TH')}</span>
+                    <span class="usage">${cat.budget.usage_percentage}%</span>
                 </div>
             ` : ''}
         </div>

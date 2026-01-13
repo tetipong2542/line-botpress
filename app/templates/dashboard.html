@@ -2967,19 +2967,31 @@
 
         // Sort by usage (most used first) - we'll use a simple approach
         const sortedCategories = [...categories];
+        // Helper to check if string is emoji
+        function isEmoji(str) {
+            const emojiRegex = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u;
+            return emojiRegex.test(str);
+        }
 
         quickCategoryScroll.innerHTML = sortedCategories.map(cat => {
             const isActive = cat.id === quickEntryState.categoryId;
-            const icon = cat.icon || '📁';
+            const icon = cat.icon || 'folder';
+            const iconHtml = isEmoji(icon)
+                ? `<span class="cat-icon">${icon}</span>`
+                : `<i data-lucide="${icon}" class="cat-icon-lucide"></i>`;
+
             return `
                 <button class="quick-category-pill ${isActive ? 'active' : ''}" 
                         data-id="${cat.id}"
                         onclick="selectQuickCategory('${cat.id}')">
-                    <span class="cat-icon">${icon}</span>
+                    ${iconHtml}
                     <span class="cat-name">${cat.name_th}</span>
                 </button>
             `;
         }).join('');
+
+        // Initialize Lucide icons for categories
+        lucide.createIcons();
 
         // Auto-select first category if none selected
         if (!quickEntryState.categoryId && sortedCategories.length > 0) {

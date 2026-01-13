@@ -8908,6 +8908,190 @@ a:focus-visible {
 }
 
 /* ============================================================================
+   ENHANCED CATEGORY CARDS (New Design)
+   ============================================================================ */
+
+.category-card-enhanced {
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+}
+
+.category-card-enhanced:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.category-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.category-icon-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.category-icon-circle i {
+    width: 22px;
+    height: 22px;
+}
+
+.category-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.category-name {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.category-amounts-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.category-total {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.category-percentage-badge {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.category-breakdown-tags {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.category-breakdown-tags .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.category-breakdown-tags .tag-icon {
+    width: 12px;
+    height: 12px;
+}
+
+.category-breakdown-tags .tag.regular {
+    background: rgba(59, 130, 246, 0.1);
+    color: #1e40af;
+}
+
+.category-breakdown-tags .tag.recurring {
+    background: rgba(139, 92, 246, 0.1);
+    color: #6d28d9;
+}
+
+.category-progress-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.category-progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.category-budget-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.category-budget-info.over-budget {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.category-budget-info .usage {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.category-budget-info.over-budget .usage {
+    color: #ef4444;
+}
+
+/* Dark mode */
+[data-theme="dark"] .category-card-enhanced {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .category-breakdown-tags .tag.regular {
+    background: rgba(59, 130, 246, 0.15);
+    color: #93c5fd;
+}
+
+[data-theme="dark"] .category-breakdown-tags .tag.recurring {
+    background: rgba(139, 92, 246, 0.15);
+    color: #c4b5fd;
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+    .category-card-enhanced {
+        padding: 12px;
+    }
+
+    .category-icon-circle {
+        width: 36px;
+        height: 36px;
+    }
+
+    .category-icon-circle i {
+        width: 18px;
+        height: 18px;
+    }
+
+    .category-total {
+        font-size: 16px;
+    }
+
+    .category-breakdown-tags .tag {
+        padding: 4px 10px;
+        font-size: 11px;
+    }
+}
+
+/* ============================================================================
    QUICK ENTRY MODAL - Mobile First Numpad Design
    ============================================================================ */
 
@@ -9096,6 +9280,18 @@ a:focus-visible {
     border-color: var(--primary);
     color: white;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Lucide icons in category pills */
+.quick-category-pill .cat-icon-lucide {
+    width: 24px;
+    height: 24px;
+    color: inherit;
+}
+
+.quick-category-pill .cat-icon {
+    font-size: 24px;
+    line-height: 1;
 }
 
 .quick-category-pill:active {
@@ -9313,25 +9509,36 @@ a:focus-visible {
     background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
 }
 
-/* Larger screens - limit width */
+/* Larger screens - centered modal */
 @media (min-width: 768px) {
-    .quick-entry-container {
-        max-width: 420px;
-        left: 50%;
-        transform: translateX(-50%);
-        border-radius: 24px 24px 0 0;
-        top: auto;
-        max-height: 90vh;
+    #quick-entry-modal {
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    @keyframes slideUpFull {
+    .quick-entry-container {
+        position: relative;
+        top: auto;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        max-width: 420px;
+        width: 100%;
+        max-height: 90vh;
+        border-radius: 24px;
+        transform: none;
+        animation: fadeInScale 0.3s ease;
+    }
+
+    @keyframes fadeInScale {
         from {
-            transform: translateX(-50%) translateY(100%);
+            transform: scale(0.95);
             opacity: 0;
         }
 
         to {
-            transform: translateX(-50%) translateY(0);
+            transform: scale(1);
             opacity: 1;
         }
     }
