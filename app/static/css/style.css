@@ -446,6 +446,10 @@ h2 i[data-lucide] {
 }
 
 .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     margin-bottom: 12px;
 }
 
@@ -455,6 +459,54 @@ h2 i[data-lucide] {
     display: flex;
     align-items: center;
     gap: 8px;
+    margin: 0;
+}
+
+/* Section link - right aligned */
+.section-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    border-radius: 20px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.section-link:hover {
+    background: color-mix(in srgb, var(--primary) 20%, transparent);
+    transform: translateX(2px);
+}
+
+/* Section button - right aligned */
+.section-header .btn-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.section-header .btn-text i {
+    width: 16px;
+    height: 16px;
+}
+
+.section-header .btn-text:hover {
+    background: color-mix(in srgb, var(--primary) 20%, transparent);
 }
 
 /* Transactions List */
