@@ -3114,8 +3114,10 @@
                 quickEntryState.amount = '0';
             }
         } else if (value === '.') {
-            // Add decimal only if not already present
-            if (!quickEntryState.amount.includes('.')) {
+            // Add decimal only if current number segment doesn't have one
+            const segments = quickEntryState.amount.split(/[+\-×÷]/);
+            const currentSegment = segments[segments.length - 1] || '';
+            if (!currentSegment.includes('.')) {
                 quickEntryState.amount += '.';
             }
         } else {
@@ -3123,14 +3125,19 @@
             if (quickEntryState.amount === '0') {
                 quickEntryState.amount = value;
             } else {
-                // Limit to reasonable length (max 10 digits + 2 decimal)
-                const parts = quickEntryState.amount.split('.');
-                if (parts[1] && parts[1].length >= 2) {
-                    return; // Max 2 decimal places
+                // Check limit on current number segment only (not entire expression)
+                const segments = quickEntryState.amount.split(/[+\-×÷]/);
+                const currentSegment = segments[segments.length - 1] || '';
+
+                // Limit current segment to 10 digits with max 2 decimal places
+                const segmentParts = currentSegment.split('.');
+                if (segmentParts[1] && segmentParts[1].length >= 2) {
+                    return; // Max 2 decimal places per segment
                 }
-                if (parts[0].length >= 10 && !quickEntryState.amount.includes('.')) {
-                    return; // Max 10 digits before decimal
+                if (segmentParts[0].length >= 10 && !currentSegment.includes('.')) {
+                    return; // Max 10 digits per number
                 }
+
                 quickEntryState.amount += value;
             }
         }
