@@ -3191,7 +3191,7 @@
         const data = {
             type: quickEntryState.type,
             category_id: quickEntryState.categoryId,
-            amount: amount * 100, // Convert to satang (already integer)
+            amount: amount, // Backend will convert to satang
             occurred_at: now.toISOString(),
             note: ''
         };

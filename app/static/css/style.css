@@ -9276,11 +9276,13 @@ a:focus-visible {
 
 /* Category Scroll */
 .quick-category-container {
-    margin-bottom: 16px;
-    margin-left: -16px;
-    margin-right: -16px;
-    padding: 0 16px;
+    margin-bottom: 12px;
+    margin-left: -12px;
+    margin-right: -12px;
+    padding: 0 12px;
     overflow: hidden;
+    min-height: 70px;
+    /* Ensure container is visible */
 }
 
 .quick-category-scroll {
