@@ -339,15 +339,23 @@ document.getElementById('recurring-form').addEventListener('submit', async (e) =
         payload.day_of_week = day_of_week;
     }
 
+    // Debug: Log payload before sending
+    console.log('[Recurring] Payload to API:', payload);
+    console.log('[Recurring] start_date:', start_date);
+    console.log('[Recurring] Extracted day_of_month:', day_of_month);
+    console.log('[Recurring] Extracted day_of_week:', day_of_week);
+
     try {
         let result;
         if (editingRecurringId) {
             // Update existing recurring rule
             result = await API.put(buildApiUrl('recurring', editingRecurringId), payload);
+            console.log('[Recurring] Update response:', result);
             showToast('อัพเดทรายการประจำสำเร็จ!', 'success');
         } else {
             // Create new recurring rule
             result = await API.post(buildApiUrl('recurring'), payload);
+            console.log('[Recurring] Create response:', result);
             showToast('บันทึกรายการประจำสำเร็จ!', 'success');
         }
 
@@ -384,6 +392,12 @@ document.getElementById('recurring-start-date').valueAsDate = new Date();
 async function loadRecurringRules() {
     try {
         const result = await API.get(buildApiUrl('recurring') + '?active_only=true');
+
+        // Debug: Log API response
+        console.log('[Recurring] API Response:', result);
+        if (result.recurring_rules && result.recurring_rules.length > 0) {
+            console.log('[Recurring] First rule:', result.recurring_rules[0]);
+        }
 
         const recurringList = document.querySelector('.recurring-list');
 
