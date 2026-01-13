@@ -503,7 +503,9 @@ function renderCards(rules) {
 
 function renderCard(rule) {
     const formatDate = (dateStr) => {
-        const date = new Date(dateStr);
+        // Fix timezone issue by parsing as local date
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const date = new Date(year, month - 1, day); // month is 0-indexed
         return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
     };
     

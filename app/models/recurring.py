@@ -51,7 +51,8 @@ class RecurringRule(db.Model):
         self.day_of_month = day_of_month
         self.start_date = start_date
         self.end_date = end_date
-        self.next_run_date = self._calculate_next_run(start_date)
+        # First run is always the start_date
+        self.next_run_date = start_date
         self.member_id = member_id
 
     def _calculate_next_run(self, from_date):
