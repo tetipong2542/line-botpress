@@ -9577,6 +9577,10 @@ a:focus-visible {
         justify-content: center;
     }
 
+    #quick-entry-modal .modal-overlay {
+        z-index: 1;
+    }
+
     .quick-entry-container {
         position: relative;
         top: auto;
@@ -9589,6 +9593,9 @@ a:focus-visible {
         border-radius: 24px;
         transform: none;
         animation: fadeInScale 0.3s ease;
+        z-index: 10;
+        /* Above overlay */
+        overflow-y: auto;
     }
 
     @keyframes fadeInScale {
