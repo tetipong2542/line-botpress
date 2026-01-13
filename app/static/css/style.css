@@ -9571,7 +9571,7 @@ a:focus-visible {
 
 /* Larger screens - centered modal */
 @media (min-width: 768px) {
-    #quick-entry-modal {
+    #quick-entry-modal.active {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -9581,7 +9581,7 @@ a:focus-visible {
         z-index: 1;
     }
 
-    .quick-entry-container {
+    #quick-entry-modal .quick-entry-container {
         position: relative;
         top: auto;
         left: auto;
@@ -9594,7 +9594,6 @@ a:focus-visible {
         transform: none;
         animation: fadeInScale 0.3s ease;
         z-index: 10;
-        /* Above overlay */
         overflow-y: auto;
     }
 
