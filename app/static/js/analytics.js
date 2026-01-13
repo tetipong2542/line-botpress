@@ -53,6 +53,7 @@ async function loadAnalytics() {
 async function loadRecurringData() {
     try {
         const response = await API.get(buildApiUrl('recurring?active_only=true'));
+        console.log('[Analytics] Recurring rules loaded:', response);
         return response.success ? response.recurring : [];
     } catch (error) {
         console.error('Recurring load error:', error);
@@ -65,18 +66,42 @@ function calculateMonthlyRecurring(rules, month, year) {
     const startDate = new Date(year, month, 1);
     const endDate = new Date(year, month + 1, 0); // Last day of month
 
+    console.log(`[Analytics] Calculating recurring for ${month + 1}/${year}`, {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        rulesCount: rules.length
+    });
+
     let totalIncome = 0;
     let totalExpense = 0;
     const expenseByCategory = {}; // {category_id: {amount, name, icon, color}}
 
     rules.forEach(rule => {
-        let nextDate = new Date(rule.next_run_date);
+        // Start from rule's start_date, not next_run_date
+        let currentDate = new Date(rule.start_date);
 
-        // Generate occurrences within the month
-        while (nextDate <= endDate) {
-            if (nextDate >= startDate && nextDate <= endDate) {
+        // If start_date is after the target month, skip this rule
+        if (currentDate > endDate) {
+            return;
+        }
+
+        console.log(`[Analytics] Processing rule:`, {
+            type: rule.type,
+            amount: rule.amount / 100,
+            freq: rule.freq,
+            start_date: rule.start_date,
+            category: rule.category ? rule.category.name : 'N/A'
+        });
+
+        let occurrenceCount = 0;
+
+        // Generate occurrences from start_date up to end of target month
+        while (currentDate <= endDate && occurrenceCount < 100) { // Safety limit
+            if (currentDate >= startDate && currentDate <= endDate) {
                 // This occurrence falls within the target month
                 const amount = rule.amount / 100; // Convert satang to baht
+
+                console.log(`  → Occurrence on ${currentDate.toISOString().split('T')[0]}: ฿${amount}`);
 
                 if (rule.type === 'income') {
                     totalIncome += amount;
@@ -100,11 +125,19 @@ function calculateMonthlyRecurring(rules, month, year) {
                     expenseByCategory[catId].formatted += amount;
                     expenseByCategory[catId].count += 1;
                 }
+
+                occurrenceCount++;
             }
 
             // Calculate next occurrence
-            nextDate = getNextOccurrence(nextDate, rule.freq, rule.day_of_week, rule.day_of_month);
+            currentDate = getNextOccurrence(currentDate, rule.freq, rule.day_of_week, rule.day_of_month);
         }
+    });
+
+    console.log('[Analytics] Recurring calculation result:', {
+        totalIncome,
+        totalExpense,
+        categoryCount: Object.keys(expenseByCategory).length
     });
 
     return {
