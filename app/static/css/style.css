@@ -9378,26 +9378,42 @@ a:focus-visible {
     border-color: var(--primary);
 }
 
-/* Numpad */
-.quick-numpad {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+/* Calculator Pad */
+.calculator-pad {
     flex: 1;
-    max-height: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     margin-bottom: 16px;
 }
 
-.numpad-btn {
+.calc-display-row {
+    min-height: 20px;
+    text-align: right;
+    padding: 4px 12px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-family: monospace;
+}
+
+.calc-expression {
+    word-break: break-all;
+}
+
+.calc-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.calc-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 56px;
+    min-height: 54px;
     border: none;
-    border-radius: 16px;
-    background: var(--bg-secondary);
-    color: var(--text);
-    font-size: 26px;
+    border-radius: 14px;
+    font-size: 22px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.1s ease;
@@ -9405,29 +9421,67 @@ a:focus-visible {
     -webkit-tap-highlight-color: transparent;
 }
 
-.numpad-btn:hover {
+.calc-btn.num {
+    background: var(--bg-secondary);
+    color: var(--text);
+}
+
+.calc-btn.num:hover {
     background: var(--border);
 }
 
-.numpad-btn:active {
+.calc-btn.num:active {
     transform: scale(0.95);
     background: var(--primary);
     color: white;
 }
 
-.numpad-btn.delete {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
+.calc-btn.num.zero {
+    grid-column: span 2;
 }
 
-.numpad-btn.delete:active {
-    background: #ef4444;
+.calc-btn.op {
+    background: rgba(99, 102, 241, 0.15);
+    color: #6366f1;
+}
+
+.calc-btn.op:hover {
+    background: rgba(99, 102, 241, 0.25);
+}
+
+.calc-btn.op:active {
+    transform: scale(0.95);
+    background: #6366f1;
     color: white;
 }
 
-.numpad-btn.delete i {
-    width: 28px;
-    height: 28px;
+.calc-btn.op i {
+    width: 20px;
+    height: 20px;
+}
+
+.calc-btn.clear {
+    background: rgba(249, 115, 22, 0.15);
+    color: #f97316;
+}
+
+.calc-btn.clear:hover {
+    background: rgba(249, 115, 22, 0.25);
+}
+
+.calc-btn.clear:active {
+    background: #f97316;
+    color: white;
+}
+
+.calc-btn.equals {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    font-size: 28px;
+}
+
+.calc-btn.equals:active {
+    transform: scale(0.95);
 }
 
 /* Submit Button */

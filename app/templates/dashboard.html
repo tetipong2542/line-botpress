@@ -697,22 +697,36 @@
             <button class="quick-chip" data-amount="1000">1K</button>
         </div>
 
-        <!-- Numpad -->
-        <div class="quick-numpad">
-            <button class="numpad-btn" data-value="1">1</button>
-            <button class="numpad-btn" data-value="2">2</button>
-            <button class="numpad-btn" data-value="3">3</button>
-            <button class="numpad-btn" data-value="4">4</button>
-            <button class="numpad-btn" data-value="5">5</button>
-            <button class="numpad-btn" data-value="6">6</button>
-            <button class="numpad-btn" data-value="7">7</button>
-            <button class="numpad-btn" data-value="8">8</button>
-            <button class="numpad-btn" data-value="9">9</button>
-            <button class="numpad-btn" data-value=".">.</button>
-            <button class="numpad-btn" data-value="0">0</button>
-            <button class="numpad-btn delete" data-value="delete">
-                <i data-lucide="delete"></i>
-            </button>
+        <!-- Calculator Numpad -->
+        <div class="calculator-pad">
+            <div class="calc-display-row">
+                <span class="calc-expression" id="calc-expression"></span>
+            </div>
+            <div class="calc-grid">
+                <button class="calc-btn clear" data-action="clear">C</button>
+                <button class="calc-btn op" data-action="percent">%</button>
+                <button class="calc-btn op" data-action="backspace"><i data-lucide="delete"></i></button>
+                <button class="calc-btn op divide" data-action="÷">÷</button>
+
+                <button class="calc-btn num" data-value="7">7</button>
+                <button class="calc-btn num" data-value="8">8</button>
+                <button class="calc-btn num" data-value="9">9</button>
+                <button class="calc-btn op multiply" data-action="×">×</button>
+
+                <button class="calc-btn num" data-value="4">4</button>
+                <button class="calc-btn num" data-value="5">5</button>
+                <button class="calc-btn num" data-value="6">6</button>
+                <button class="calc-btn op minus" data-action="-">−</button>
+
+                <button class="calc-btn num" data-value="1">1</button>
+                <button class="calc-btn num" data-value="2">2</button>
+                <button class="calc-btn num" data-value="3">3</button>
+                <button class="calc-btn op plus" data-action="+">+</button>
+
+                <button class="calc-btn num zero" data-value="0">0</button>
+                <button class="calc-btn num" data-value=".">.</button>
+                <button class="calc-btn equals" data-action="=">=</button>
+            </div>
         </div>
 
         <!-- Submit Button -->
@@ -3155,54 +3169,126 @@
         // Open Quick Entry - Override existing quick add button
         const originalQuickAddBtn = document.getElementById('btn-quick-add');
         if (originalQuickAddBtn) {
-            originalQuickAddBtn.removeEventListener('click', arguments.callee);
             originalQuickAddBtn.addEventListener('click', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 openQuickEntry();
             });
         }
 
-        // Close button
-        document.getElementById('quick-entry-close')?.addEventListener('click', closeQuickEntry);
+        // Close button - with direct binding
+        const closeBtn = document.getElementById('quick-entry-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                closeQuickEntry();
+            });
+        }
 
         // Overlay click
-        quickEntryModal?.querySelector('.modal-overlay')?.addEventListener('click', closeQuickEntry);
+        const overlay = quickEntryModal?.querySelector('.modal-overlay');
+        if (overlay) {
+            overlay.addEventListener('click', closeQuickEntry);
+        }
 
-        // Type Toggle
+        // Type Toggle - with event prevention
         document.querySelectorAll('.quick-type-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 quickEntryState.type = btn.dataset.type;
-                quickEntryState.categoryId = null; // Reset category
+                quickEntryState.categoryId = null;
+                quickEntryState.amount = '0';
                 updateQuickTypeToggle();
                 loadQuickCategories();
                 updateQuickSubmitButton();
+                updateQuickAmountDisplay();
                 triggerHaptic('light');
             });
         });
 
-        // Numpad buttons
-        document.querySelectorAll('.numpad-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+        // Calculator buttons - number buttons
+        document.querySelectorAll('.calc-btn.num').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
                 handleNumpadPress(btn.dataset.value);
+            });
+        });
+
+        // Calculator buttons - operation buttons
+        document.querySelectorAll('.calc-btn[data-action]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const action = btn.dataset.action;
+
+                triggerHaptic('light');
+
+                switch (action) {
+                    case 'clear':
+                        quickEntryState.amount = '0';
+                        break;
+                    case 'backspace':
+                        if (quickEntryState.amount.length > 1) {
+                            quickEntryState.amount = quickEntryState.amount.slice(0, -1);
+                        } else {
+                            quickEntryState.amount = '0';
+                        }
+                        break;
+                    case 'percent':
+                        const val = parseFloat(quickEntryState.amount) || 0;
+                        quickEntryState.amount = String(val / 100);
+                        break;
+                    case '=':
+                        // Evaluate any expression
+                        try {
+                            let expr = quickEntryState.amount
+                                .replace(/×/g, '*')
+                                .replace(/÷/g, '/')
+                                .replace(/−/g, '-');
+                            if (/^[\d+\-*/. ]+$/.test(expr)) {
+                                const result = Function('"use strict"; return (' + expr + ')')();
+                                quickEntryState.amount = String(Math.round(result * 100) / 100);
+                            }
+                        } catch { }
+                        triggerHaptic('medium');
+                        break;
+                    case '+':
+                    case '-':
+                    case '×':
+                    case '÷':
+                        quickEntryState.amount += action;
+                        break;
+                }
+
+                updateQuickAmountDisplay();
             });
         });
 
         // Quick Amount Chips
         document.querySelectorAll('.quick-chip').forEach(chip => {
-            chip.addEventListener('click', () => {
+            chip.addEventListener('click', (e) => {
+                e.preventDefault();
                 handleQuickChip(parseInt(chip.dataset.amount));
             });
         });
 
         // Submit button
-        quickSubmitBtn?.addEventListener('click', submitQuickEntry);
+        if (quickSubmitBtn) {
+            quickSubmitBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                submitQuickEntry();
+            });
+        }
 
         // ESC key to close
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && quickEntryModal.classList.contains('active')) {
+            if (e.key === 'Escape' && quickEntryModal?.classList.contains('active')) {
                 closeQuickEntry();
             }
         });
+
+        console.log('Quick Entry Calculator initialized');
     });
 
 </script>
