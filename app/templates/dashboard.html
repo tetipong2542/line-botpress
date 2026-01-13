@@ -2976,10 +2976,17 @@
     // Load Categories for Quick Entry
     function loadQuickCategories() {
         const categories = quickEntryState.type === 'expense'
-            ? categoriesCache.expense
-            : categoriesCache.income;
+            ? (categoriesCache?.expense || [])
+            : (categoriesCache?.income || []);
 
-        // Sort by usage (most used first) - we'll use a simple approach
+        // Guard check for empty categories
+        if (!categories || categories.length === 0) {
+            if (quickCategoryScroll) {
+                quickCategoryScroll.innerHTML = '<p style="color: var(--text-secondary); padding: 16px; text-align: center;">กำลังโหลด...</p>';
+            }
+            return;
+        }
+
         const sortedCategories = [...categories];
         // Helper to check if string is emoji
         function isEmoji(str) {
@@ -3028,15 +3035,50 @@
         });
     }
 
-    // Update Amount Display
+    // Update Amount Display - shows expression and evaluated result
     function updateQuickAmountDisplay() {
-        const formattedAmount = formatQuickAmount(quickEntryState.amount);
-        quickAmountValue.textContent = formattedAmount;
+        const amountStr = quickEntryState.amount;
+
+        // Show full expression in expression row (above numpad)
+        const calcExpEl = document.getElementById('calc-expression');
+        if (calcExpEl) {
+            calcExpEl.textContent = amountStr !== '0' ? amountStr : '';
+        }
+
+        // Evaluate expression and show result as integer in main display
+        let displayValue = 0;
+        try {
+            let expr = amountStr
+                .replace(/×/g, '*')
+                .replace(/÷/g, '/')
+                .replace(/−/g, '-');
+            // Remove trailing operator for evaluation
+            expr = expr.replace(/[+\-*/]$/, '');
+            if (/^[\d+\-*/. ]+$/.test(expr) && expr.length > 0) {
+                const result = Function('"use strict"; return (' + expr + ')')();
+                if (!isNaN(result) && isFinite(result)) {
+                    displayValue = Math.round(result); // Integer only
+                }
+            }
+        } catch {
+            displayValue = parseInt(amountStr) || 0;
+        }
+
+        quickAmountValue.textContent = displayValue.toLocaleString('th-TH');
 
         // Pop animation
         quickAmountValue.classList.remove('pop');
-        void quickAmountValue.offsetWidth; // Trigger reflow
+        void quickAmountValue.offsetWidth;
         quickAmountValue.classList.add('pop');
+
+        // Highlight active operator button
+        const lastChar = amountStr.slice(-1);
+        document.querySelectorAll('.calc-btn.op').forEach(btn => {
+            const action = btn.dataset.action;
+            if (['+', '-', '×', '÷'].includes(action)) {
+                btn.classList.toggle('active', action === lastChar);
+            }
+        });
     }
 
     // Format amount for display
@@ -3109,7 +3151,21 @@
 
     // Submit Quick Entry
     async function submitQuickEntry() {
-        const amount = parseFloat(quickEntryState.amount) || 0;
+        // Evaluate expression to get final amount
+        let amount = 0;
+        try {
+            let expr = quickEntryState.amount
+                .replace(/×/g, '*')
+                .replace(/÷/g, '/')
+                .replace(/−/g, '-')
+                .replace(/[+\-*/]$/, ''); // Remove trailing operator
+            if (/^[\d+\-*/. ]+$/.test(expr) && expr.length > 0) {
+                amount = Function('"use strict"; return (' + expr + ')')();
+                amount = Math.round(amount); // Integer only
+            }
+        } catch {
+            amount = parseInt(quickEntryState.amount) || 0;
+        }
 
         if (amount <= 0) {
             showToast('กรุณากรอกจำนวนเงิน', 'error');
@@ -3123,12 +3179,12 @@
             return;
         }
 
-        // Prepare data
+        // Prepare data - amount in satang (integer * 100)
         const now = new Date();
         const data = {
             type: quickEntryState.type,
             category_id: quickEntryState.categoryId,
-            amount: Math.round(amount * 100), // Convert to satang
+            amount: amount * 100, // Convert to satang (already integer)
             occurred_at: now.toISOString(),
             note: ''
         };

@@ -9455,6 +9455,12 @@ a:focus-visible {
     color: white;
 }
 
+.calc-btn.op.active {
+    background: #6366f1;
+    color: white;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
 .calc-btn.op i {
     width: 20px;
     height: 20px;
