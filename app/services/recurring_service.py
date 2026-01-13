@@ -22,7 +22,7 @@ class RecurringService:
     @staticmethod
     def create_recurring_rule(project_id, user_id, type, category_id, amount, freq,
                              start_date, day_of_week=None, day_of_month=None,
-                             note=None, member_id=None, remind_days=0):
+                             note=None, member_id=None, remind_days=0, end_date=None):
         """
         Create a new recurring transaction rule
 
@@ -39,6 +39,7 @@ class RecurringService:
             note: Optional note
             member_id: Optional member ID
             remind_days: Days before to remind (default: 0)
+            end_date: Optional end date (date object or ISO string, null = forever)
 
         Returns:
             RecurringRule object
@@ -77,6 +78,14 @@ class RecurringService:
         if isinstance(start_date, str):
             start_date = datetime.fromisoformat(start_date.replace('Z', '+00:00')).date()
 
+        # Parse end_date
+        if end_date and isinstance(end_date, str):
+            end_date = datetime.fromisoformat(end_date.replace('Z', '+00:00')).date()
+
+        # Validate end_date > start_date
+        if end_date and end_date < start_date:
+            raise ValueError("End date must be after start date")
+
         # Create recurring rule
         recurring_rule = RecurringRule(
             project_id=project_id,
@@ -88,7 +97,8 @@ class RecurringService:
             day_of_week=day_of_week,
             day_of_month=day_of_month,
             note=note,
-            member_id=member_id
+            member_id=member_id,
+            end_date=end_date
         )
         recurring_rule.remind_days = remind_days
 
@@ -214,6 +224,15 @@ class RecurringService:
                 start_date = datetime.fromisoformat(start_date.replace('Z', '+00:00')).date()
             recurring_rule.start_date = start_date
             needs_recalc = True
+
+        if 'end_date' in updates:
+            end_date = updates['end_date']
+            if end_date and isinstance(end_date, str):
+                end_date = datetime.fromisoformat(end_date.replace('Z', '+00:00')).date()
+            # Validate end_date > start_date
+            if end_date and end_date < recurring_rule.start_date:
+                raise ValueError("End date must be after start date")
+            recurring_rule.end_date = end_date
 
         if 'note' in updates:
             recurring_rule.note = updates['note']

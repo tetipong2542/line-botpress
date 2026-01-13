@@ -54,7 +54,8 @@ async function loadRecurringData() {
     try {
         const response = await API.get(buildApiUrl('recurring?active_only=true'));
         console.log('[Analytics] Recurring rules loaded:', response);
-        return response.success ? response.recurring : [];
+        // API returns {recurring_rules: [...]} not {recurring: [...]}
+        return response.recurring_rules || [];
     } catch (error) {
         console.error('Recurring load error:', error);
         return [];
@@ -85,19 +86,33 @@ function calculateMonthlyRecurring(rules, month, year) {
             return;
         }
 
+        // Check if rule has end_date and it's before the target month
+        let ruleEndDate = null;
+        if (rule.end_date) {
+            ruleEndDate = new Date(rule.end_date);
+            if (ruleEndDate < startDate) {
+                // Rule ended before this month, skip
+                return;
+            }
+        }
+
         console.log(`[Analytics] Processing rule:`, {
             type: rule.type,
             amount: rule.amount / 100,
             freq: rule.freq,
             start_date: rule.start_date,
+            end_date: rule.end_date || 'ไม่จำกัด',
             category: rule.category ? rule.category.name : 'N/A'
         });
 
         let occurrenceCount = 0;
 
-        // Generate occurrences from start_date up to end of target month
-        while (currentDate <= endDate && occurrenceCount < 100) { // Safety limit
-            if (currentDate >= startDate && currentDate <= endDate) {
+        // Determine the actual end boundary (either month end or rule end_date)
+        const actualEndDate = ruleEndDate && ruleEndDate < endDate ? ruleEndDate : endDate;
+
+        // Generate occurrences from start_date up to actual end date
+        while (currentDate <= actualEndDate && occurrenceCount < 100) { // Safety limit
+            if (currentDate >= startDate && currentDate <= actualEndDate) {
                 // This occurrence falls within the target month
                 const amount = rule.amount / 100; // Convert satang to baht
 

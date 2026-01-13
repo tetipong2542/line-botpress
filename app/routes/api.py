@@ -306,7 +306,8 @@ def create_recurring(project_id):
             day_of_month=data.get('day_of_month'),
             note=data.get('note'),
             member_id=data.get('member_id'),
-            remind_days=data.get('remind_days', 0)
+            remind_days=data.get('remind_days', 0),
+            end_date=data.get('end_date')
         )
 
         return jsonify({
