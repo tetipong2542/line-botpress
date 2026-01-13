@@ -276,6 +276,64 @@ typeSelect.addEventListener('change', (e) => {
     }
 });
 
+// Calculate and update next run date
+function updateNextRunDate() {
+    const startDateInput = document.getElementById('recurring-start-date');
+    const frequencySelect = document.getElementById('recurring-frequency');
+    const nextDateInput = document.getElementById('recurring-next-date');
+
+    const startDate = startDateInput.value;
+    const frequency = frequencySelect.value;
+
+    if (!startDate) {
+        nextDateInput.value = '-';
+        return;
+    }
+
+    // Parse start date
+    const [year, month, day] = startDate.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+
+    // Calculate next run date based on frequency
+    let nextDate = new Date(date);
+
+    if (frequency === 'daily') {
+        nextDate.setDate(nextDate.getDate() + 1);
+    } else if (frequency === 'weekly') {
+        nextDate.setDate(nextDate.getDate() + 7);
+    } else if (frequency === 'monthly') {
+        // Add 1 month
+        let nextMonth = nextDate.getMonth() + 1;
+        let nextYear = nextDate.getFullYear();
+        if (nextMonth > 11) {
+            nextMonth = 0;
+            nextYear++;
+        }
+
+        // Handle day overflow (e.g., Jan 31 -> Feb 28/29)
+        const targetDay = nextDate.getDate();
+        nextDate = new Date(nextYear, nextMonth, 1);
+        const lastDayOfMonth = new Date(nextYear, nextMonth + 1, 0).getDate();
+        nextDate.setDate(Math.min(targetDay, lastDayOfMonth));
+    } else if (frequency === 'yearly') {
+        nextDate.setFullYear(nextDate.getFullYear() + 1);
+    }
+
+    // Format as DD/MM/YYYY
+    const nextDay = String(nextDate.getDate()).padStart(2, '0');
+    const nextMonth = String(nextDate.getMonth() + 1).padStart(2, '0');
+    const nextYear = nextDate.getFullYear();
+
+    nextDateInput.value = `${nextDay}/${nextMonth}/${nextYear}`;
+}
+
+// Listen to start date and frequency changes
+document.getElementById('recurring-start-date').addEventListener('change', updateNextRunDate);
+document.getElementById('recurring-frequency').addEventListener('change', updateNextRunDate);
+
+// Initialize next run date on page load
+updateNextRunDate();
+
 // Form submission
 document.getElementById('recurring-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -659,6 +717,9 @@ async function editRecurring(recurringId) {
 
         // Trigger type change to show correct categories
         document.getElementById('recurring-type').dispatchEvent(new Event('change'));
+
+        // Update next run date based on start_date and frequency
+        updateNextRunDate();
 
         // Change modal header and button text
         const modalHeader = modal.querySelector('.modal-header h2');
