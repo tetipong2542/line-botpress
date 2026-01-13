@@ -648,6 +648,81 @@
     </div>
 </div>
 
+<!-- Quick Entry Modal (Numpad-First) -->
+<div class="modal" id="quick-entry-modal">
+    <div class="modal-overlay"></div>
+    <div class="quick-entry-container">
+        <!-- Header -->
+        <div class="quick-entry-header">
+            <button class="quick-entry-close" id="quick-entry-close">
+                <i data-lucide="x"></i>
+            </button>
+            <h2>⚡ จดเร็ว</h2>
+            <button class="quick-entry-settings" id="quick-entry-more">
+                <i data-lucide="more-vertical"></i>
+            </button>
+        </div>
+
+        <!-- Type Toggle (Swipeable) -->
+        <div class="quick-type-toggle">
+            <button class="quick-type-btn expense active" data-type="expense">
+                <i data-lucide="minus-circle"></i>
+                <span>รายจ่าย</span>
+            </button>
+            <button class="quick-type-btn income" data-type="income">
+                <i data-lucide="plus-circle"></i>
+                <span>รายรับ</span>
+            </button>
+        </div>
+
+        <!-- Swipeable Category Pills -->
+        <div class="quick-category-container">
+            <div class="quick-category-scroll" id="quick-category-scroll">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Amount Display -->
+        <div class="quick-amount-display">
+            <span class="quick-currency">฿</span>
+            <span class="quick-amount-value" id="quick-amount-value">0</span>
+        </div>
+
+        <!-- Quick Amount Chips -->
+        <div class="quick-amount-chips">
+            <button class="quick-chip" data-amount="50">50</button>
+            <button class="quick-chip" data-amount="100">100</button>
+            <button class="quick-chip" data-amount="200">200</button>
+            <button class="quick-chip" data-amount="500">500</button>
+            <button class="quick-chip" data-amount="1000">1K</button>
+        </div>
+
+        <!-- Numpad -->
+        <div class="quick-numpad">
+            <button class="numpad-btn" data-value="1">1</button>
+            <button class="numpad-btn" data-value="2">2</button>
+            <button class="numpad-btn" data-value="3">3</button>
+            <button class="numpad-btn" data-value="4">4</button>
+            <button class="numpad-btn" data-value="5">5</button>
+            <button class="numpad-btn" data-value="6">6</button>
+            <button class="numpad-btn" data-value="7">7</button>
+            <button class="numpad-btn" data-value="8">8</button>
+            <button class="numpad-btn" data-value="9">9</button>
+            <button class="numpad-btn" data-value=".">.</button>
+            <button class="numpad-btn" data-value="0">0</button>
+            <button class="numpad-btn delete" data-value="delete">
+                <i data-lucide="delete"></i>
+            </button>
+        </div>
+
+        <!-- Submit Button -->
+        <button class="quick-submit-btn" id="quick-submit-btn">
+            <i data-lucide="check"></i>
+            <span>บันทึก</span>
+        </button>
+    </div>
+</div>
+
 <!-- Sticky Footer Menu -->
 {% set current_page = 'home' %}
 {% include 'components/footer_menu.html' %}
@@ -2872,5 +2947,313 @@
     loadHealthScore();
     loadForecast(3);
     loadRecurringForecast();
+
+    // ============================================================================
+    // QUICK ENTRY MODAL - Numpad-First Fast Transaction Entry
+    // ============================================================================
+
+    const quickEntryModal = document.getElementById('quick-entry-modal');
+    const quickAmountValue = document.getElementById('quick-amount-value');
+    const quickCategoryScroll = document.getElementById('quick-category-scroll');
+    const quickSubmitBtn = document.getElementById('quick-submit-btn');
+
+    // Quick Entry State
+    let quickEntryState = {
+        type: 'expense',
+        categoryId: null,
+        amount: '0'
+    };
+
+    // Haptic Feedback Helper
+    function triggerHaptic(pattern = 'light') {
+        if ('vibrate' in navigator) {
+            switch (pattern) {
+                case 'light':
+                    navigator.vibrate(10);
+                    break;
+                case 'medium':
+                    navigator.vibrate(25);
+                    break;
+                case 'success':
+                    navigator.vibrate([20, 50, 20]);
+                    break;
+                case 'error':
+                    navigator.vibrate([50, 30, 50, 30, 50]);
+                    break;
+            }
+        }
+    }
+
+    // Open Quick Entry Modal
+    function openQuickEntry() {
+        // Reset state
+        quickEntryState = {
+            type: lastUsedTransaction.type || 'expense',
+            categoryId: lastUsedTransaction.categoryId || null,
+            amount: '0'
+        };
+
+        // Update UI
+        updateQuickTypeToggle();
+        loadQuickCategories();
+        updateQuickAmountDisplay();
+        updateQuickSubmitButton();
+
+        quickEntryModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        lucide.createIcons();
+        triggerHaptic('light');
+    }
+
+    // Close Quick Entry Modal
+    function closeQuickEntry() {
+        quickEntryModal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // Update Type Toggle UI
+    function updateQuickTypeToggle() {
+        document.querySelectorAll('.quick-type-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.type === quickEntryState.type) {
+                btn.classList.add('active');
+            }
+        });
+    }
+
+    // Load Categories for Quick Entry
+    function loadQuickCategories() {
+        const categories = quickEntryState.type === 'expense'
+            ? categoriesCache.expense
+            : categoriesCache.income;
+
+        // Sort by usage (most used first) - we'll use a simple approach
+        const sortedCategories = [...categories];
+
+        quickCategoryScroll.innerHTML = sortedCategories.map(cat => {
+            const isActive = cat.id === quickEntryState.categoryId;
+            const icon = cat.icon || '📁';
+            return `
+                <button class="quick-category-pill ${isActive ? 'active' : ''}" 
+                        data-id="${cat.id}"
+                        onclick="selectQuickCategory('${cat.id}')">
+                    <span class="cat-icon">${icon}</span>
+                    <span class="cat-name">${cat.name_th}</span>
+                </button>
+            `;
+        }).join('');
+
+        // Auto-select first category if none selected
+        if (!quickEntryState.categoryId && sortedCategories.length > 0) {
+            quickEntryState.categoryId = sortedCategories[0].id;
+            loadQuickCategories(); // Refresh to show selection
+        }
+    }
+
+    // Select Category
+    function selectQuickCategory(categoryId) {
+        quickEntryState.categoryId = categoryId;
+        triggerHaptic('light');
+
+        // Update pills
+        document.querySelectorAll('.quick-category-pill').forEach(pill => {
+            pill.classList.remove('active');
+            if (pill.dataset.id === categoryId) {
+                pill.classList.add('active');
+            }
+        });
+    }
+
+    // Update Amount Display
+    function updateQuickAmountDisplay() {
+        const formattedAmount = formatQuickAmount(quickEntryState.amount);
+        quickAmountValue.textContent = formattedAmount;
+
+        // Pop animation
+        quickAmountValue.classList.remove('pop');
+        void quickAmountValue.offsetWidth; // Trigger reflow
+        quickAmountValue.classList.add('pop');
+    }
+
+    // Format amount for display
+    function formatQuickAmount(amount) {
+        const num = parseFloat(amount) || 0;
+        if (num === 0) return '0';
+
+        // Check if has decimal
+        if (amount.includes('.')) {
+            const parts = amount.split('.');
+            const decimal = parts[1] || '';
+            return parseFloat(parts[0]).toLocaleString('th-TH') + '.' + decimal;
+        }
+
+        return num.toLocaleString('th-TH');
+    }
+
+    // Update Submit Button Style
+    function updateQuickSubmitButton() {
+        quickSubmitBtn.classList.remove('expense-mode', 'income-mode');
+        quickSubmitBtn.classList.add(quickEntryState.type + '-mode');
+    }
+
+    // Handle Numpad Press
+    function handleNumpadPress(value) {
+        triggerHaptic('light');
+
+        if (value === 'delete') {
+            // Remove last character
+            if (quickEntryState.amount.length > 1) {
+                quickEntryState.amount = quickEntryState.amount.slice(0, -1);
+            } else {
+                quickEntryState.amount = '0';
+            }
+        } else if (value === '.') {
+            // Add decimal only if not already present
+            if (!quickEntryState.amount.includes('.')) {
+                quickEntryState.amount += '.';
+            }
+        } else {
+            // Add digit
+            if (quickEntryState.amount === '0') {
+                quickEntryState.amount = value;
+            } else {
+                // Limit to reasonable length (max 10 digits + 2 decimal)
+                const parts = quickEntryState.amount.split('.');
+                if (parts[1] && parts[1].length >= 2) {
+                    return; // Max 2 decimal places
+                }
+                if (parts[0].length >= 10 && !quickEntryState.amount.includes('.')) {
+                    return; // Max 10 digits before decimal
+                }
+                quickEntryState.amount += value;
+            }
+        }
+
+        updateQuickAmountDisplay();
+    }
+
+    // Handle Quick Amount Chip
+    function handleQuickChip(amount) {
+        triggerHaptic('medium');
+
+        // Add to current amount
+        const current = parseFloat(quickEntryState.amount) || 0;
+        quickEntryState.amount = String(current + amount);
+
+        updateQuickAmountDisplay();
+    }
+
+    // Submit Quick Entry
+    async function submitQuickEntry() {
+        const amount = parseFloat(quickEntryState.amount) || 0;
+
+        if (amount <= 0) {
+            showToast('กรุณากรอกจำนวนเงิน', 'error');
+            triggerHaptic('error');
+            return;
+        }
+
+        if (!quickEntryState.categoryId) {
+            showToast('กรุณาเลือกหมวดหมู่', 'error');
+            triggerHaptic('error');
+            return;
+        }
+
+        // Prepare data
+        const now = new Date();
+        const data = {
+            type: quickEntryState.type,
+            category_id: quickEntryState.categoryId,
+            amount: Math.round(amount * 100), // Convert to satang
+            occurred_at: now.toISOString(),
+            note: ''
+        };
+
+        try {
+            // Show loading
+            quickSubmitBtn.disabled = true;
+            quickSubmitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i> <span>กำลังบันทึก...</span>';
+            lucide.createIcons();
+
+            await API.post(buildApiUrl('transactions'), data);
+
+            // Success
+            triggerHaptic('success');
+            showToast(`บันทึก${quickEntryState.type === 'expense' ? 'รายจ่าย' : 'รายรับ'}สำเร็จ!`, 'success');
+
+            // Save last used
+            saveLastUsedTransaction(quickEntryState.type, quickEntryState.categoryId);
+
+            // Close and refresh
+            closeQuickEntry();
+            loadTransactions();
+            loadSummary();
+
+        } catch (error) {
+            triggerHaptic('error');
+            showToast(error.message || 'เกิดข้อผิดพลาด', 'error');
+        } finally {
+            // Reset button
+            quickSubmitBtn.disabled = false;
+            quickSubmitBtn.innerHTML = '<i data-lucide="check"></i> <span>บันทึก</span>';
+            lucide.createIcons();
+        }
+    }
+
+    // Event Listeners for Quick Entry Modal
+    document.addEventListener('DOMContentLoaded', function () {
+        // Open Quick Entry - Override existing quick add button
+        const originalQuickAddBtn = document.getElementById('btn-quick-add');
+        if (originalQuickAddBtn) {
+            originalQuickAddBtn.removeEventListener('click', arguments.callee);
+            originalQuickAddBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                openQuickEntry();
+            });
+        }
+
+        // Close button
+        document.getElementById('quick-entry-close')?.addEventListener('click', closeQuickEntry);
+
+        // Overlay click
+        quickEntryModal?.querySelector('.modal-overlay')?.addEventListener('click', closeQuickEntry);
+
+        // Type Toggle
+        document.querySelectorAll('.quick-type-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                quickEntryState.type = btn.dataset.type;
+                quickEntryState.categoryId = null; // Reset category
+                updateQuickTypeToggle();
+                loadQuickCategories();
+                updateQuickSubmitButton();
+                triggerHaptic('light');
+            });
+        });
+
+        // Numpad buttons
+        document.querySelectorAll('.numpad-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                handleNumpadPress(btn.dataset.value);
+            });
+        });
+
+        // Quick Amount Chips
+        document.querySelectorAll('.quick-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                handleQuickChip(parseInt(chip.dataset.amount));
+            });
+        });
+
+        // Submit button
+        quickSubmitBtn?.addEventListener('click', submitQuickEntry);
+
+        // ESC key to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && quickEntryModal.classList.contains('active')) {
+                closeQuickEntry();
+            }
+        });
+    });
+
 </script>
 {% endblock %}

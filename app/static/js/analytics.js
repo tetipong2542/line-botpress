@@ -580,33 +580,196 @@ function updateTopCategories(regularCategories, recurringCategories) {
     lucide.createIcons();
 }
 
-// Period navigation
+// Period navigation with Touch Swipe Support
 function setupPeriodNavigation() {
     const prevBtn = document.getElementById('prev-period');
     const nextBtn = document.getElementById('next-period');
+    const periodSelector = document.querySelector('.period-selector');
+    const container = document.querySelector('.mobile-container');
 
-    if (prevBtn) {
-        prevBtn.addEventListener('click', () => {
-            currentMonth--;
-            if (currentMonth < 0) {
-                currentMonth = 11;
-                currentYear--;
-            }
-            updatePeriodDisplay();
-            loadAnalytics();
+    // Helper: Trigger haptic feedback
+    function triggerHaptic() {
+        if ('vibrate' in navigator) {
+            navigator.vibrate(15);
+        }
+    }
+    
+    // Previous period
+    function goToPrevPeriod() {
+        triggerHaptic();
+        currentMonth--;
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        }
+        animatePeriodChange('left');
+        updatePeriodDisplay();
+        loadAnalytics();
+    }
+    
+    // Next period
+    function goToNextPeriod() {
+        triggerHaptic();
+        currentMonth++;
+        if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        }
+        animatePeriodChange('right');
+        updatePeriodDisplay();
+        loadAnalytics();
+    }
+    
+    // Animate period change
+    function animatePeriodChange(direction) {
+        const periodEl = document.getElementById('current-period');
+        if (!periodEl) return;
+        
+        periodEl.style.transition = 'none';
+        periodEl.style.transform = direction === 'left' ? 'translateX(30px)' : 'translateX(-30px)';
+        periodEl.style.opacity = '0';
+        
+        requestAnimationFrame(() => {
+            periodEl.style.transition = 'all 0.3s ease';
+            periodEl.style.transform = 'translateX(0)';
+            periodEl.style.opacity = '1';
         });
     }
 
+    if (prevBtn) {
+        prevBtn.addEventListener('click', goToPrevPeriod);
+    }
+
     if (nextBtn) {
-        nextBtn.addEventListener('click', () => {
-            currentMonth++;
-            if (currentMonth > 11) {
-                currentMonth = 0;
-                currentYear++;
+        nextBtn.addEventListener('click', goToNextPeriod);
+    }
+    
+    // ===== SWIPE GESTURE DETECTION =====
+    if (periodSelector) {
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchStartTime = 0;
+        
+        periodSelector.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            touchStartTime = Date.now();
+        }, { passive: true });
+        
+        periodSelector.addEventListener('touchend', (e) => {
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            const deltaTime = Date.now() - touchStartTime;
+            
+            // Check if it's a horizontal swipe (more horizontal than vertical)
+            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50 && deltaTime < 500) {
+                if (deltaX > 0) {
+                    // Swipe right -> go to previous month
+                    goToPrevPeriod();
+                } else {
+                    // Swipe left -> go to next month
+                    goToNextPeriod();
+                }
             }
-            updatePeriodDisplay();
-            loadAnalytics();
-        });
+        }, { passive: true });
+    }
+    
+    // ===== PULL-TO-REFRESH =====
+    if (container) {
+        let pullStartY = 0;
+        let isPulling = false;
+        let pullIndicator = null;
+        
+        // Create pull indicator
+        function createPullIndicator() {
+            pullIndicator = document.createElement('div');
+            pullIndicator.className = 'pull-to-refresh-indicator';
+            pullIndicator.innerHTML = `
+                <i data-lucide="arrow-down"></i>
+                <span>ดึงลงเพื่อรีเฟรช</span>
+            `;
+            pullIndicator.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 60px;
+                background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                font-weight: 600;
+                transform: translateY(-100%);
+                transition: transform 0.3s ease;
+                z-index: 9998;
+            `;
+            document.body.appendChild(pullIndicator);
+            lucide.createIcons();
+        }
+        
+        createPullIndicator();
+        
+        container.addEventListener('touchstart', (e) => {
+            if (container.scrollTop === 0) {
+                pullStartY = e.touches[0].clientY;
+                isPulling = true;
+            }
+        }, { passive: true });
+        
+        container.addEventListener('touchmove', (e) => {
+            if (!isPulling) return;
+            
+            const pullY = e.touches[0].clientY;
+            const pullDistance = pullY - pullStartY;
+            
+            if (pullDistance > 0 && pullDistance < 150) {
+                const progress = Math.min(pullDistance / 100, 1);
+                pullIndicator.style.transform = `translateY(${progress * 60 - 60}px)`;
+                
+                if (pullDistance > 80) {
+                    pullIndicator.innerHTML = `
+                        <i data-lucide="loader" class="spinning"></i>
+                        <span>ปล่อยเพื่อรีเฟรช</span>
+                    `;
+                    lucide.createIcons();
+                }
+            }
+        }, { passive: true });
+        
+        container.addEventListener('touchend', async () => {
+            if (!isPulling) return;
+            
+            const pullY = parseFloat(pullIndicator.style.transform.replace(/[^0-9.-]/g, '')) || 0;
+            
+            if (pullY >= 0) {
+                // Trigger refresh
+                triggerHaptic();
+                pullIndicator.innerHTML = `
+                    <i data-lucide="loader" class="spinning"></i>
+                    <span>กำลังโหลด...</span>
+                `;
+                lucide.createIcons();
+                
+                await loadAnalytics();
+                showToast('รีเฟรชข้อมูลสำเร็จ', 'success');
+            }
+            
+            // Hide indicator
+            pullIndicator.style.transform = 'translateY(-100%)';
+            setTimeout(() => {
+                pullIndicator.innerHTML = `
+                    <i data-lucide="arrow-down"></i>
+                    <span>ดึงลงเพื่อรีเฟรช</span>
+                `;
+                lucide.createIcons();
+            }, 300);
+            
+            isPulling = false;
+        }, { passive: true });
     }
 }
 

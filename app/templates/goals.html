@@ -243,90 +243,191 @@
         document.getElementById('total-saved').textContent = '฿' + (totalSaved / 100).toLocaleString('th-TH');
         document.getElementById('avg-progress').textContent = Math.round(totalProgress / goals.length) + '%';
 
-        // Render cards
+        // Render cards with enhanced design
         goalsList.innerHTML = goals.map(goal => {
             const current = (goal.current_amount || 0) / 100;
             const target = goal.target_amount / 100;
             const progress = goal.progress_percentage || 0;
             const isCompleted = goal.is_completed;
             const isOverdue = goal.is_overdue;
-            const progressColor = progress >= 100 ? 'complete' : progress >= 80 ? 'warning' : 'normal';
+
+            // Calculate milestone states
+            const milestones = [
+                { percent: 25, reached: progress >= 25 },
+                { percent: 50, reached: progress >= 50 },
+                { percent: 75, reached: progress >= 75 },
+                { percent: 100, reached: progress >= 100 }
+            ];
+
+            // SVG circle calculations
+            const radius = 45;
+            const circumference = 2 * Math.PI * radius;
+            const strokeDashoffset = circumference - (Math.min(progress, 100) / 100) * circumference;
+
+            // Color based on progress
+            const progressColor = progress >= 100 ? '#10b981' : progress >= 75 ? '#f59e0b' : '#6366f1';
+
+            // Estimate completion date
+            let predictionText = '';
+            if (!isCompleted && goal.days_remaining && progress > 0) {
+                const avgDailyProgress = progress / ((goal.months || 6) * 30 - (goal.days_remaining || 0));
+                const daysToComplete = avgDailyProgress > 0 ? Math.ceil((100 - progress) / avgDailyProgress) : 0;
+                if (daysToComplete > 0 && daysToComplete < 365) {
+                    const completionDate = new Date();
+                    completionDate.setDate(completionDate.getDate() + daysToComplete);
+                    predictionText = `คาดว่าบรรลุ: ${completionDate.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}`;
+                }
+            }
 
             return `
-            <div class="goal-card ${isCompleted ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}" data-id="${goal.id}">
-                <div class="goal-card-header">
-                    <div class="goal-main-info">
-                        <div class="goal-icon-wrapper">
-                            <i data-lucide="${isCompleted ? 'check-circle' : 'target'}"></i>
-                        </div>
-                        <div class="goal-title-section">
-                            <h3 class="goal-title">${goal.name}</h3>
-                            ${goal.days_remaining !== null && !isCompleted ? `
-                                <span class="goal-subtitle ${isOverdue ? 'overdue' : ''}">
-                                    <i data-lucide="calendar"></i>
-                                    ${isOverdue ? 'เกินกำหนด' : `เหลือ ${goal.days_remaining} วัน`}
-                                </span>
-                            ` : ''}
-                            ${isCompleted ? `
-                                <span class="goal-subtitle success">
-                                    <i data-lucide="trophy"></i>
-                                    บรรลุเป้าหมายแล้ว!
-                                </span>
-                            ` : ''}
+            <div class="goal-card-enhanced ${isCompleted ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}" data-id="${goal.id}" data-progress="${progress}">
+                <!-- Card Header with Circular Progress -->
+                <div class="goal-enhanced-header">
+                    <div class="goal-progress-ring">
+                        <svg viewBox="0 0 100 100" class="progress-ring-svg">
+                            <!-- Background circle -->
+                            <circle cx="50" cy="50" r="${radius}" fill="none" stroke="var(--border)" stroke-width="8"/>
+                            <!-- Progress circle -->
+                            <circle cx="50" cy="50" r="${radius}" fill="none" 
+                                stroke="${progressColor}" 
+                                stroke-width="8"
+                                stroke-linecap="round"
+                                stroke-dasharray="${circumference}"
+                                stroke-dashoffset="${strokeDashoffset}"
+                                class="progress-ring-circle"
+                                transform="rotate(-90 50 50)"/>
+                        </svg>
+                        <div class="progress-ring-center">
+                            ${isCompleted ? '🎉' : `<span class="ring-percent">${Math.round(progress)}%</span>`}
                         </div>
                     </div>
-                    <div class="goal-menu-wrapper">
-                        <button class="btn-menu" onclick="toggleGoalMenu('${goal.id}')" title="ตัวเลือก">
-                            <i data-lucide="more-vertical"></i>
+                    
+                    <div class="goal-info-section">
+                        <h3 class="goal-name">${goal.name}</h3>
+                        <div class="goal-amounts">
+                            <span class="goal-current">฿${current.toLocaleString('th-TH')}</span>
+                            <span class="goal-separator">/</span>
+                            <span class="goal-target">฿${target.toLocaleString('th-TH')}</span>
+                        </div>
+                        ${goal.days_remaining !== null && !isCompleted ? `
+                            <div class="goal-time ${isOverdue ? 'overdue' : ''}">
+                                <i data-lucide="${isOverdue ? 'alert-circle' : 'clock'}"></i>
+                                <span>${isOverdue ? 'เกินกำหนด' : `เหลือ ${goal.days_remaining} วัน`}</span>
+                            </div>
+                        ` : ''}
+                        ${predictionText ? `
+                            <div class="goal-prediction">
+                                <i data-lucide="sparkles"></i>
+                                <span>${predictionText}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <button class="goal-menu-btn" onclick="toggleGoalMenu('${goal.id}')" title="ตัวเลือก">
+                        <i data-lucide="more-vertical"></i>
+                    </button>
+                    
+                    <div class="dropdown-menu" id="menu-${goal.id}">
+                        ${!isCompleted ? `
+                            <button class="menu-item primary" onclick="openContribute('${goal.id}'); closeAllMenus();">
+                                <i data-lucide="plus-circle"></i>
+                                <span>เพิ่มเงินออม</span>
+                            </button>
+                        ` : ''}
+                        ${!isCompleted && current > 0 ? `
+                            <button class="menu-item warning" onclick="openWithdraw('${goal.id}', '${goal.name}', ${current}); closeAllMenus();">
+                                <i data-lucide="minus-circle"></i>
+                                <span>ถอนเงิน</span>
+                            </button>
+                        ` : ''}
+                        <button class="menu-item" onclick="openEdit('${goal.id}', '${goal.name}', ${goal.target_amount}, ${goal.days_remaining || 30}); closeAllMenus();">
+                            <i data-lucide="edit-2"></i>
+                            <span>แก้ไข</span>
                         </button>
-                        <div class="dropdown-menu" id="menu-${goal.id}">
-                            ${!isCompleted ? `
-                                <button class="menu-item primary" onclick="openContribute('${goal.id}'); closeAllMenus();">
-                                    <i data-lucide="plus-circle"></i>
-                                    <span>เพิ่มเงินออม</span>
-                                </button>
-                            ` : ''}
-                            ${!isCompleted && current > 0 ? `
-                                <button class="menu-item warning" onclick="openWithdraw('${goal.id}', '${goal.name}', ${current}); closeAllMenus();">
-                                    <i data-lucide="minus-circle"></i>
-                                    <span>ถอนเงิน</span>
-                                </button>
-                            ` : ''}
-                            <button class="menu-item" onclick="openEdit('${goal.id}', '${goal.name}', ${goal.target_amount}, ${goal.days_remaining || 30}); closeAllMenus();">
-                                <i data-lucide="edit-2"></i>
-                                <span>แก้ไข</span>
-                            </button>
-                            <button class="menu-item danger" onclick="deleteGoal('${goal.id}'); closeAllMenus();">
-                                <i data-lucide="trash-2"></i>
-                                <span>ลบเป้าหมาย</span>
-                            </button>
+                        <button class="menu-item danger" onclick="deleteGoal('${goal.id}'); closeAllMenus();">
+                            <i data-lucide="trash-2"></i>
+                            <span>ลบเป้าหมาย</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Milestone Indicators -->
+                <div class="goal-milestones">
+                    ${milestones.map(m => `
+                        <div class="milestone ${m.reached ? 'reached' : ''}" title="${m.percent}%">
+                            <div class="milestone-dot">
+                                ${m.reached ? '<i data-lucide="check"></i>' : ''}
+                            </div>
+                            <span class="milestone-label">${m.percent}%</span>
                         </div>
-                    </div>
+                    `).join('')}
                 </div>
-
-                <div class="goal-amount-section">
-                    <div class="amount-current">
-                        <span class="amount-label">ออมแล้ว</span>
-                        <span class="amount-value">฿${current.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</span>
+                
+                <!-- Quick Action Buttons -->
+                ${!isCompleted ? `
+                    <div class="goal-quick-actions">
+                        <button class="goal-action-btn contribute" onclick="openContribute('${goal.id}')">
+                            <i data-lucide="plus"></i>
+                            <span>เพิ่มเงินออม</span>
+                        </button>
+                        ${current > 0 ? `
+                            <button class="goal-action-btn withdraw" onclick="openWithdraw('${goal.id}', '${goal.name}', ${current})">
+                                <i data-lucide="minus"></i>
+                                <span>ถอนเงิน</span>
+                            </button>
+                        ` : ''}
                     </div>
-                    <div class="amount-target">
-                        <span class="amount-label">เป้าหมาย</span>
-                        <span class="amount-value">฿${target.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</span>
+                ` : `
+                    <div class="goal-completed-badge">
+                        <i data-lucide="trophy"></i>
+                        <span>🎊 บรรลุเป้าหมายแล้ว! 🎊</span>
                     </div>
-                </div>
-
-                <div class="goal-progress-section">
-                    <div class="progress-bar-large">
-                        <div class="progress-fill-large ${progressColor}" style="width: ${Math.min(progress, 100)}%">
-                            <span class="progress-percentage">${progress.toFixed(0)}%</span>
-                        </div>
-                    </div>
-                </div>
+                `}
             </div>
         `;
         }).join('');
 
         lucide.createIcons();
+
+        // Animate progress rings on load
+        setTimeout(() => {
+            document.querySelectorAll('.progress-ring-circle').forEach(circle => {
+                circle.classList.add('animate');
+            });
+        }, 100);
+
+        // Trigger confetti for newly completed goals
+        const completedGoals = goals.filter(g => g.is_completed);
+        if (completedGoals.length > 0) {
+            // Check if first visit celebration needed
+            const celebratedGoals = JSON.parse(localStorage.getItem('celebratedGoals') || '[]');
+            completedGoals.forEach(goal => {
+                if (!celebratedGoals.includes(goal.id)) {
+                    triggerConfetti();
+                    celebratedGoals.push(goal.id);
+                    localStorage.setItem('celebratedGoals', JSON.stringify(celebratedGoals));
+                }
+            });
+        }
+    }
+
+    // Confetti Animation
+    function triggerConfetti() {
+        const colors = ['#10b981', '#f59e0b', '#6366f1', '#ec4899', '#8b5cf6'];
+        const confettiCount = 50;
+
+        for (let i = 0; i < confettiCount; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.cssText = `
+                left: ${Math.random() * 100}vw;
+                background: ${colors[Math.floor(Math.random() * colors.length)]};
+                animation-delay: ${Math.random() * 0.5}s;
+            `;
+            document.body.appendChild(confetti);
+
+            setTimeout(() => confetti.remove(), 3000);
+        }
     }
 
     // Menu toggle functions
@@ -984,6 +1085,358 @@
         opacity: 1;
         visibility: visible;
         transform: scale(1);
+    }
+
+    /* ============================================================================
+       ENHANCED GOAL CARDS - Circular Progress & Milestones
+       ============================================================================ */
+
+    .goal-card-enhanced {
+        background: var(--bg);
+        border-radius: 20px;
+        padding: 20px;
+        margin-bottom: 16px;
+        border: 2px solid var(--border);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        animation: fadeInUp 0.4s ease;
+    }
+
+    .goal-card-enhanced:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .goal-card-enhanced.completed {
+        border-color: #10b981;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, var(--bg) 100%);
+    }
+
+    .goal-card-enhanced.overdue {
+        border-color: #ef4444;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, var(--bg) 100%);
+    }
+
+    /* Enhanced Header with Circular Progress */
+    .goal-enhanced-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 16px;
+        position: relative;
+    }
+
+    /* Circular Progress Ring */
+    .goal-progress-ring {
+        width: 90px;
+        height: 90px;
+        flex-shrink: 0;
+        position: relative;
+    }
+
+    .progress-ring-svg {
+        width: 100%;
+        height: 100%;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    }
+
+    .progress-ring-circle {
+        transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .progress-ring-circle.animate {
+        stroke-dashoffset: 0 !important;
+    }
+
+    .progress-ring-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+    }
+
+    .ring-percent {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--text);
+    }
+
+    .progress-ring-center .emoji {
+        font-size: 28px;
+    }
+
+    /* Goal Info Section */
+    .goal-info-section {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .goal-name {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text);
+        margin: 0 0 8px 0;
+        line-height: 1.3;
+    }
+
+    .goal-amounts {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+    }
+
+    .goal-current {
+        font-size: 20px;
+        font-weight: 700;
+        color: #6366f1;
+    }
+
+    .goal-separator {
+        font-size: 14px;
+        color: var(--text-secondary);
+    }
+
+    .goal-target {
+        font-size: 14px;
+        color: var(--text-secondary);
+    }
+
+    .goal-time,
+    .goal-prediction {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 4px;
+    }
+
+    .goal-time i,
+    .goal-prediction i {
+        width: 14px;
+        height: 14px;
+    }
+
+    .goal-time.overdue {
+        color: #ef4444;
+    }
+
+    .goal-prediction {
+        color: #6366f1;
+    }
+
+    /* Menu Button */
+    .goal-menu-btn {
+        width: 36px;
+        height: 36px;
+        border: none;
+        background: var(--bg-secondary);
+        border-radius: 10px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+    }
+
+    .goal-menu-btn:hover {
+        background: var(--primary);
+        color: white;
+    }
+
+    /* Milestone Indicators */
+    .goal-milestones {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 0;
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 16px;
+    }
+
+    .milestone {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        flex: 1;
+    }
+
+    .milestone-dot {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--bg-secondary);
+        border: 2px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .milestone-dot i {
+        width: 14px;
+        height: 14px;
+        color: white;
+    }
+
+    .milestone.reached .milestone-dot {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-color: #10b981;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+    }
+
+    .milestone-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+
+    .milestone.reached .milestone-label {
+        color: #10b981;
+    }
+
+    /* Quick Action Buttons */
+    .goal-quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+    }
+
+    .goal-action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        background: var(--bg-secondary);
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: inherit;
+    }
+
+    .goal-action-btn i {
+        width: 18px;
+        height: 18px;
+    }
+
+    .goal-action-btn.contribute:hover {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-color: #10b981;
+        color: white;
+    }
+
+    .goal-action-btn.withdraw:hover {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border-color: #f59e0b;
+        color: white;
+    }
+
+    .goal-action-btn:active {
+        transform: scale(0.98);
+    }
+
+    /* Completed Badge */
+    .goal-completed-badge {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 16px;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+        border-radius: 12px;
+        color: #10b981;
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .goal-completed-badge i {
+        width: 24px;
+        height: 24px;
+        color: #fbbf24;
+    }
+
+    /* Confetti Animation */
+    .confetti {
+        position: fixed;
+        top: -10px;
+        width: 10px;
+        height: 10px;
+        border-radius: 2px;
+        animation: confettiFall 3s ease-out forwards;
+        z-index: 99999;
+        pointer-events: none;
+    }
+
+    @keyframes confettiFall {
+        0% {
+            transform: translateY(0) rotate(0deg);
+            opacity: 1;
+        }
+
+        100% {
+            transform: translateY(100vh) rotate(720deg);
+            opacity: 0;
+        }
+    }
+
+    /* Mobile Responsive for Enhanced Cards */
+    @media (max-width: 480px) {
+        .goal-card-enhanced {
+            padding: 16px;
+            border-radius: 16px;
+        }
+
+        .goal-enhanced-header {
+            gap: 12px;
+        }
+
+        .goal-progress-ring {
+            width: 70px;
+            height: 70px;
+        }
+
+        .ring-percent {
+            font-size: 14px;
+        }
+
+        .goal-name {
+            font-size: 16px;
+        }
+
+        .goal-current {
+            font-size: 16px;
+        }
+
+        .milestone-dot {
+            width: 24px;
+            height: 24px;
+        }
+
+        .milestone-dot i {
+            width: 12px;
+            height: 12px;
+        }
+
+        .milestone-label {
+            font-size: 10px;
+        }
+
+        .goal-action-btn {
+            padding: 10px 12px;
+            font-size: 13px;
+        }
     }
 </style>
 {% endblock %}

@@ -45,7 +45,7 @@ class NotificationService:
         if unread_only:
             query = query.filter_by(is_read=False)
         notifications = query.order_by(Notification.created_at.desc()).limit(limit).all()
-        return [n.to_dict() for in notifications]
+        return [n.to_dict() for n in notifications]
 
     @staticmethod
     def mark_as_read(notification_id, user_id):
