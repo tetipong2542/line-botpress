@@ -68,7 +68,17 @@ def run_auto_migrations():
             ))
             db.session.commit()
             print("✅ Auto-migration: 'openrouter_model' column added!")
-                
+
+        # Migration: Add end_date to recurring_rule if not exists
+        recurring_columns = [col['name'] for col in inspector.get_columns('recurring_rule')]
+        if 'end_date' not in recurring_columns:
+            print("📝 Auto-migration: Adding 'end_date' column to recurring_rule...")
+            db.session.execute(text(
+                "ALTER TABLE recurring_rule ADD COLUMN end_date DATE"
+            ))
+            db.session.commit()
+            print("✅ Auto-migration: 'end_date' column added to recurring_rule!")
+
     except Exception as e:
         print(f"⚠️ Auto-migration check: {e}")
 
