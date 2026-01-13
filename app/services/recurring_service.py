@@ -244,8 +244,9 @@ class RecurringService:
             recurring_rule.is_active = bool(updates['is_active'])
 
         # Recalculate next_run_date if frequency or day changed
+        # Use start_date as first next_run_date (not the calculated next occurrence)
         if needs_recalc:
-            recurring_rule.next_run_date = recurring_rule._calculate_next_run(recurring_rule.start_date)
+            recurring_rule.next_run_date = recurring_rule.start_date
 
         db.session.commit()
 
