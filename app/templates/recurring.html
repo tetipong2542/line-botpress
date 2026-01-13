@@ -144,23 +144,18 @@
                 </select>
             </div>
 
-            <!-- วันที่ -->
-            <div class="form-group">
-                <label class="form-label">วันที่</label>
-                <select class="form-select" id="recurring-day">
-                    <option value="1">1</option>
-                    <option value="5">5</option>
-                    <option value="10">10</option>
-                    <option value="15">15</option>
-                    <option value="25">25</option>
-                    <option value="28">28</option>
-                </select>
-            </div>
-
             <!-- วันที่เริ่มต้น -->
             <div class="form-group">
                 <label class="form-label">วันที่เริ่มต้น</label>
                 <input type="date" class="form-input" id="recurring-start-date" required>
+                <small class="form-hint">วันที่ในนี้จะเป็นวันทำรายการประจำทุกรอบ</small>
+            </div>
+
+            <!-- วันที่สิ้นสุด (Optional) -->
+            <div class="form-group">
+                <label class="form-label">วันที่สิ้นสุด (ไม่บังคับ)</label>
+                <input type="date" class="form-input" id="recurring-end-date">
+                <small class="form-hint">ถ้าไม่ใส่จะทำงานไปเรื่อยๆ</small>
             </div>
 
             <!-- ครบกำหนดครั้งถัดไป (Readonly) -->
@@ -290,9 +285,10 @@ document.getElementById('recurring-form').addEventListener('submit', async (e) =
 
     // Get form values
     const frequency = document.getElementById('recurring-frequency').value;
-    const day = parseInt(document.getElementById('recurring-day').value);
     const amount = parseFloat(document.getElementById('recurring-amount').value);
     const category_id = document.getElementById('recurring-category').value;
+    const start_date = document.getElementById('recurring-start-date').value;
+    const end_date = document.getElementById('recurring-end-date').value;
 
     // Validation
     if (!category_id) {
@@ -303,28 +299,44 @@ document.getElementById('recurring-form').addEventListener('submit', async (e) =
         showToast('กรุณากรอกจำนวนเงินที่ถูกต้อง', 'error');
         return;
     }
+    if (!start_date) {
+        showToast('กรุณาเลือกวันที่เริ่มต้น', 'error');
+        return;
+    }
+
+    // Validate end_date > start_date
+    if (end_date && end_date <= start_date) {
+        showToast('วันที่สิ้นสุดต้องหลังวันที่เริ่มต้น', 'error');
+        return;
+    }
 
     // Loading state
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังบันทึก...</span>';
     lucide.createIcons();
 
-    // Prepare payload based on frequency
+    // Extract day from start_date
+    const startDateObj = new Date(start_date);
+    const day_of_month = startDateObj.getDate(); // 1-31
+    const day_of_week = startDateObj.getDay(); // 0=Sunday, 6=Saturday
+
+    // Prepare payload
     const payload = {
         type: document.getElementById('recurring-type').value,
         category_id: category_id,
         amount: parseFloat(amount), // Backend will convert to satang
         freq: frequency,
-        start_date: document.getElementById('recurring-start-date').value,
+        start_date: start_date,
+        end_date: end_date || null,
         remind_days: parseInt(document.getElementById('recurring-reminder').value) || 0,
         note: document.getElementById('recurring-note').value || null
     };
 
-    // Add day_of_month for monthly or day_of_week for weekly
+    // Add day_of_month for monthly or day_of_week for weekly (from start_date)
     if (frequency === 'monthly') {
-        payload.day_of_month = day;
+        payload.day_of_month = day_of_month;
     } else if (frequency === 'weekly') {
-        payload.day_of_week = day;
+        payload.day_of_week = day_of_week;
     }
 
     try {
@@ -501,8 +513,12 @@ function renderCard(rule) {
     
     const formatFrequency = (freq, dayOfWeek, dayOfMonth) => {
         if (freq === 'daily') return 'รายวัน';
-        if (freq === 'weekly') return 'รายสัปดาห์';
-        if (freq === 'monthly') return `รายเดือน (${dayOfMonth} ทุกเดือน)`;
+        if (freq === 'weekly') {
+            const weekdays = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+            return `รายสัปดาห์ (${weekdays[dayOfWeek] || 'ทุกสัปดาห์'})`;
+        }
+        if (freq === 'monthly') return `รายเดือน (วันที่ ${dayOfMonth})`;
+        if (freq === 'yearly') return 'รายปี';
         return freq;
     };
     
@@ -633,8 +649,8 @@ async function editRecurring(recurringId) {
         document.getElementById('recurring-type').value = rule.type;
         document.getElementById('recurring-category').value = rule.category_id;
         document.getElementById('recurring-frequency').value = rule.freq;
-        document.getElementById('recurring-day').value = rule.day_of_month || rule.day_of_week || 1;
         document.getElementById('recurring-start-date').value = rule.start_date;
+        document.getElementById('recurring-end-date').value = rule.end_date || '';
         document.getElementById('recurring-reminder').value = rule.remind_days || 0;
         document.getElementById('recurring-note').value = rule.note || '';
         document.getElementById('recurring-amount').value = (rule.amount / 100).toFixed(2);
