@@ -9169,6 +9169,7 @@ a:focus-visible {
     padding-bottom: max(12px, env(safe-area-inset-bottom));
     z-index: 10000;
     animation: slideUpFull 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-x: hidden;
     overflow-y: auto;
 }
 
