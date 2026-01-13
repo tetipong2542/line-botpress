@@ -1074,17 +1074,32 @@
 
 
     /* === Dropdown Fixed Position Fix === */
+    .goal-enhanced-header {
+        position: relative;
+    }
+
     .dropdown-menu {
-        position: fixed;
+        position: absolute;
+        top: 40px;
+        right: 0;
+        min-width: 180px;
         max-height: 50vh;
         overflow-y: auto;
-        z-index: 9999;
+        z-index: 100;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px) scale(0.95);
+        transition: all 0.2s ease;
     }
 
     .dropdown-menu.show {
         opacity: 1;
         visibility: visible;
-        transform: scale(1);
+        transform: translateY(0) scale(1);
     }
 
     /* ============================================================================

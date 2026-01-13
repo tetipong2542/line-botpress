@@ -644,27 +644,49 @@ function setupPeriodNavigation() {
         nextBtn.addEventListener('click', goToNextPeriod);
     }
     
-    // ===== SWIPE GESTURE DETECTION =====
-    if (periodSelector) {
+    // ===== SWIPE GESTURE DETECTION (Improved - entire header area) =====
+    const swipeArea = document.querySelector('.page-header') || periodSelector;
+    if (swipeArea) {
         let touchStartX = 0;
         let touchStartY = 0;
         let touchStartTime = 0;
+        let isSwiping = false;
         
-        periodSelector.addEventListener('touchstart', (e) => {
+        swipeArea.addEventListener('touchstart', (e) => {
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
             touchStartTime = Date.now();
+            isSwiping = true;
         }, { passive: true });
         
-        periodSelector.addEventListener('touchend', (e) => {
+        swipeArea.addEventListener('touchmove', (e) => {
+            if (!isSwiping) return;
+            const deltaX = e.touches[0].clientX - touchStartX;
+            
+            // Visual feedback during swipe
+            if (periodSelector && Math.abs(deltaX) > 20) {
+                periodSelector.style.transform = `translateX(${deltaX * 0.3}px)`;
+                periodSelector.style.transition = 'none';
+            }
+        }, { passive: true });
+        
+        swipeArea.addEventListener('touchend', (e) => {
+            if (!isSwiping) return;
+            
             const touchEndX = e.changedTouches[0].clientX;
             const touchEndY = e.changedTouches[0].clientY;
             const deltaX = touchEndX - touchStartX;
             const deltaY = touchEndY - touchStartY;
             const deltaTime = Date.now() - touchStartTime;
             
-            // Check if it's a horizontal swipe (more horizontal than vertical)
-            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50 && deltaTime < 500) {
+            // Reset visual feedback
+            if (periodSelector) {
+                periodSelector.style.transition = 'transform 0.3s ease';
+                periodSelector.style.transform = '';
+            }
+            
+            // Check if it's a horizontal swipe (more horizontal than vertical, lower threshold)
+            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 30 && deltaTime < 600) {
                 if (deltaX > 0) {
                     // Swipe right -> go to previous month
                     goToPrevPeriod();
@@ -673,6 +695,8 @@ function setupPeriodNavigation() {
                     goToNextPeriod();
                 }
             }
+            
+            isSwiping = false;
         }, { passive: true });
     }
     

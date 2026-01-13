@@ -804,77 +804,15 @@
     addExpenseBtn.addEventListener('click', () => openModal('expense'));
     addIncomeBtn.addEventListener('click', () => openModal('income'));
 
+    // Quick Add Button - Opens NEW Quick Entry Modal (Numpad-First)
     quickAddBtn.addEventListener('click', () => {
-        // ใช้รายการล่าสุดที่บันทึกจริงๆ (type + category)
-        let type = lastUsedTransaction.type || 'expense';
-        let categoryId = lastUsedTransaction.categoryId;
-
-        // ถ้าไม่มี history เลย ใช้ category แรกของ expense
-        if (!categoryId && categoriesCache.expense.length > 0) {
-            type = 'expense';
-            categoryId = categoriesCache.expense[0].id;
-        }
-
-        // ถ้าไม่มี expense category ใช้ income category แทน
-        if (!categoryId && categoriesCache.income.length > 0) {
-            type = 'income';
-            categoryId = categoriesCache.income[0].id;
-        }
-
-        // ถ้ายังไม่มีเลย แสดง error
-        if (!categoryId) {
-            showToast('กรุณาสร้างหมวดหมู่ก่อนใช้งาน', 'error');
-            return;
-        }
-
-        // Pre-fill form ด้วยรายการล่าสุด
-        document.getElementById('transaction-type').value = type;
-        document.getElementById('transaction-category').value = categoryId;
-
-        // Set วันที่/เวลาปัจจุบัน
-        const now = new Date();
-        document.getElementById('transaction-date').value = now.toISOString().split('T')[0];
-        document.getElementById('transaction-time').value = now.toTimeString().slice(0, 5);
-
-        // Clear จำนวนเงินและหมายเหตุ
-        document.getElementById('transaction-amount').value = '';
-        document.getElementById('transaction-note').value = '';
-
-        // Filter categories ตาม type ที่เลือก
-        const expenseGroup = document.getElementById('expense-categories');
-        const incomeGroup = document.getElementById('income-categories');
-        if (type === 'expense') {
-            if (expenseGroup) expenseGroup.style.display = '';
-            if (incomeGroup) incomeGroup.style.display = 'none';
+        // openQuickEntry() is defined later in the script
+        if (typeof openQuickEntry === 'function') {
+            openQuickEntry();
         } else {
-            if (expenseGroup) expenseGroup.style.display = 'none';
-            if (incomeGroup) incomeGroup.style.display = '';
+            // Fallback to old modal if Quick Entry not available
+            openModal();
         }
-
-        // Update modal header
-        const modalHeader = document.getElementById('transaction-modal-header');
-        const modalTitle = document.getElementById('transaction-modal-title');
-
-        if (modalHeader) {
-            modalHeader.classList.remove('expense', 'income');
-            modalHeader.classList.add(type);
-        }
-        if (modalTitle) {
-            // แสดงชื่อหมวดหมู่ที่เลือกด้วย
-            const selectedCategory = (type === 'expense' ? categoriesCache.expense : categoriesCache.income)
-                .find(c => c.id === categoryId);
-            const categoryName = selectedCategory ? selectedCategory.name_th : '';
-            modalTitle.textContent = `⚡ จดเร็ว: ${categoryName}`;
-        }
-
-        // Focus ที่ช่องจำนวนเงินเลย
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
-
-        // Delay focus เพื่อให้ modal เปิดก่อน
-        setTimeout(() => {
-            document.getElementById('transaction-amount').focus();
-        }, 100);
     });
 
     closeBtn.addEventListener('click', closeModal);

@@ -230,33 +230,9 @@
         remainingEl.textContent = `฿${formatMoney(summary.total_remaining_formatted)}`;
     }
 
-    // ===== RENDER BUDGETS =====
+    // ===== RENDER BUDGETS (Enhanced with Circular Progress) =====
     function renderBudgets(budgets) {
         const container = document.getElementById('budgets-list');
-
-        // Mapping Lucide icon names to display
-        const lucideIconMap = {
-            'utensils': 'utensils',
-            'car': 'car',
-            'shopping-bag': 'shopping-bag',
-            'film': 'film',
-            'heart': 'heart',
-            'home': 'home',
-            'book': 'book',
-            'gift': 'gift',
-            'coffee': 'coffee',
-            'plane': 'plane',
-            'gamepad-2': 'gamepad-2',
-            'smartphone': 'smartphone',
-            'shirt': 'shirt',
-            'wifi': 'wifi',
-            'zap': 'zap',
-            'droplet': 'droplet',
-            'baby': 'baby',
-            'briefcase': 'briefcase',
-            'graduation-cap': 'graduation-cap',
-            'stethoscope': 'stethoscope'
-        };
 
         // Function to check if string is emoji
         function isEmoji(str) {
@@ -265,8 +241,9 @@
         }
 
         container.innerHTML = budgets.map(budget => {
-            const progressColor = budget.is_over_budget ? 'over' : budget.is_near_limit ? 'warning' : 'normal';
-            const statusText = budget.is_over_budget ? 'เกินงบ' : budget.is_near_limit ? 'ใกล้หมด' : 'ปกติ';
+            const usage = budget.usage_percentage || 0;
+            const isOverBudget = budget.is_over_budget;
+            const isNearLimit = budget.is_near_limit;
 
             // Handle null category with fallback values
             const category = budget.category || {};
@@ -276,76 +253,107 @@
 
             // Determine if icon is emoji or Lucide name
             const isIconEmoji = isEmoji(categoryIcon);
-            const iconHtml = isIconEmoji
-                ? `<span class="budget-icon-emoji">${categoryIcon}</span>`
-                : `<i data-lucide="${lucideIconMap[categoryIcon] || categoryIcon}" class="budget-lucide-icon"></i>`;
+
+            // SVG circle calculations
+            const radius = 45;
+            const circumference = 2 * Math.PI * radius;
+            const strokeDashoffset = circumference - (Math.min(usage, 100) / 100) * circumference;
+
+            // Color based on usage
+            const progressColor = isOverBudget ? '#ef4444' : isNearLimit ? '#f59e0b' : '#10b981';
+
+            // Status badge
+            const statusText = isOverBudget ? 'เกินงบ!' : isNearLimit ? 'ใกล้หมด' : 'ปกติ';
+            const statusClass = isOverBudget ? 'danger' : isNearLimit ? 'warning' : 'normal';
 
             return `
-            <div class="budget-card ${budget.is_over_budget ? 'over-budget' : ''} ${budget.is_near_limit ? 'near-limit' : ''}" data-id="${budget.id}">
-                <div class="budget-card-header">
-                    <div class="budget-main-info">
-                        <div class="budget-icon-wrapper" style="
-                            background: color-mix(in srgb, ${categoryColor} 15%, transparent);
-                            border-color: ${categoryColor};
-                            color: ${categoryColor};
-                        ">
-                            ${iconHtml}
-                        </div>
-                        <div class="budget-title-section">
-                            <h3 class="budget-title">${categoryName}</h3>
-                            <span class="budget-subtitle ${progressColor}">
-                                <i data-lucide="${budget.is_over_budget ? 'alert-circle' : budget.is_near_limit ? 'alert-triangle' : 'check-circle'}"></i>
-                                ${statusText}
-                            </span>
+            <div class="budget-card-enhanced ${isOverBudget ? 'over-budget' : ''} ${isNearLimit ? 'near-limit' : ''}" data-id="${budget.id}">
+                <!-- Card Header with Circular Progress -->
+                <div class="budget-enhanced-header">
+                    <div class="budget-progress-ring">
+                        <svg viewBox="0 0 100 100" class="progress-ring-svg">
+                            <!-- Background circle -->
+                            <circle cx="50" cy="50" r="${radius}" fill="none" stroke="var(--border)" stroke-width="8"/>
+                            <!-- Progress circle -->
+                            <circle cx="50" cy="50" r="${radius}" fill="none" 
+                                stroke="${progressColor}" 
+                                stroke-width="8"
+                                stroke-linecap="round"
+                                stroke-dasharray="${circumference}"
+                                stroke-dashoffset="${strokeDashoffset}"
+                                class="progress-ring-circle"
+                                transform="rotate(-90 50 50)"/>
+                        </svg>
+                        <div class="progress-ring-center">
+                            <span class="ring-percent">${Math.round(usage)}%</span>
                         </div>
                     </div>
-                    <div class="budget-menu-wrapper">
-                        <button type="button" class="btn-menu" onclick="event.stopPropagation(); toggleBudgetMenu('${budget.id}'); return false;" title="ตัวเลือก">
-                            <i data-lucide="more-vertical"></i>
+                    
+                    <div class="budget-info-section">
+                        <div class="budget-category-badge" style="background: color-mix(in srgb, ${categoryColor} 15%, transparent); color: ${categoryColor};">
+                            ${isIconEmoji ? categoryIcon : `<i data-lucide="${categoryIcon}"></i>`}
+                            <span>${categoryName}</span>
+                        </div>
+                        <div class="budget-amounts">
+                            <span class="budget-spent">฿${budget.spent_formatted.toLocaleString('th-TH')}</span>
+                            <span class="budget-separator">/</span>
+                            <span class="budget-limit">฿${budget.limit_amount_formatted.toLocaleString('th-TH')}</span>
+                        </div>
+                        <div class="budget-remaining ${budget.remaining < 0 ? 'negative' : ''}">
+                            <i data-lucide="${budget.remaining < 0 ? 'trending-down' : 'wallet'}"></i>
+                            <span>เหลือ: ฿${Math.abs(budget.remaining_formatted).toLocaleString('th-TH')}</span>
+                        </div>
+                    </div>
+                    
+                    <button class="budget-menu-btn" onclick="event.stopPropagation(); toggleBudgetMenu('${budget.id}');" title="ตัวเลือก">
+                        <i data-lucide="more-vertical"></i>
+                    </button>
+                    
+                    <div class="dropdown-menu" id="menu-${budget.id}">
+                        <button class="menu-item" onclick="event.stopPropagation(); editBudget('${budget.id}'); closeAllMenus();">
+                            <i data-lucide="edit-2"></i>
+                            <span>แก้ไข</span>
                         </button>
-                        <div class="dropdown-menu" id="menu-${budget.id}">
-                            <button type="button" class="menu-item" onclick="event.stopPropagation(); editBudget('${budget.id}'); closeAllMenus(); return false;">
-                                <i data-lucide="edit-2"></i>
-                                <span>แก้ไข</span>
-                            </button>
-                            <button type="button" class="menu-item danger" onclick="event.stopPropagation(); deleteBudget('${budget.id}'); closeAllMenus(); return false;">
-                                <i data-lucide="trash-2"></i>
-                                <span>ลบงบประมาณ</span>
-                            </button>
-                        </div>
+                        <button class="menu-item danger" onclick="event.stopPropagation(); deleteBudget('${budget.id}'); closeAllMenus();">
+                            <i data-lucide="trash-2"></i>
+                            <span>ลบงบประมาณ</span>
+                        </button>
                     </div>
                 </div>
-
-                <div class="budget-amount-section">
-                    <div class="amount-item">
-                        <span class="amount-label">งบประมาณ</span>
-                        <span class="amount-value budget">฿${budget.limit_amount_formatted.toLocaleString('th-TH')}</span>
+                
+                <!-- Status Badge -->
+                <div class="budget-status-section">
+                    <div class="status-badge ${statusClass}">
+                        <i data-lucide="${isOverBudget ? 'alert-circle' : isNearLimit ? 'alert-triangle' : 'check-circle'}"></i>
+                        <span>${statusText}</span>
                     </div>
-                    <div class="amount-item center">
-                        <span class="amount-label">ใช้ไปแล้ว</span>
-                        <span class="amount-value spent">฿${budget.spent_formatted.toLocaleString('th-TH')}</span>
-                    </div>
-                    <div class="amount-item">
-                        <span class="amount-label">
-                            คงเหลือ
-                            <i data-lucide="${budget.remaining < 0 ? 'alert-triangle' : 'check'}" class="remaining-icon ${budget.remaining < 0 ? 'negative' : 'positive'}"></i>
-                        </span>
-                        <span class="amount-value ${budget.remaining < 0 ? 'negative' : 'positive'}">฿${Math.abs(budget.remaining_formatted).toLocaleString('th-TH')}</span>
-                    </div>
-                </div>
-
-                <div class="budget-progress-section">
-                    <div class="progress-bar-large">
-                        <div class="progress-fill-large ${progressColor}" style="width: ${Math.min(budget.usage_percentage, 100)}%">
-                            <span class="progress-percentage">${budget.usage_percentage}%</span>
+                    ${budget.rollover_policy !== 'none' ? `
+                        <div class="rollover-badge">
+                            <i data-lucide="repeat"></i>
+                            <span>ยกยอด</span>
                         </div>
-                    </div>
+                    ` : ''}
+                </div>
+                
+                <!-- Quick Action -->
+                <div class="budget-quick-actions">
+                    <button class="budget-action-btn edit" onclick="editBudget('${budget.id}')">
+                        <i data-lucide="edit"></i>
+                        <span>แก้ไขงบประมาณ</span>
+                    </button>
                 </div>
             </div>
         `;
         }).join('');
 
         lucide.createIcons();
+
+        // Animate progress rings on load
+        setTimeout(() => {
+            document.querySelectorAll('.progress-ring-circle').forEach(circle => {
+                circle.classList.add('animate');
+            });
+        }, 100);
     }
 
     // Menu toggle functions
@@ -691,14 +699,14 @@
         margin-bottom: 16px;
         border: 1.5px solid var(--border-color);
         box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1),
-                    0 1px 3px rgba(0, 0, 0, 0.08);
+            0 1px 3px rgba(0, 0, 0, 0.08);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         animation: fadeInUp 0.3s ease;
     }
 
     .budget-card:hover {
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15),
-                    0 4px 8px rgba(0, 0, 0, 0.1);
+            0 4px 8px rgba(0, 0, 0, 0.1);
         border-color: var(--primary-color);
         transform: translateY(-4px);
     }
@@ -707,14 +715,14 @@
         border: 2px solid #f59e0b;
         background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, var(--card-bg) 100%);
         box-shadow: 0 2px 12px rgba(245, 158, 11, 0.2),
-                    0 1px 3px rgba(245, 158, 11, 0.1);
+            0 1px 3px rgba(245, 158, 11, 0.1);
     }
 
     .budget-card.over-budget {
         border: 2px solid var(--expense-color);
         background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, var(--card-bg) 100%);
         box-shadow: 0 2px 12px rgba(239, 68, 68, 0.2),
-                    0 1px 3px rgba(239, 68, 68, 0.1);
+            0 1px 3px rgba(239, 68, 68, 0.1);
     }
 
     /* Card Header */
@@ -1182,17 +1190,316 @@
     }
 
     /* === Dropdown Fixed Position Fix === */
+    .budget-enhanced-header {
+        position: relative;
+    }
+
     .dropdown-menu {
-        position: fixed;
+        position: absolute;
+        top: 40px;
+        right: 0;
+        min-width: 180px;
         max-height: 50vh;
         overflow-y: auto;
-        z-index: 9999;
+        z-index: 100;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px) scale(0.95);
+        transition: all 0.2s ease;
     }
 
     .dropdown-menu.show {
         opacity: 1;
         visibility: visible;
-        transform: scale(1);
+        transform: translateY(0) scale(1);
+    }
+
+    /* ============================================================================
+       ENHANCED BUDGET CARDS - Circular Progress & Similar to Goals
+       ============================================================================ */
+
+    .budget-card-enhanced {
+        background: var(--bg);
+        border-radius: 20px;
+        padding: 20px;
+        margin-bottom: 16px;
+        border: 2px solid var(--border);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        animation: fadeInUp 0.4s ease;
+    }
+
+    .budget-card-enhanced:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .budget-card-enhanced.over-budget {
+        border-color: #ef4444;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.05) 0%, var(--bg) 100%);
+    }
+
+    .budget-card-enhanced.near-limit {
+        border-color: #f59e0b;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, var(--bg) 100%);
+    }
+
+    /* Enhanced Header with Circular Progress */
+    .budget-enhanced-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    /* Circular Progress Ring */
+    .budget-progress-ring {
+        width: 90px;
+        height: 90px;
+        flex-shrink: 0;
+        position: relative;
+    }
+
+    .progress-ring-svg {
+        width: 100%;
+        height: 100%;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    }
+
+    .progress-ring-circle {
+        transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .progress-ring-circle.animate {
+        stroke-dashoffset: 0 !important;
+    }
+
+    .progress-ring-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+    }
+
+    .ring-percent {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--text);
+    }
+
+    /* Budget Info Section */
+    .budget-info-section {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .budget-category-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .budget-category-badge i {
+        width: 16px;
+        height: 16px;
+    }
+
+    .budget-amounts {
+        display: flex;
+        align-items: baseline;
+        gap: 4px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+    }
+
+    .budget-spent {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text);
+    }
+
+    .budget-separator {
+        font-size: 14px;
+        color: var(--text-secondary);
+    }
+
+    .budget-limit {
+        font-size: 14px;
+        color: var(--text-secondary);
+    }
+
+    .budget-remaining {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
+        color: #10b981;
+    }
+
+    .budget-remaining i {
+        width: 14px;
+        height: 14px;
+    }
+
+    .budget-remaining.negative {
+        color: #ef4444;
+    }
+
+    /* Menu Button */
+    .budget-menu-btn {
+        width: 36px;
+        height: 36px;
+        border: none;
+        background: var(--bg-secondary);
+        border-radius: 10px;
+        color: var(--text-secondary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+    }
+
+    .budget-menu-btn:hover {
+        background: var(--primary);
+        color: white;
+    }
+
+    /* Status Section */
+    .budget-status-section {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        padding: 12px 0;
+        border-top: 1px solid var(--border);
+    }
+
+    .status-badge,
+    .rollover-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .status-badge i,
+    .rollover-badge i {
+        width: 14px;
+        height: 14px;
+    }
+
+    .status-badge.normal {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+    .status-badge.warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+
+    .status-badge.danger {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+    }
+
+    .rollover-badge {
+        background: rgba(99, 102, 241, 0.1);
+        color: #6366f1;
+    }
+
+    /* Quick Action Buttons */
+    .budget-quick-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .budget-action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        background: var(--bg-secondary);
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: inherit;
+    }
+
+    .budget-action-btn i {
+        width: 18px;
+        height: 18px;
+    }
+
+    .budget-action-btn.edit:hover {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        border-color: #6366f1;
+        color: white;
+    }
+
+    .budget-action-btn:active {
+        transform: scale(0.98);
+    }
+
+    /* Mobile Responsive for Enhanced Cards */
+    @media (max-width: 480px) {
+        .budget-card-enhanced {
+            padding: 16px;
+            border-radius: 16px;
+        }
+
+        .budget-enhanced-header {
+            gap: 12px;
+        }
+
+        .budget-progress-ring {
+            width: 70px;
+            height: 70px;
+        }
+
+        .ring-percent {
+            font-size: 14px;
+        }
+
+        .budget-category-badge {
+            font-size: 12px;
+            padding: 4px 10px;
+        }
+
+        .budget-spent {
+            font-size: 16px;
+        }
+
+        .status-badge,
+        .rollover-badge {
+            font-size: 11px;
+            padding: 5px 10px;
+        }
+
+        .budget-action-btn {
+            padding: 10px 12px;
+            font-size: 13px;
+        }
     }
 </style>
 {% endblock %}
