@@ -102,16 +102,21 @@
                         <span class="breakdown-percent" id="expense-recurring-pct">(0%)</span>
                     </div>
                 </div>
-                <div class="breakdown-item loan">
+                <div class="breakdown-item loan expandable" id="loan-row" onclick="toggleLoanDetail()">
                     <div class="breakdown-left">
                         <span class="breakdown-dot loan"></span>
                         <span class="breakdown-name">สินเชื่อ</span>
-                        <span class="breakdown-badge" id="loan-installment">งวด 0/0</span>
+                        <span class="breakdown-badge" id="loan-count">0 รายการ</span>
+                        <i data-lucide="chevron-down" class="expand-icon" id="loan-expand-icon"></i>
                     </div>
                     <div class="breakdown-right">
                         <span class="breakdown-amount" id="expense-loan">฿0</span>
                         <span class="breakdown-percent" id="expense-loan-pct">(0%)</span>
                     </div>
+                </div>
+                <!-- Expandable Loan Detail List -->
+                <div class="loan-detail-list" id="loan-detail-list" style="display: none;">
+                    <!-- Populated by JavaScript -->
                 </div>
                 <div class="breakdown-divider"></div>
                 <div class="breakdown-item total">

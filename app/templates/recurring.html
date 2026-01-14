@@ -861,6 +861,10 @@
             ` : ''}
 
             <div class="card-actions">
+                <button class="btn-mark" onclick="markRecurringPaid('${rule.id}', event)" title="ชำระแล้วเดือนนี้">
+                    <i data-lucide="check"></i>
+                    <span>จ่ายแล้ว</span>
+                </button>
                 <button class="card-action-btn" onclick="editRecurring('${rule.id}')" title="แก้ไข">
                     <i data-lucide="edit-2"></i>
                 </button>
@@ -986,6 +990,58 @@
             await loadRecurringRules();
         } catch (error) {
             showToast(error.message || 'เกิดข้อผิดพลาด', 'error');
+        }
+    }
+
+    // Mark recurring as paid for this month (creates a transaction)
+    async function markRecurringPaid(recurringId, event) {
+        event.stopPropagation();
+
+        const rule = allRecurringRules.find(r => r.id === recurringId);
+        if (!rule) return;
+
+        const btn = event.target.closest('.btn-mark');
+        const originalContent = btn.innerHTML;
+
+        try {
+            // Show loading
+            btn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังบันทึก...</span>';
+            btn.disabled = true;
+            lucide.createIcons();
+
+            // Create transaction based on recurring rule
+            const today = new Date();
+            const transactionData = {
+                amount: rule.amount,
+                type: rule.type,
+                category_id: rule.category_id,
+                note: `${rule.note || rule.category?.name || 'รายการประจำ'} (ชำระจากรายการประจำ)`,
+                transaction_date: today.toISOString().split('T')[0]
+            };
+
+            await API.post(buildApiUrl('transactions'), transactionData);
+
+            // Mark as successful
+            btn.innerHTML = '<i data-lucide="check-circle"></i><span>จ่ายแล้ว!</span>';
+            btn.classList.add('marked');
+            lucide.createIcons();
+
+            showToast('บันทึกการชำระเรียบร้อย!', 'success');
+
+            // Reset button after delay
+            setTimeout(() => {
+                btn.innerHTML = originalContent;
+                btn.classList.remove('marked');
+                btn.disabled = false;
+                lucide.createIcons();
+            }, 2000);
+
+        } catch (error) {
+            console.error('Mark paid error:', error);
+            showToast(error.message || 'เกิดข้อผิดพลาด', 'error');
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+            lucide.createIcons();
         }
     }
 

@@ -377,15 +377,21 @@ function updateSimpleDashboard(summary, recurringMonthly, loanMonthly) {
     document.getElementById('expense-loan').textContent = formatAmount(loanExpense);
     document.getElementById('expense-loan-pct').textContent = `(${calcPercent(loanExpense)}%)`;
 
-    // Update loan installment badge
-    const loanInstallment = document.getElementById('loan-installment');
-    if (loanMonthly.loanCount > 0 && loanMonthly.payments.length > 0) {
-        // Show first loan's installment
-        const firstLoan = loanMonthly.payments[0];
-        loanInstallment.textContent = `งวด ${firstLoan.installment}/${firstLoan.totalInstallments}`;
-        loanInstallment.style.display = 'inline-block';
+    // Update loan count badge and detail list
+    const loanCount = document.getElementById('loan-count');
+    const loanRow = document.getElementById('loan-row');
+    
+    if (loanMonthly.loanCount > 0) {
+        loanCount.textContent = `${loanMonthly.loanCount} รายการ`;
+        loanCount.style.display = 'inline-block';
+        loanRow.style.display = 'flex';
+        
+        // Build loan detail list
+        updateLoanDetailList(loanMonthly.payments, formatAmount);
     } else {
-        loanInstallment.style.display = 'none';
+        loanCount.style.display = 'none';
+        loanRow.style.display = 'none';
+        document.getElementById('loan-detail-list').innerHTML = '';
     }
 
     document.getElementById('expense-total-detail').textContent = formatAmount(totalExpense);
@@ -393,6 +399,42 @@ function updateSimpleDashboard(summary, recurringMonthly, loanMonthly) {
     // Refresh icons
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
+    }
+}
+
+// Update Loan Detail List (for expandable section)
+function updateLoanDetailList(loanPayments, formatAmount) {
+    const container = document.getElementById('loan-detail-list');
+    if (!container || !loanPayments || loanPayments.length === 0) return;
+
+    container.innerHTML = loanPayments.map((loan, index) => {
+        const isLast = index === loanPayments.length - 1;
+        const isPaid = loan.isPaid;
+        const badgeClass = isPaid ? 'paid' : 'pending';
+        const badgeText = isPaid ? '✓ ชำระแล้ว' : `งวด ${loan.installment}/${loan.totalInstallments}`;
+        
+        return `
+            <div class="loan-detail-item ${isLast ? 'last' : ''}">
+                <span class="loan-detail-connector">${isLast ? '└─' : '├─'}</span>
+                <span class="loan-detail-name">${loan.name}</span>
+                <span class="loan-detail-amount">${formatAmount(loan.amount)}</span>
+                <span class="loan-detail-badge ${badgeClass}">${badgeText}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+// Toggle Loan Detail visibility
+function toggleLoanDetail() {
+    const detailList = document.getElementById('loan-detail-list');
+    const expandIcon = document.getElementById('loan-expand-icon');
+    
+    if (detailList.style.display === 'none') {
+        detailList.style.display = 'block';
+        expandIcon.style.transform = 'rotate(180deg)';
+    } else {
+        detailList.style.display = 'none';
+        expandIcon.style.transform = 'rotate(0deg)';
     }
 }
 
@@ -1105,10 +1147,26 @@ async function loadMonthlyPayments() {
                 const day = payment.date.getDate();
                 const month = payment.date.toLocaleDateString('th-TH', { month: 'short' });
                 const typeClass = payment.type === 'loan' ? 'loan' : 'recurring';
-                const typeLabel = payment.type === 'loan' ? payment.installment : 'ประจำ';
+                const isPaid = payment.isPaid || false;
+                const paidClass = isPaid ? 'paid' : 'pending';
+                
+                // Badge and label based on type and status
+                let typeLabel, badgeHtml;
+                if (payment.type === 'loan') {
+                    if (isPaid) {
+                        typeLabel = '✓ ชำระแล้ว';
+                        badgeHtml = `<span class="payment-badge paid">ชำระแล้ว</span>`;
+                    } else {
+                        typeLabel = payment.installment;
+                        badgeHtml = '';
+                    }
+                } else {
+                    typeLabel = 'ประจำ';
+                    badgeHtml = isPaid ? `<span class="payment-badge paid">ชำระแล้ว</span>` : '';
+                }
 
                 return `
-                    <div class="payment-item ${typeClass}">
+                    <div class="payment-item ${typeClass} ${paidClass}">
                         <div class="payment-item-date">
                             <span class="payment-day">${day}</span>
                             <span class="payment-month">${month}</span>
@@ -1120,8 +1178,9 @@ async function loadMonthlyPayments() {
                             <span class="payment-name">${payment.name}</span>
                             <span class="payment-type">${typeLabel}</span>
                         </div>
-                        <div class="payment-item-amount">
-                            ฿${payment.amount.toLocaleString('th-TH')}
+                        <div class="payment-item-right">
+                            ${badgeHtml}
+                            <span class="payment-item-amount ${isPaid ? 'paid' : ''}">฿${payment.amount.toLocaleString('th-TH')}</span>
                         </div>
                     </div>
                 `;

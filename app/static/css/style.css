@@ -10734,3 +10734,149 @@ a:focus-visible {
         font-size: 20px;
     }
 }
+
+/* ===== Expandable Loan Detail ===== */
+.breakdown-item.expandable {
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.breakdown-item.expandable:hover {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    margin: -4px -8px;
+    padding: 4px 8px;
+}
+
+.expand-icon {
+    width: 14px;
+    height: 14px;
+    color: var(--text-secondary);
+    margin-left: 4px;
+    transition: transform 0.2s;
+}
+
+.loan-detail-list {
+    padding-left: 18px;
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
+.loan-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 13px;
+}
+
+.loan-detail-connector {
+    color: var(--border);
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.loan-detail-name {
+    flex: 1;
+    color: var(--text);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.loan-detail-amount {
+    font-weight: 600;
+    color: #ef4444;
+}
+
+.loan-detail-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.loan-detail-badge.pending {
+    background: #ef444420;
+    color: #ef4444;
+}
+
+.loan-detail-badge.paid {
+    background: #10b98120;
+    color: #10b981;
+}
+
+/* ===== Payment Badge ===== */
+.payment-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.payment-badge.paid {
+    background: #10b981;
+    color: white;
+}
+
+.payment-badge.pending {
+    background: #f59e0b20;
+    color: #f59e0b;
+}
+
+/* ===== Payment Item States ===== */
+.payment-item.paid {
+    opacity: 0.7;
+    border-left-color: #10b981 !important;
+}
+
+.payment-item.paid .payment-day,
+.payment-item.paid .payment-name {
+    text-decoration: line-through;
+    color: var(--text-secondary);
+}
+
+.payment-item-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.payment-item-amount.paid {
+    color: #10b981;
+    text-decoration: line-through;
+}
+
+/* ===== Recurring Card Mark Button ===== */
+.btn-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px 12px;
+    background: #10b98120;
+    color: #10b981;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-mark:hover {
+    background: #10b981;
+    color: white;
+}
+
+.btn-mark.marked {
+    background: #10b981;
+    color: white;
+}
+
+.btn-mark svg {
+    width: 14px;
+    height: 14px;
+}
