@@ -676,16 +676,19 @@
         const daysDiff = Math.floor((end - lastValidDate) / (1000 * 60 * 60 * 24));
 
         if (daysDiff === 0) {
-            // Perfect alignment
+            // Perfect alignment - GREEN
             hintEl.textContent = `✅ รวม ${count} งวด (ลงล็อคพอดี)`;
             hintEl.style.color = '#10b981';
+            warningEl.style.display = 'none';
         } else {
-            // Has remainder
+            // Has remainder - RED WARNING
             const lastDateStr = lastValidDate.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
             hintEl.textContent = `รวม ${count} งวด`;
             hintEl.style.color = '';
-            warningEl.textContent = `⚠️ งวดสุดท้าย: ${lastDateStr} (เหลือเศษ ${daysDiff} วัน)`;
+            warningEl.innerHTML = `<span style="color: #ef4444;">⚠️ เกินรอบที่กำหนด ${daysDiff} วัน</span><br>` +
+                `<span style="color: #6b7280; font-size: 11px;">แนะนำ: ใช้วันที่ ${lastDateStr} เพื่อให้ลงล็อคพอดี</span>`;
             warningEl.style.display = 'block';
+            warningEl.style.color = '#ef4444';
         }
     }
 
