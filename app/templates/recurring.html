@@ -1023,8 +1023,10 @@
             // Trigger type change to show correct categories
             document.getElementById('recurring-type').dispatchEvent(new Event('change'));
 
-            // Update next run date based on start_date and frequency
-            updateNextRunDate();
+            // Update next run date based on start_date and frequency (delay to ensure values are set)
+            setTimeout(() => {
+                updateNextRunDate();
+            }, 100);
 
             // Change modal header and button text
             const modalHeader = modal.querySelector('.modal-header h2');
