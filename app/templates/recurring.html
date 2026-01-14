@@ -733,7 +733,7 @@
             let suggestHtml = `<span style="color: #ef4444;">⚠️ เกินรอบที่กำหนด ${daysDiff} วัน</span><br>`;
             suggestHtml += `<span style="color: #6b7280; font-size: 11px;">แนะนำวันที่ลงล็อค:</span><br>`;
             suggestions.forEach(s => {
-                suggestHtml += `<span style="color: #3b82f6; font-size: 11px; cursor: pointer;" onclick="document.getElementById('recurring-end-date').value='${s.date.toISOString().split('T')[0]}'; validateEndDate();">• ${formatDate(s.date)} (${s.count} งวด)</span><br>`;
+                suggestHtml += `<span style="color: #3b82f6; font-size: 11px; cursor: pointer;" onclick="document.getElementById('recurring-end-date').value='${s.date.toISOString().split('T')[0]}'; document.getElementById('recurring-installments').value='${s.count}'; validateEndDate();">• ${formatDate(s.date)} (${s.count} งวด)</span><br>`;
             });
 
             warningEl.innerHTML = suggestHtml;
