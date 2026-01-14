@@ -92,15 +92,21 @@
                         <span class="breakdown-percent" id="expense-regular-pct">(0%)</span>
                     </div>
                 </div>
-                <div class="breakdown-item">
+                <div class="breakdown-item recurring expandable" id="recurring-row" onclick="toggleRecurringDetail()">
                     <div class="breakdown-left">
                         <span class="breakdown-dot recurring"></span>
                         <span class="breakdown-name">ประจำ</span>
+                        <span class="breakdown-badge" id="recurring-count" style="display: none;">0 รายการ</span>
+                        <i data-lucide="chevron-down" class="expand-icon" id="recurring-expand-icon"></i>
                     </div>
                     <div class="breakdown-right">
                         <span class="breakdown-amount" id="expense-recurring">฿0</span>
                         <span class="breakdown-percent" id="expense-recurring-pct">(0%)</span>
                     </div>
+                </div>
+                <!-- Expandable Recurring Detail List -->
+                <div class="recurring-detail-list" id="recurring-detail-list" style="display: none;">
+                    <!-- Populated by JavaScript -->
                 </div>
                 <div class="breakdown-item loan expandable" id="loan-row" onclick="toggleLoanDetail()">
                     <div class="breakdown-left">

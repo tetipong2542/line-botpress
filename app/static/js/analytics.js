@@ -387,6 +387,7 @@ function updateSimpleDashboard(summary, recurringMonthly, loanMonthly) {
     const loanCount = document.getElementById('loan-count');
     const loanRow = document.getElementById('loan-row');
     
+    let loanPendingAmount = loanExpense;
     if (loanMonthly.loanCount > 0) {
         loanCount.textContent = `${loanMonthly.loanCount} รายการ`;
         loanCount.style.display = 'inline-block';
@@ -394,13 +395,39 @@ function updateSimpleDashboard(summary, recurringMonthly, loanMonthly) {
         
         // Build loan detail list
         updateLoanDetailList(loanMonthly.payments, formatAmount);
+        
+        // Calculate pending loan
+        const paidLoanAmount = loanMonthly.payments.filter(l => l.isPaid).reduce((sum, l) => sum + l.amount, 0);
+        loanPendingAmount = loanExpense - paidLoanAmount;
     } else {
         loanCount.style.display = 'none';
         loanRow.style.display = 'none';
         document.getElementById('loan-detail-list').innerHTML = '';
     }
 
-    document.getElementById('expense-total-detail').textContent = formatAmount(totalExpense);
+    // Update recurring count badge and detail list
+    const recurringCountEl = document.getElementById('recurring-count');
+    const recurringRow = document.getElementById('recurring-row');
+    const recurringPayments = recurringMonthly.expensePayments || [];
+    
+    let recurringPendingAmount = recurringExpense;
+    if (recurringPayments.length > 0) {
+        recurringCountEl.textContent = `${recurringPayments.length} รายการ`;
+        recurringCountEl.style.display = 'inline-block';
+        
+        // Build recurring detail list
+        const result = updateRecurringDetailList(recurringPayments, formatAmount);
+        if (result) {
+            recurringPendingAmount = result.pendingAmount;
+        }
+    } else {
+        recurringCountEl.style.display = 'none';
+        document.getElementById('recurring-detail-list').innerHTML = '';
+    }
+
+    // Calculate total remaining (unpaid) amount
+    const totalRemaining = regularExpense + recurringPendingAmount + loanPendingAmount;
+    document.getElementById('expense-total-detail').textContent = formatAmount(totalRemaining);
 
     // Refresh icons
     if (typeof lucide !== 'undefined') {
@@ -472,6 +499,69 @@ function toggleLoanDetail() {
         detailList.style.display = 'none';
         expandIcon.style.transform = 'rotate(0deg)';
     }
+}
+
+// Toggle Recurring Detail visibility
+function toggleRecurringDetail() {
+    const detailList = document.getElementById('recurring-detail-list');
+    const expandIcon = document.getElementById('recurring-expand-icon');
+    
+    if (detailList.style.display === 'none') {
+        detailList.style.display = 'block';
+        expandIcon.style.transform = 'rotate(180deg)';
+    } else {
+        detailList.style.display = 'none';
+        expandIcon.style.transform = 'rotate(0deg)';
+    }
+}
+
+// Update Recurring Detail List
+function updateRecurringDetailList(recurringPayments, formatAmount) {
+    const container = document.getElementById('recurring-detail-list');
+    if (!container || !recurringPayments || recurringPayments.length === 0) return;
+
+    // Calculate summary
+    const paidItems = recurringPayments.filter(r => r.isPaid);
+    const pendingItems = recurringPayments.filter(r => !r.isPaid);
+    const paidAmount = paidItems.reduce((sum, r) => sum + r.amount, 0);
+    const pendingAmount = pendingItems.reduce((sum, r) => sum + r.amount, 0);
+
+    // Build recurring items HTML
+    const itemsHtml = recurringPayments.map((item, index) => {
+        const isLast = index === recurringPayments.length - 1;
+        const isPaid = item.isPaid;
+        const badgeClass = isPaid ? 'paid' : 'pending';
+        const badgeText = isPaid ? '<i data-lucide="check" class="inline-icon"></i> ชำระแล้ว' : 'รอชำระ';
+        const amountClass = isPaid ? 'paid' : '';
+        
+        return `
+            <div class="recurring-detail-item ${isLast ? 'last' : ''} ${isPaid ? 'is-paid' : ''}">
+                <span class="recurring-detail-connector">${isLast ? '└─' : '├─'}</span>
+                <span class="recurring-detail-name ${isPaid ? 'paid' : ''}">${item.name}</span>
+                <span class="recurring-detail-amount ${amountClass}">${formatAmount(item.amount)}</span>
+                <span class="recurring-detail-badge ${badgeClass}">${badgeText}</span>
+            </div>
+        `;
+    }).join('');
+
+    // Build summary HTML
+    const summaryHtml = `
+        <div class="recurring-summary">
+            <div class="recurring-summary-row">
+                <span><i data-lucide="check" class="inline-icon paid"></i> ชำระแล้ว (${paidItems.length})</span>
+                <span class="recurring-summary-amount paid">${formatAmount(paidAmount)}</span>
+            </div>
+            <div class="recurring-summary-row">
+                <span><i data-lucide="clock" class="inline-icon pending"></i> คงเหลือ (${pendingItems.length})</span>
+                <span class="recurring-summary-amount">${formatAmount(pendingAmount)}</span>
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = itemsHtml + summaryHtml;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    
+    return { paidAmount, pendingAmount };
 }
 
 // Render Stacked Bar Chart (Category Breakdown: Regular + Recurring)
