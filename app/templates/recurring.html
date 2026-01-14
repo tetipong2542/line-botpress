@@ -750,6 +750,7 @@
     }
 
     function applyFilters() {
+        console.log('📋 applyFilters called, allRecurringRules:', allRecurringRules.length);
         let filtered = [...allRecurringRules];
 
         // Filter by search
@@ -765,6 +766,7 @@
         // Apply sort
         filtered = sortRules(filtered, currentSort);
 
+        console.log('📋 After filter/sort, filtered rules:', filtered.length);
         filteredRules = filtered;
         renderCards(filtered);
     }
@@ -789,14 +791,22 @@
     }
 
     function renderCards(rules) {
+        console.log('📋 renderCards called with', rules.length, 'rules');
         const recurringList = document.querySelector('.recurring-list');
+        console.log('📋 recurringList element in renderCards:', recurringList);
 
         if (rules.length === 0) {
+            console.log('📋 No rules, showing empty state');
             renderEmptyState();
             return;
         }
 
-        recurringList.innerHTML = rules.map(rule => renderCard(rule)).join('');
+        const html = rules.map(rule => renderCard(rule)).join('');
+        console.log('📋 Generated HTML length:', html.length);
+        console.log('📋 First 500 chars of HTML:', html.substring(0, 500));
+
+        recurringList.innerHTML = html;
+        console.log('📋 innerHTML set, recurringList.innerHTML length:', recurringList.innerHTML.length);
 
         if (typeof lucide !== 'undefined') {
             lucide.createIcons();
