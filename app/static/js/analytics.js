@@ -1026,15 +1026,8 @@ async function loadMonthlyPayments() {
             }
         });
 
-        // Update summary cards
-        const totalPayments = recurringExpense + totalLoanPayment;
-
-        document.getElementById('monthly-recurring-expense').textContent =
-            '฿' + recurringExpense.toLocaleString('th-TH', { minimumFractionDigits: 0 });
-        document.getElementById('monthly-loan-payment').textContent =
-            '฿' + totalLoanPayment.toLocaleString('th-TH', { minimumFractionDigits: 0 });
-        document.getElementById('monthly-total-payment').textContent =
-            '฿' + totalPayments.toLocaleString('th-TH', { minimumFractionDigits: 0 });
+        // Note: Summary cards were removed from HTML (now using Simple Dashboard)
+        // The data is already displayed in updateSimpleDashboard()
 
         // Build payment list
         const allPayments = [];
