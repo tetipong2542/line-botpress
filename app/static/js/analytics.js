@@ -133,6 +133,11 @@ function calculateMonthlyRecurring(rules, month, year) {
                     totalExpense += amount;
 
                     // Add to expense payments list for display
+                    // isPaid only applies to current month
+                    const now = new Date();
+                    const isCurrentMonth = (month === now.getMonth() && year === now.getFullYear());
+                    const isPaidForDisplay = isCurrentMonth ? (rule.is_paid_this_period || false) : false;
+                    
                     expensePayments.push({
                         name: rule.category?.name_th || rule.category?.name || rule.note || 'รายจ่ายประจำ',
                         amount: amount,
@@ -141,7 +146,7 @@ function calculateMonthlyRecurring(rules, month, year) {
                         icon: rule.category?.icon || 'repeat',
                         color: rule.category?.color || '#8b5cf6',
                         category_id: rule.category_id,
-                        isPaid: rule.is_paid_this_period || false
+                        isPaid: isPaidForDisplay
                     });
 
                     // Track by category
