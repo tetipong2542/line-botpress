@@ -481,7 +481,16 @@
         document.body.style.overflow = '';
     }
 
-    addBtn.addEventListener('click', openModal);
+    // FAB click handler - opens correct modal based on current tab
+    function handleFabClick() {
+        if (typeof currentTab !== 'undefined' && currentTab === 'loans') {
+            openLoanModal();
+        } else {
+            openModal();
+        }
+    }
+
+    addBtn.addEventListener('click', handleFabClick);
     closeBtn.addEventListener('click', closeModal);
     overlay.addEventListener('click', closeModal);
 
@@ -1128,11 +1137,8 @@
             content.classList.toggle('hidden', content.id !== `tab-${tabName}`);
         });
 
-        // Update FAB based on tab
-        const fab = document.getElementById('add-recurring-btn');
-        if (fab) {
-            fab.onclick = tabName === 'loans' ? openLoanModal : openModal;
-        }
+        // FAB behavior is now handled by handleFabClick function
+        // which checks currentTab value
 
         // Load data for the tab
         if (tabName === 'loans') {
