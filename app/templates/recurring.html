@@ -577,33 +577,29 @@
         const [year, month, day] = startDate.split('-').map(Number);
         const date = new Date(year, month - 1, day);
 
-        // Calculate next run date based on frequency and interval
+        // Calculate next run date = start_date + (1 interval)
+        // This shows the NEXT occurrence after start_date
         let nextDate = new Date(date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
 
-        // Find the next occurrence after today
-        while (nextDate <= today) {
-            if (frequency === 'daily') {
-                nextDate.setDate(nextDate.getDate() + interval);
-            } else if (frequency === 'weekly') {
-                nextDate.setDate(nextDate.getDate() + (7 * interval));
-            } else if (frequency === 'monthly') {
-                // Add X months
-                const targetDay = date.getDate();
-                let nextMonth = nextDate.getMonth() + interval;
-                let nextYear = nextDate.getFullYear();
+        if (frequency === 'daily') {
+            nextDate.setDate(nextDate.getDate() + interval);
+        } else if (frequency === 'weekly') {
+            nextDate.setDate(nextDate.getDate() + (7 * interval));
+        } else if (frequency === 'monthly') {
+            // Add X months
+            const targetDay = date.getDate();
+            let nextMonth = nextDate.getMonth() + interval;
+            let nextYear = nextDate.getFullYear();
 
-                while (nextMonth > 11) {
-                    nextMonth -= 12;
-                    nextYear++;
-                }
-
-                // Handle day overflow (e.g., Jan 31 -> Feb 28/29)
-                nextDate = new Date(nextYear, nextMonth, 1);
-                const lastDayOfMonth = new Date(nextYear, nextMonth + 1, 0).getDate();
-                nextDate.setDate(Math.min(targetDay, lastDayOfMonth));
+            while (nextMonth > 11) {
+                nextMonth -= 12;
+                nextYear++;
             }
+
+            // Handle day overflow (e.g., Jan 31 -> Feb 28/29)
+            nextDate = new Date(nextYear, nextMonth, 1);
+            const lastDayOfMonth = new Date(nextYear, nextMonth + 1, 0).getDate();
+            nextDate.setDate(Math.min(targetDay, lastDayOfMonth));
         }
 
         // Format as DD/MM/YYYY
