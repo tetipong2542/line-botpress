@@ -245,7 +245,7 @@ function updateSummaryCardsWithRecurring(summary, recurringMonthly) {
     }
 }
 
-// Calculate loan payments for a specific month
+// Calculate loan payments for a specific month (works for any month, not just current)
 function calculateMonthlyLoanPayments(loans, month, year) {
     let totalPayment = 0;
     let loanCount = 0;
@@ -253,28 +253,45 @@ function calculateMonthlyLoanPayments(loans, month, year) {
     let paidInstallments = 0;
     const payments = [];
 
-    loans.forEach(loan => {
-        if (!loan.is_active || loan.is_completed) return;
+    const targetDate = new Date(year, month, 1);
 
-        if (loan.next_payment_date) {
-            const paymentDate = new Date(loan.next_payment_date);
-            if (paymentDate.getMonth() === month && paymentDate.getFullYear() === year) {
-                const amount = loan.monthly_payment / 100;
-                totalPayment += amount;
-                loanCount++;
-                payments.push({
-                    name: loan.name,
-                    amount: amount,
-                    date: paymentDate,
-                    installment: loan.paid_installments + 1,
-                    totalInstallments: loan.term_months
-                });
-            }
-        }
+    loans.forEach(loan => {
+        if (!loan.is_active) return;
 
         // Track overall progress
         totalInstallments += loan.term_months;
         paidInstallments += loan.paid_installments;
+
+        // Calculate which installment falls in the target month
+        const startDate = new Date(loan.start_date);
+        
+        // Calculate months difference from start_date to target month
+        const monthsDiff = (year - startDate.getFullYear()) * 12 + (month - startDate.getMonth());
+        
+        // Installment number for target month (1-indexed)
+        const installmentNumber = monthsDiff + 1;
+
+        // Check if this installment is valid (between 1 and term_months)
+        if (installmentNumber >= 1 && installmentNumber <= loan.term_months) {
+            const amount = loan.monthly_payment / 100;
+            totalPayment += amount;
+            loanCount++;
+
+            // Calculate payment date (same day as start_date, in target month)
+            const paymentDay = startDate.getDate();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const actualDay = Math.min(paymentDay, daysInMonth);
+            const paymentDate = new Date(year, month, actualDay);
+
+            payments.push({
+                name: loan.name,
+                amount: amount,
+                date: paymentDate,
+                installment: installmentNumber,
+                totalInstallments: loan.term_months,
+                isPaid: installmentNumber <= loan.paid_installments
+            });
+        }
     });
 
     return {
@@ -1005,24 +1022,34 @@ async function loadMonthlyPayments() {
         const recurringMonthly = calculateMonthlyRecurring(recurringRules, currentMonth, currentYear);
         const recurringExpense = recurringMonthly.expense;
 
-        // Calculate loan payments for current month
+        // Calculate loan payments for selected month (using start_date-based calculation)
         let loanPayments = [];
-        let totalLoanPayment = 0;
 
         loans.forEach(loan => {
-            if (loan.is_active && !loan.is_completed && loan.next_payment_date) {
-                const paymentDate = new Date(loan.next_payment_date);
-                if (paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear) {
-                    const amount = loan.monthly_payment / 100;
-                    loanPayments.push({
-                        name: loan.name,
-                        amount: amount,
-                        date: paymentDate,
-                        type: 'loan',
-                        installment: `งวดที่ ${loan.paid_installments + 1}/${loan.term_months}`
-                    });
-                    totalLoanPayment += amount;
-                }
+            if (!loan.is_active) return;
+
+            const startDate = new Date(loan.start_date);
+            const monthsDiff = (currentYear - startDate.getFullYear()) * 12 + (currentMonth - startDate.getMonth());
+            const installmentNumber = monthsDiff + 1;
+
+            // Check if this installment is valid (between 1 and term_months)
+            if (installmentNumber >= 1 && installmentNumber <= loan.term_months) {
+                const amount = loan.monthly_payment / 100;
+                
+                // Calculate payment date
+                const paymentDay = startDate.getDate();
+                const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+                const actualDay = Math.min(paymentDay, daysInMonth);
+                const paymentDate = new Date(currentYear, currentMonth, actualDay);
+
+                loanPayments.push({
+                    name: loan.name,
+                    amount: amount,
+                    date: paymentDate,
+                    type: 'loan',
+                    installment: `งวดที่ ${installmentNumber}/${loan.term_months}`,
+                    isPaid: installmentNumber <= loan.paid_installments
+                });
             }
         });
 
