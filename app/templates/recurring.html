@@ -28,7 +28,7 @@
     </div>
 
     <!-- ========== TAB: รายการประจำ ========== -->
-    <div class="tab-content" id="tab-recurring">
+    <div class="tab-content active" id="tab-recurring">
         <!-- Recurring Stats Cards (Simplified - 3 cards) -->
         <div class="recurring-stats">
             <div class="stat-card">
@@ -99,7 +99,7 @@
     </div>
 
     <!-- ========== TAB: สินเชื่อ/ผ่อนชำระ ========== -->
-    <div class="tab-content hidden" id="tab-loans">
+    <div class="tab-content" id="tab-loans">
         <!-- Loan Stats Cards -->
         <div class="recurring-stats">
             <div class="stat-card">
@@ -682,16 +682,11 @@
     async function loadRecurringRules() {
         try {
             const result = await API.get(buildApiUrl('recurring') + '?active_only=true');
-            console.log('📋 Recurring API Response:', result);
-
             const recurringList = document.querySelector('.recurring-list');
-            console.log('📋 recurring-list element:', recurringList);
 
             if (result.recurring_rules && result.recurring_rules.length > 0) {
-                console.log('📋 Found', result.recurring_rules.length, 'rules, rendering...');
                 renderRecurringRules(result.recurring_rules);
             } else {
-                console.log('📋 No recurring rules found, showing empty state');
                 // Show empty state
                 recurringList.innerHTML = `
                 <div class="empty-state">
@@ -750,7 +745,6 @@
     }
 
     function applyFilters() {
-        console.log('📋 applyFilters called, allRecurringRules:', allRecurringRules.length);
         let filtered = [...allRecurringRules];
 
         // Filter by search
@@ -766,7 +760,6 @@
         // Apply sort
         filtered = sortRules(filtered, currentSort);
 
-        console.log('📋 After filter/sort, filtered rules:', filtered.length);
         filteredRules = filtered;
         renderCards(filtered);
     }
@@ -791,22 +784,14 @@
     }
 
     function renderCards(rules) {
-        console.log('📋 renderCards called with', rules.length, 'rules');
         const recurringList = document.querySelector('.recurring-list');
-        console.log('📋 recurringList element in renderCards:', recurringList);
 
         if (rules.length === 0) {
-            console.log('📋 No rules, showing empty state');
             renderEmptyState();
             return;
         }
 
-        const html = rules.map(rule => renderCard(rule)).join('');
-        console.log('📋 Generated HTML length:', html.length);
-        console.log('📋 First 500 chars of HTML:', html.substring(0, 500));
-
-        recurringList.innerHTML = html;
-        console.log('📋 innerHTML set, recurringList.innerHTML length:', recurringList.innerHTML.length);
+        recurringList.innerHTML = rules.map(rule => renderCard(rule)).join('');
 
         if (typeof lucide !== 'undefined') {
             lucide.createIcons();
@@ -1146,9 +1131,9 @@
             btn.classList.toggle('active', btn.dataset.tab === tabName);
         });
 
-        // Update tab content
+        // Update tab content - use 'active' class (CSS pattern)
         document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.toggle('hidden', content.id !== `tab-${tabName}`);
+            content.classList.toggle('active', content.id === `tab-${tabName}`);
         });
 
         // FAB behavior is now handled by handleFabClick function
