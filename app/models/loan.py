@@ -278,8 +278,9 @@ class Loan(db.Model):
             is_active=True
         ).all()
         
-        total_balance = sum(loan.remaining_balance for loan in loans)
-        total_loans = len(loans)
+        active_loans = [loan for loan in loans if not loan.is_completed]
+        total_outstanding = sum(loan.remaining_balance for loan in loans)
+        total_paid = sum(loan.paid_principal + loan.paid_interest for loan in loans)
         
         # Find next payment
         upcoming_payments = []
@@ -297,10 +298,18 @@ class Loan(db.Model):
         next_payment = upcoming_payments[0] if upcoming_payments else None
         
         return {
-            'total_loans': total_loans,
-            'total_balance': total_balance,
-            'total_balance_formatted': total_balance / 100,
-            'next_payment': next_payment
+            'total_loans': len(loans),
+            'active_loans': len(active_loans),
+            'total_outstanding': total_outstanding,
+            'total_outstanding_formatted': total_outstanding / 100,
+            'total_paid': total_paid,
+            'total_paid_formatted': total_paid / 100,
+            'next_payment': next_payment,
+            'next_payment_date': next_payment['payment_date'].isoformat() if next_payment else None,
+            'next_payment_amount': next_payment['amount'] if next_payment else 0,
+            # Legacy fields for backward compatibility
+            'total_balance': total_outstanding,
+            'total_balance_formatted': total_outstanding / 100
         }
 
     def __repr__(self):

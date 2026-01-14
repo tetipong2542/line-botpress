@@ -146,17 +146,53 @@
         </div>
     </div>
 
-    <!-- Monthly Trend -->
-    <div class="section">
+    <!-- This Month's Scheduled Payments -->
+    <div class="section" id="monthly-payments-section">
         <div class="section-header">
             <h2>
-                <i data-lucide="activity"></i>
-                แนวโน้มรายเดือน
+                <i data-lucide="calendar-check"></i>
+                รายการต้องจ่ายเดือนนี้
             </h2>
-            <p class="section-subtitle">เปรียบเทียบรายรับรายจ่าย 6 เดือนย้อนหลัง</p>
         </div>
-        <div class="chart-container" style="height: 300px;">
-            <canvas id="trendsChart"></canvas>
+
+        <!-- Payment Summary Cards -->
+        <div class="payment-summary-grid" id="payment-summary">
+            <div class="payment-summary-card">
+                <div class="payment-icon recurring">
+                    <i data-lucide="repeat"></i>
+                </div>
+                <div class="payment-info">
+                    <span class="payment-label">รายจ่ายประจำ</span>
+                    <span class="payment-value" id="monthly-recurring-expense">฿0</span>
+                </div>
+            </div>
+            <div class="payment-summary-card">
+                <div class="payment-icon loan">
+                    <i data-lucide="landmark"></i>
+                </div>
+                <div class="payment-info">
+                    <span class="payment-label">ค่างวดสินเชื่อ</span>
+                    <span class="payment-value" id="monthly-loan-payment">฿0</span>
+                </div>
+            </div>
+            <div class="payment-summary-card total">
+                <div class="payment-icon total">
+                    <i data-lucide="calculator"></i>
+                </div>
+                <div class="payment-info">
+                    <span class="payment-label">รวมต้องจ่าย</span>
+                    <span class="payment-value" id="monthly-total-payment">฿0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment List -->
+        <div class="payment-list" id="monthly-payment-list">
+            <!-- Populated by JavaScript -->
+            <div class="loading-placeholder">
+                <i data-lucide="loader" class="spinning"></i>
+                <span>กำลังโหลด...</span>
+            </div>
         </div>
     </div>
 

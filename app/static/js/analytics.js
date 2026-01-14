@@ -25,10 +25,9 @@ async function loadAnalytics() {
 
     try {
         // Fetch all data in parallel
-        const [summary, categoryData, trendsData, recurringRules] = await Promise.all([
+        const [summary, categoryData, recurringRules] = await Promise.all([
             API.get(buildApiUrl(`analytics/summary?month=${month}`)),
             API.get(buildApiUrl(`analytics/by-category?month=${month}&type=expense`)),
-            API.get(buildApiUrl(`analytics/trends?months=6`)),
             loadRecurringData()
         ]);
 
@@ -40,8 +39,10 @@ async function loadAnalytics() {
         // Update UI with combined data
         updateSummaryCardsWithRecurring(summary.summary, recurringMonthly);
         renderCategoryChart(categoryData.categories, recurringMonthly.expense_by_category);
-        renderTrendsChart(trendsData.trends, recurringRules);
         updateTopCategories(categoryData.categories, recurringMonthly.expense_by_category);
+
+        // Load monthly payments section (recurring + loans)
+        loadMonthlyPayments();
 
     } catch (error) {
         console.error('Analytics load error:', error);
@@ -857,3 +858,136 @@ function setupExportButton() {
         }
     });
 }
+
+// ===== MONTHLY PAYMENTS SECTION =====
+async function loadMonthlyPayments() {
+    const listContainer = document.getElementById('monthly-payment-list');
+    if (!listContainer) return;
+
+    try {
+        // Fetch recurring rules and loans
+        const [recurringResponse, loansResponse] = await Promise.all([
+            API.get(buildApiUrl('recurring?active_only=true')),
+            API.get(buildApiUrl('loans'))
+        ]);
+
+        const recurringRules = recurringResponse.recurring_rules || [];
+        const loans = loansResponse.loans || [];
+
+        // Calculate recurring expense for current month
+        const recurringMonthly = calculateMonthlyRecurring(recurringRules, currentMonth, currentYear);
+        const recurringExpense = recurringMonthly.expense;
+
+        // Calculate loan payments for current month
+        let loanPayments = [];
+        let totalLoanPayment = 0;
+
+        loans.forEach(loan => {
+            if (loan.is_active && !loan.is_completed && loan.next_payment_date) {
+                const paymentDate = new Date(loan.next_payment_date);
+                if (paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear) {
+                    const amount = loan.monthly_payment / 100;
+                    loanPayments.push({
+                        name: loan.name,
+                        amount: amount,
+                        date: paymentDate,
+                        type: 'loan',
+                        installment: `งวดที่ ${loan.paid_installments + 1}/${loan.term_months}`
+                    });
+                    totalLoanPayment += amount;
+                }
+            }
+        });
+
+        // Update summary cards
+        const totalPayments = recurringExpense + totalLoanPayment;
+
+        document.getElementById('monthly-recurring-expense').textContent =
+            '฿' + recurringExpense.toLocaleString('th-TH', { minimumFractionDigits: 0 });
+        document.getElementById('monthly-loan-payment').textContent =
+            '฿' + totalLoanPayment.toLocaleString('th-TH', { minimumFractionDigits: 0 });
+        document.getElementById('monthly-total-payment').textContent =
+            '฿' + totalPayments.toLocaleString('th-TH', { minimumFractionDigits: 0 });
+
+        // Build payment list
+        const allPayments = [];
+
+        // Add recurring expenses
+        recurringRules.forEach(rule => {
+            if (rule.type === 'expense' && rule.next_run_date) {
+                const nextDate = new Date(rule.next_run_date);
+                if (nextDate.getMonth() === currentMonth && nextDate.getFullYear() === currentYear) {
+                    allPayments.push({
+                        name: rule.category?.name_th || rule.note || 'รายจ่ายประจำ',
+                        amount: rule.amount / 100,
+                        date: nextDate,
+                        type: 'recurring',
+                        icon: rule.category?.icon || 'repeat',
+                        color: rule.category?.color || '#8b5cf6'
+                    });
+                }
+            }
+        });
+
+        // Add loan payments
+        loanPayments.forEach(loan => {
+            allPayments.push({
+                ...loan,
+                icon: 'landmark',
+                color: '#ef4444'
+            });
+        });
+
+        // Sort by date
+        allPayments.sort((a, b) => a.date - b.date);
+
+        // Render list
+        if (allPayments.length === 0) {
+            listContainer.innerHTML = `
+                <div class="empty-state" style="padding: 24px;">
+                    <i data-lucide="check-circle"></i>
+                    <p>ไม่มีรายการต้องจ่ายเดือนนี้</p>
+                </div>
+            `;
+        } else {
+            listContainer.innerHTML = allPayments.map(payment => {
+                const day = payment.date.getDate();
+                const month = payment.date.toLocaleDateString('th-TH', { month: 'short' });
+                const typeClass = payment.type === 'loan' ? 'loan' : 'recurring';
+                const typeLabel = payment.type === 'loan' ? payment.installment : 'ประจำ';
+
+                return `
+                    <div class="payment-item ${typeClass}">
+                        <div class="payment-item-date">
+                            <span class="payment-day">${day}</span>
+                            <span class="payment-month">${month}</span>
+                        </div>
+                        <div class="payment-item-icon" style="background: ${payment.color}20; color: ${payment.color}">
+                            <i data-lucide="${payment.icon}"></i>
+                        </div>
+                        <div class="payment-item-info">
+                            <span class="payment-name">${payment.name}</span>
+                            <span class="payment-type">${typeLabel}</span>
+                        </div>
+                        <div class="payment-item-amount">
+                            ฿${payment.amount.toLocaleString('th-TH')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        lucide.createIcons();
+
+    } catch (error) {
+        console.error('Load monthly payments error:', error);
+        listContainer.innerHTML = `
+            <div class="empty-state" style="padding: 24px;">
+                <i data-lucide="alert-circle"></i>
+                <p>ไม่สามารถโหลดข้อมูลได้</p>
+            </div>
+        `;
+        lucide.createIcons();
+    }
+}
+

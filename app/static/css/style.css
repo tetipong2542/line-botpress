@@ -10292,3 +10292,171 @@ a:focus-visible {
 .loan-preview-monthly {
     color: var(--text-secondary);
 }
+
+/* Monthly Payments Section (Analytics) */
+.payment-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.payment-summary-card {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.payment-summary-card.total {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.payment-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.payment-icon.recurring {
+    background: #8b5cf620;
+    color: #8b5cf6;
+}
+
+.payment-icon.loan {
+    background: #ef444420;
+    color: #ef4444;
+}
+
+.payment-icon.total {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.payment-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.payment-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.payment-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.payment-summary-card.total .payment-label {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.payment-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.payment-summary-card.total .payment-value {
+    color: white;
+}
+
+/* Payment List */
+.payment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.payment-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border-left: 3px solid transparent;
+}
+
+.payment-item.recurring {
+    border-left-color: #8b5cf6;
+}
+
+.payment-item.loan {
+    border-left-color: #ef4444;
+}
+
+.payment-item-date {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 40px;
+}
+
+.payment-day {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.payment-month {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.payment-item-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.payment-item-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.payment-item-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.payment-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.payment-type {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.payment-item-amount {
+    font-size: 14px;
+    font-weight: 700;
+    color: #ef4444;
+}
+
+@media (max-width: 400px) {
+    .payment-summary-grid {
+        grid-template-columns: 1fr;
+    }
+}
