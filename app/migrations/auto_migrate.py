@@ -95,48 +95,75 @@ def run_auto_migration():
     print("\n🔄 Running Smart Auto-Migration...")
     print("=" * 50)
     
-    # Import all models
-    from app.models.user import User
-    from app.models.project import Project, ProjectMember
-    from app.models.category import Category
-    from app.models.transaction import Transaction, Attachment
-    from app.models.budget import Budget
-    from app.models.recurring import RecurringRule
-    from app.models.bot import BotNonce, IdempotencyKey
+    models = []
     
-    # Optional models (may not exist)
+    # Core models (always exist)
+    try:
+        from app.models.user import User
+        models.append(User)
+    except ImportError:
+        pass
+    
+    try:
+        from app.models.project import Project, ProjectMember
+        models.extend([Project, ProjectMember])
+    except ImportError:
+        pass
+    
+    try:
+        from app.models.category import Category
+        models.append(Category)
+    except ImportError:
+        pass
+    
+    try:
+        from app.models.transaction import Transaction, Attachment
+        models.extend([Transaction, Attachment])
+    except ImportError:
+        pass
+    
+    try:
+        from app.models.budget import Budget
+        models.append(Budget)
+    except ImportError:
+        pass
+    
+    try:
+        from app.models.recurring import RecurringRule
+        models.append(RecurringRule)
+    except ImportError:
+        pass
+    
+    # Optional models
+    try:
+        from app.models.bot import BotNonce, IdempotencyKey
+        models.extend([BotNonce, IdempotencyKey])
+    except ImportError:
+        pass
+    
     try:
         from app.models.insight import Insight
-        from app.models.notification import Notification, NotificationPreference
+        models.append(Insight)
     except ImportError:
-        Insight = None
-        Notification = None
-        NotificationPreference = None
+        pass
+    
+    try:
+        from app.models.notification import Notification, NotificationPreference
+        models.extend([Notification, NotificationPreference])
+    except ImportError:
+        pass
     
     try:
         from app.models.loan import Loan, LoanPayment
+        models.extend([Loan, LoanPayment])
     except ImportError:
-        Loan = None
-        LoanPayment = None
+        pass
     
     try:
         from app.models.savings import SavingsGoal
+        models.append(SavingsGoal)
     except ImportError:
-        SavingsGoal = None
-    
-    # List of all models to check
-    models = [
-        User, Project, ProjectMember, Category, Transaction, 
-        Attachment, Budget, RecurringRule, BotNonce, IdempotencyKey
-    ]
-    
-    # Add optional models if they exist
-    if Insight: models.append(Insight)
-    if Notification: models.append(Notification)
-    if NotificationPreference: models.append(NotificationPreference)
-    if Loan: models.append(Loan)
-    if LoanPayment: models.append(LoanPayment)
-    if SavingsGoal: models.append(SavingsGoal)
+        pass
     
     total_added = 0
     for model in models:
