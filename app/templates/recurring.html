@@ -896,6 +896,13 @@
             ` : ''}
 
             <div class="card-actions">
+                <button class="btn-mark ${rule.is_paid_this_period ? 'marked' : ''}" 
+                        onclick="markRecurringPaid('${rule.id}', event)" 
+                        title="${rule.is_paid_this_period ? 'ชำระแล้วงวดนี้' : 'ชำระเดือนนี้'}"
+                        ${rule.is_paid_this_period ? 'disabled' : ''}>
+                    <i data-lucide="${rule.is_paid_this_period ? 'check-circle' : 'check'}"></i>
+                    <span>${rule.is_paid_this_period ? '✓ จ่ายแล้ว' : 'จ่ายแล้ว'}</span>
+                </button>
                 ${rule.is_paid_this_period ? `
                     <button class="btn-cancel-payment" 
                             onclick="cancelRecurringPayment('${rule.id}', event)" 
@@ -903,15 +910,7 @@
                         <i data-lucide="x-circle"></i>
                         <span>ยกเลิก</span>
                     </button>
-                ` : `
-                    <button class="btn-mark" 
-                            onclick="markRecurringPaid('${rule.id}', event)" 
-                            title="ชำระเดือนนี้">
-                        <i data-lucide="check"></i>
-                        <span>จ่ายแล้ว</span>
-                    </button>
-                `}
-                ${rule.paid_count > 0 ? `<span class="paid-count-badge">${rule.paid_count} ครั้ง</span>` : ''}
+                ` : ''}
                 <button class="card-action-btn" onclick="editRecurring('${rule.id}')" title="แก้ไข">
                     <i data-lucide="edit-2"></i>
                 </button>
