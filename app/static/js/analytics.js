@@ -418,7 +418,7 @@ function updateLoanDetailList(loanPayments, formatAmount) {
         const isLast = index === loanPayments.length - 1;
         const isPaid = loan.isPaid;
         const badgeClass = isPaid ? 'paid' : 'pending';
-        const badgeText = isPaid ? '✓ ชำระแล้ว' : `งวด ${loan.installment}/${loan.totalInstallments}`;
+        const badgeText = isPaid ? '<i data-lucide="check" class="inline-icon"></i> ชำระแล้ว' : `งวด ${loan.installment}/${loan.totalInstallments}`;
         const amountClass = isPaid ? 'paid' : '';
         
         return `
@@ -431,20 +431,27 @@ function updateLoanDetailList(loanPayments, formatAmount) {
         `;
     }).join('');
 
-    // Build summary HTML
+    // Build summary HTML with Lucide icons
     const summaryHtml = `
         <div class="loan-summary-divider"></div>
         <div class="loan-summary-row">
-            <span class="loan-summary-label">✅ ชำระแล้ว (${paidLoans.length})</span>
+            <span class="loan-summary-label"><i data-lucide="check-circle" class="inline-icon paid"></i> ชำระแล้ว (${paidLoans.length})</span>
             <span class="loan-summary-amount paid">${formatAmount(paidAmount)}</span>
         </div>
         <div class="loan-summary-row">
-            <span class="loan-summary-label">⏳ คงเหลือ (${pendingLoans.length})</span>
+            <span class="loan-summary-label"><i data-lucide="clock" class="inline-icon pending"></i> คงเหลือ (${pendingLoans.length})</span>
             <span class="loan-summary-amount pending">${formatAmount(pendingAmount)}</span>
         </div>
     `;
 
     container.innerHTML = loanItemsHtml + summaryHtml;
+    
+    // Default open and refresh icons
+    container.style.display = 'block';
+    const expandIcon = document.getElementById('loan-expand-icon');
+    if (expandIcon) expandIcon.style.transform = 'rotate(180deg)';
+    
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 // Toggle Loan Detail visibility

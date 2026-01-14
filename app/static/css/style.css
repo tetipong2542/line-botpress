@@ -10853,6 +10853,23 @@ a:focus-visible {
     color: #ef4444;
 }
 
+/* Inline Icons for Loan Summary */
+.inline-icon {
+    width: 14px;
+    height: 14px;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 4px;
+}
+
+.inline-icon.paid {
+    color: #10b981;
+}
+
+.inline-icon.pending {
+    color: #f59e0b;
+}
+
 /* ===== Payment Badge ===== */
 .payment-badge {
     font-size: 10px;
