@@ -160,6 +160,41 @@
     </button>
 </div>
 
+<!-- Confirm Payment Modal -->
+<div class="confirm-modal" id="confirm-payment-modal">
+    <div class="confirm-overlay"></div>
+    <div class="confirm-dialog">
+        <div class="confirm-icon">
+            <i data-lucide="alert-circle"></i>
+        </div>
+        <h3 class="confirm-title">ยืนยันการชำระ?</h3>
+        <div class="confirm-details" id="confirm-details">
+            <!-- Populated by JS -->
+        </div>
+        <div class="confirm-actions">
+            <button class="btn-cancel" id="confirm-cancel">ยกเลิก</button>
+            <button class="btn-confirm" id="confirm-proceed">
+                <i data-lucide="check"></i>
+                <span>ยืนยัน</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Undo Toast -->
+<div class="undo-toast" id="undo-toast">
+    <div class="undo-content">
+        <i data-lucide="check-circle" class="undo-icon"></i>
+        <span class="undo-message">ชำระเรียบร้อย!</span>
+    </div>
+    <button class="undo-btn" id="undo-btn">
+        <i data-lucide="undo-2"></i>
+        <span>Undo</span>
+        <span class="undo-countdown" id="undo-countdown">10</span>
+    </button>
+    <div class="undo-progress" id="undo-progress"></div>
+</div>
+
 <!-- Modal: Add/Edit Recurring Transaction -->
 <div class="modal" id="recurring-modal">
     <div class="modal-overlay"></div>
@@ -1010,19 +1045,61 @@
             return;
         }
 
-        const btn = event.target.closest('.btn-mark');
-        const originalContent = btn.innerHTML;
+        // Show confirm dialog
+        showConfirmDialog(rule, async () => {
+            await executeMarkPaid(rule);
+        });
+    }
 
+    // Show confirm dialog before payment
+    function showConfirmDialog(rule, onConfirm) {
+        const modal = document.getElementById('confirm-payment-modal');
+        const details = document.getElementById('confirm-details');
+        const cancelBtn = document.getElementById('confirm-cancel');
+        const confirmBtn = document.getElementById('confirm-proceed');
+
+        // Populate details
+        const amount = (rule.amount / 100).toLocaleString('th-TH');
+        const categoryName = rule.category?.name_th || rule.category?.name || 'รายการประจำ';
+        details.innerHTML = `
+            <div class="confirm-amount">฿${amount}</div>
+            <div class="confirm-category">${categoryName}</div>
+            ${rule.note ? `<div class="confirm-note">${rule.note}</div>` : ''}
+        `;
+
+        // Show modal
+        modal.classList.add('show');
+        lucide.createIcons();
+
+        // Cancel handler
+        const handleCancel = () => {
+            modal.classList.remove('show');
+            cancelBtn.removeEventListener('click', handleCancel);
+            confirmBtn.removeEventListener('click', handleConfirm);
+        };
+
+        // Confirm handler
+        const handleConfirm = () => {
+            modal.classList.remove('show');
+            cancelBtn.removeEventListener('click', handleCancel);
+            confirmBtn.removeEventListener('click', handleConfirm);
+            onConfirm();
+        };
+
+        cancelBtn.addEventListener('click', handleCancel);
+        confirmBtn.addEventListener('click', handleConfirm);
+    }
+
+    // Execute the actual payment mark
+    let lastPaymentData = null;
+    let undoTimeout = null;
+
+    async function executeMarkPaid(rule) {
         try {
-            // Show loading
-            btn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังบันทึก...</span>';
-            btn.disabled = true;
-            lucide.createIcons();
-
             // Call mark-paid API
-            await API.post(buildApiUrl(`recurring/${recurringId}/mark-paid`));
+            await API.post(buildApiUrl(`recurring/${rule.id}/mark-paid`));
 
-            // Also create transaction
+            // Create transaction
             const today = new Date();
             const transactionData = {
                 amount: rule.amount,
@@ -1031,9 +1108,27 @@
                 note: `${rule.note || rule.category?.name || 'รายการประจำ'} (ชำระจากรายการประจำ)`,
                 transaction_date: today.toISOString().split('T')[0]
             };
-            await API.post(buildApiUrl('transactions'), transactionData);
+            const transactionResult = await API.post(buildApiUrl('transactions'), transactionData);
 
-            showToast('บันทึกการชำระเรียบร้อย!', 'success');
+            // Store for undo
+            lastPaymentData = {
+                ruleId: rule.id,
+                transactionId: transactionResult.transaction?.id
+            };
+
+            // Show undo toast
+            showUndoToast(async () => {
+                // Undo action - delete transaction if exists
+                if (lastPaymentData?.transactionId) {
+                    try {
+                        await API.delete(buildApiUrl(`transactions/${lastPaymentData.transactionId}`));
+                        showToast('ยกเลิกการชำระแล้ว', 'success');
+                        await loadRecurringRules();
+                    } catch (e) {
+                        showToast('ไม่สามารถยกเลิกได้', 'error');
+                    }
+                }
+            });
 
             // Reload to show updated state
             await loadRecurringRules();
@@ -1041,11 +1136,63 @@
         } catch (error) {
             console.error('Mark paid error:', error);
             showToast(error.message || 'เกิดข้อผิดพลาด', 'error');
-            btn.innerHTML = originalContent;
-            btn.disabled = false;
-            lucide.createIcons();
         }
     }
+
+    // Show undo toast with countdown
+    function showUndoToast(onUndo) {
+        const toast = document.getElementById('undo-toast');
+        const undoBtn = document.getElementById('undo-btn');
+        const countdown = document.getElementById('undo-countdown');
+        const progress = document.getElementById('undo-progress');
+
+        let timeLeft = 10;
+
+        // Clear any existing timeout
+        if (undoTimeout) {
+            clearTimeout(undoTimeout);
+        }
+
+        // Show toast
+        toast.classList.add('show');
+        countdown.textContent = timeLeft;
+        progress.style.width = '100%';
+        lucide.createIcons();
+
+        // Update progress
+        const interval = setInterval(() => {
+            timeLeft--;
+            countdown.textContent = timeLeft;
+            progress.style.width = `${(timeLeft / 10) * 100}%`;
+
+            if (timeLeft <= 0) {
+                clearInterval(interval);
+                hideUndoToast();
+            }
+        }, 1000);
+
+        // Undo handler
+        const handleUndo = () => {
+            clearInterval(interval);
+            hideUndoToast();
+            onUndo();
+            undoBtn.removeEventListener('click', handleUndo);
+        };
+
+        undoBtn.addEventListener('click', handleUndo);
+
+        // Auto hide after timeout
+        undoTimeout = setTimeout(() => {
+            clearInterval(interval);
+            hideUndoToast();
+            undoBtn.removeEventListener('click', handleUndo);
+        }, 10000);
+    }
+
+    function hideUndoToast() {
+        document.getElementById('undo-toast').classList.remove('show');
+    }
+
 
     // Load categories for dropdown
     async function loadCategories() {
