@@ -26,6 +26,9 @@ class RecurringRule(db.Model):
     next_run_date = db.Column(db.Date, nullable=False)
     remind_days = db.Column(db.Integer, nullable=False, default=0)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
+    # Payment History Tracking (Option B)
+    last_paid_date = db.Column(db.Date, nullable=True)  # Last date user marked as paid
+    paid_count = db.Column(db.Integer, nullable=False, default=0)  # Total times paid
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -112,6 +115,10 @@ class RecurringRule(db.Model):
             'next_run_date': self.next_run_date.isoformat() if self.next_run_date else None,
             'remind_days': self.remind_days,
             'is_active': self.is_active,
+            # Payment History Tracking
+            'last_paid_date': self.last_paid_date.isoformat() if self.last_paid_date else None,
+            'paid_count': self.paid_count or 0,
+            'is_paid_this_period': self.is_paid_for_period(),
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
@@ -131,5 +138,34 @@ class RecurringRule(db.Model):
 
         return result
 
+    def is_paid_for_period(self):
+        """Check if this recurring rule has been paid for the current period"""
+        if not self.last_paid_date or not self.next_run_date:
+            return False
+        
+        # For monthly: check if last_paid_date is in the same month as next_run_date
+        if self.freq == 'monthly':
+            return (self.last_paid_date.year == self.next_run_date.year and
+                    self.last_paid_date.month == self.next_run_date.month)
+        
+        # For weekly: check if last_paid_date is within 7 days before next_run_date
+        elif self.freq == 'weekly':
+            days_diff = (self.next_run_date - self.last_paid_date).days
+            return 0 <= days_diff < 7
+        
+        # For daily: check if last_paid_date is the same as next_run_date
+        elif self.freq == 'daily':
+            return self.last_paid_date == self.next_run_date
+        
+        return False
+
+    def mark_as_paid(self):
+        """Mark this recurring rule as paid for the current period"""
+        from datetime import date
+        self.last_paid_date = date.today()
+        self.paid_count = (self.paid_count or 0) + 1
+        return True
+
     def __repr__(self):
         return f'<RecurringRule {self.freq} {self.amount/100}>'
+

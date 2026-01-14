@@ -470,6 +470,46 @@ def delete_recurring(project_id, recurring_id):
         }), 403
 
 
+@bp.route('/projects/<project_id>/recurring/<recurring_id>/mark-paid', methods=['POST'])
+def mark_recurring_paid(project_id, recurring_id):
+    """Mark recurring rule as paid for the current period"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.models.recurring import RecurringRule
+        
+        rule = RecurringRule.query.filter_by(id=recurring_id, project_id=project_id).first()
+        
+        if not rule:
+            return jsonify({
+                'error': {
+                    'code': 'NOT_FOUND',
+                    'message': 'ไม่พบรายการประจำ'
+                }
+            }), 404
+        
+        # Mark as paid
+        rule.mark_as_paid()
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'บันทึกการชำระเรียบร้อย',
+            'rule': rule.to_dict()
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'error': {
+                'code': 'SERVER_ERROR',
+                'message': str(e)
+            }
+        }), 500
+
+
 @bp.route('/projects/<project_id>/recurring/<recurring_id>/execute', methods=['POST'])
 def execute_recurring(project_id, recurring_id):
     """Manually execute recurring transaction rule"""

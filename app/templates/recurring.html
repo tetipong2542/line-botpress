@@ -861,9 +861,13 @@
             ` : ''}
 
             <div class="card-actions">
-                <button class="btn-mark" onclick="markRecurringPaid('${rule.id}', event)" title="ชำระแล้วเดือนนี้">
-                    <i data-lucide="check"></i>
-                    <span>จ่ายแล้ว</span>
+                <button class="btn-mark ${rule.is_paid_this_period ? 'marked' : ''}" 
+                        onclick="markRecurringPaid('${rule.id}', event)" 
+                        title="${rule.is_paid_this_period ? 'ชำระแล้วงวดนี้' : 'ชำระเดือนนี้'}"
+                        ${rule.is_paid_this_period ? 'disabled' : ''}>
+                    <i data-lucide="${rule.is_paid_this_period ? 'check-circle' : 'check'}"></i>
+                    <span>${rule.is_paid_this_period ? '✓ จ่ายแล้ว' : 'จ่ายแล้ว'}</span>
+                    ${rule.paid_count > 0 ? `<span class="paid-count">${rule.paid_count}</span>` : ''}
                 </button>
                 <button class="card-action-btn" onclick="editRecurring('${rule.id}')" title="แก้ไข">
                     <i data-lucide="edit-2"></i>
@@ -1000,6 +1004,12 @@
         const rule = allRecurringRules.find(r => r.id === recurringId);
         if (!rule) return;
 
+        // Check if already paid
+        if (rule.is_paid_this_period) {
+            showToast('ชำระแล้วในงวดนี้', 'info');
+            return;
+        }
+
         const btn = event.target.closest('.btn-mark');
         const originalContent = btn.innerHTML;
 
@@ -1009,7 +1019,10 @@
             btn.disabled = true;
             lucide.createIcons();
 
-            // Create transaction based on recurring rule
+            // Call mark-paid API
+            await API.post(buildApiUrl(`recurring/${recurringId}/mark-paid`));
+
+            // Also create transaction
             const today = new Date();
             const transactionData = {
                 amount: rule.amount,
@@ -1018,23 +1031,12 @@
                 note: `${rule.note || rule.category?.name || 'รายการประจำ'} (ชำระจากรายการประจำ)`,
                 transaction_date: today.toISOString().split('T')[0]
             };
-
             await API.post(buildApiUrl('transactions'), transactionData);
-
-            // Mark as successful
-            btn.innerHTML = '<i data-lucide="check-circle"></i><span>จ่ายแล้ว!</span>';
-            btn.classList.add('marked');
-            lucide.createIcons();
 
             showToast('บันทึกการชำระเรียบร้อย!', 'success');
 
-            // Reset button after delay
-            setTimeout(() => {
-                btn.innerHTML = originalContent;
-                btn.classList.remove('marked');
-                btn.disabled = false;
-                lucide.createIcons();
-            }, 2000);
+            // Reload to show updated state
+            await loadRecurringRules();
 
         } catch (error) {
             console.error('Mark paid error:', error);
