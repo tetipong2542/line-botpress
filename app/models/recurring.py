@@ -19,6 +19,7 @@ class RecurringRule(db.Model):
     amount = db.Column(db.Integer, nullable=False)  # Amount in satang
     note = db.Column(db.Text, nullable=True)
     freq = db.Column(db.String(20), nullable=False)  # 'daily', 'weekly', 'monthly'
+    freq_interval = db.Column(db.Integer, nullable=False, default=1)  # Every X days/weeks/months
     day_of_week = db.Column(db.Integer, nullable=True)  # 0=Monday, 6=Sunday (for weekly)
     day_of_month = db.Column(db.Integer, nullable=True)  # 1-31 (for monthly)
     start_date = db.Column(db.Date, nullable=False)
@@ -108,6 +109,7 @@ class RecurringRule(db.Model):
             'amount_formatted': self.amount / 100.0,
             'note': self.note,
             'freq': self.freq,
+            'freq_interval': self.freq_interval or 1,
             'day_of_week': self.day_of_week,
             'day_of_month': self.day_of_month,
             'start_date': self.start_date.isoformat() if self.start_date else None,

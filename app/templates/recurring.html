@@ -238,11 +238,17 @@
             <!-- ความถี่ -->
             <div class="form-group">
                 <label class="form-label">ความถี่</label>
-                <select class="form-select" id="recurring-frequency">
-                    <option value="monthly">ทุกเดือน</option>
-                    <option value="weekly">ทุกสัปดาห์</option>
-                    <option value="yearly">ทุกปี</option>
-                </select>
+                <div class="frequency-input-group">
+                    <span class="freq-prefix">ทุกๆ</span>
+                    <input type="number" class="form-input freq-interval-input" id="recurring-freq-interval" min="1"
+                        max="365" value="1">
+                    <select class="form-select freq-unit-select" id="recurring-frequency">
+                        <option value="daily">วัน</option>
+                        <option value="weekly">สัปดาห์</option>
+                        <option value="monthly" selected>เดือน</option>
+                    </select>
+                </div>
+                <small class="form-hint">เช่น ทุก 2 สัปดาห์ หรือ ทุก 3 เดือน</small>
             </div>
 
             <!-- วันที่เริ่มต้น -->
@@ -654,11 +660,13 @@
         const day_of_week = startDateObj.getDay(); // 0=Sunday, 6=Saturday
 
         // Prepare payload
+        const freqInterval = parseInt(document.getElementById('recurring-freq-interval').value) || 1;
         const payload = {
             type: document.getElementById('recurring-type').value,
             category_id: category_id,
             amount: parseFloat(amount), // Backend will convert to satang
             freq: frequency,
+            freq_interval: freqInterval,
             start_date: start_date,
             end_date: end_date || null,
             remind_days: parseInt(document.getElementById('recurring-reminder').value) || 0,
@@ -998,6 +1006,7 @@
             document.getElementById('recurring-type').value = rule.type;
             document.getElementById('recurring-category').value = rule.category_id;
             document.getElementById('recurring-frequency').value = rule.freq;
+            document.getElementById('recurring-freq-interval').value = rule.freq_interval || 1;
             document.getElementById('recurring-start-date').value = rule.start_date;
             document.getElementById('recurring-end-date').value = rule.end_date || '';
             document.getElementById('recurring-reminder').value = rule.remind_days || 0;
