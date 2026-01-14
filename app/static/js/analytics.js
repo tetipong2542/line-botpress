@@ -412,7 +412,7 @@ function updateSimpleDashboard(summary, recurringMonthly, loanMonthly) {
     // Update recurring count badge and detail list
     const recurringCountEl = document.getElementById('recurring-count');
     const recurringRow = document.getElementById('recurring-row');
-    const recurringPayments = recurringMonthly.expensePayments || [];
+    const recurringPayments = recurringMonthly.expense_payments || [];
     
     let recurringPendingAmount = recurringExpense;
     if (recurringPayments.length > 0) {
