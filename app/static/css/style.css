@@ -10460,3 +10460,277 @@ a:focus-visible {
         grid-template-columns: 1fr;
     }
 }
+
+/* ===== Option 3: Simple Summary Dashboard ===== */
+.simple-summary-dashboard {
+    margin-bottom: 20px;
+}
+
+/* Main 3 Cards */
+.main-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.main-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.main-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.main-card.income {
+    border-color: #10b981;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.02) 100%);
+}
+
+.main-card.expense {
+    border-color: #ef4444;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.02) 100%);
+}
+
+.main-card.balance {
+    border-color: #3b82f6;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.02) 100%);
+}
+
+.main-card.balance.positive {
+    border-color: #10b981;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.02) 100%);
+}
+
+.main-card.balance.negative {
+    border-color: #ef4444;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.02) 100%);
+}
+
+.main-card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.main-card.income .main-card-icon {
+    background: #10b98120;
+    color: #10b981;
+}
+
+.main-card.expense .main-card-icon {
+    background: #ef444420;
+    color: #ef4444;
+}
+
+.main-card.balance .main-card-icon {
+    background: #3b82f620;
+    color: #3b82f6;
+}
+
+.main-card.balance.positive .main-card-icon {
+    background: #10b98120;
+    color: #10b981;
+}
+
+.main-card.balance.negative .main-card-icon {
+    background: #ef444420;
+    color: #ef4444;
+}
+
+.main-card-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.main-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.main-card-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.main-card-amount {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.main-card.income .main-card-amount {
+    color: #10b981;
+}
+
+.main-card.expense .main-card-amount {
+    color: #ef4444;
+}
+
+.main-card.balance.positive .main-card-amount {
+    color: #10b981;
+}
+
+.main-card.balance.negative .main-card-amount {
+    color: #ef4444;
+}
+
+.main-card-note {
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+
+.main-card-status {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Expense Breakdown Card */
+.expense-breakdown-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+}
+
+.breakdown-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text);
+    margin-bottom: 12px;
+}
+
+.breakdown-header svg {
+    width: 18px;
+    height: 18px;
+    color: var(--text-secondary);
+}
+
+.breakdown-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.breakdown-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.breakdown-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.breakdown-dot.regular {
+    background: #3b82f6;
+}
+
+.breakdown-dot.recurring {
+    background: #8b5cf6;
+}
+
+.breakdown-dot.loan {
+    background: #ef4444;
+}
+
+.breakdown-name {
+    font-size: 14px;
+    color: var(--text);
+}
+
+.breakdown-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    background: #ef444420;
+    color: #ef4444;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.breakdown-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.breakdown-amount {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.breakdown-percent {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.breakdown-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+}
+
+.breakdown-item.total .breakdown-name {
+    font-weight: 600;
+}
+
+.breakdown-item.total .breakdown-amount {
+    font-weight: 700;
+    color: #ef4444;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .main-summary-cards {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .main-card {
+        flex-direction: row;
+        text-align: left;
+        padding: 14px;
+    }
+
+    .main-card-icon {
+        margin-bottom: 0;
+        margin-right: 12px;
+    }
+
+    .main-card-content {
+        align-items: flex-start;
+        flex: 1;
+    }
+
+    .main-card-amount {
+        font-size: 20px;
+    }
+}

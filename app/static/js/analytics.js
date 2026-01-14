@@ -19,25 +19,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupExportButton();
 });
 
-// Load all analytics data including recurring
+// Load all analytics data including recurring and loans
 async function loadAnalytics() {
     const month = formatMonthParam();
 
     try {
-        // Fetch all data in parallel
-        const [summary, categoryData, recurringRules] = await Promise.all([
+        // Fetch all data in parallel (including loans)
+        const [summary, categoryData, recurringRules, loansResponse] = await Promise.all([
             API.get(buildApiUrl(`analytics/summary?month=${month}`)),
             API.get(buildApiUrl(`analytics/by-category?month=${month}&type=expense`)),
-            loadRecurringData()
+            loadRecurringData(),
+            API.get(buildApiUrl('loans'))
         ]);
 
         recurringData = recurringRules;
+        const loans = loansResponse.loans || [];
 
         // Calculate recurring for current month
         const recurringMonthly = calculateMonthlyRecurring(recurringRules, currentMonth, currentYear);
 
-        // Update UI with combined data
-        updateSummaryCardsWithRecurring(summary.summary, recurringMonthly);
+        // Calculate loan payments for current month
+        const loanMonthly = calculateMonthlyLoanPayments(loans, currentMonth, currentYear);
+
+        // Update Simple Dashboard (Option 3)
+        updateSimpleDashboard(summary.summary, recurringMonthly, loanMonthly);
+
+        // Update charts and categories
         renderCategoryChart(categoryData.categories, recurringMonthly.expense_by_category);
         updateTopCategories(categoryData.categories, recurringMonthly.expense_by_category);
 
@@ -235,6 +242,126 @@ function updateSummaryCardsWithRecurring(summary, recurringMonthly) {
         balanceCard.classList.add('positive');
     } else {
         balanceCard.classList.add('negative');
+    }
+}
+
+// Calculate loan payments for a specific month
+function calculateMonthlyLoanPayments(loans, month, year) {
+    let totalPayment = 0;
+    let loanCount = 0;
+    let totalInstallments = 0;
+    let paidInstallments = 0;
+    const payments = [];
+
+    loans.forEach(loan => {
+        if (!loan.is_active || loan.is_completed) return;
+
+        if (loan.next_payment_date) {
+            const paymentDate = new Date(loan.next_payment_date);
+            if (paymentDate.getMonth() === month && paymentDate.getFullYear() === year) {
+                const amount = loan.monthly_payment / 100;
+                totalPayment += amount;
+                loanCount++;
+                payments.push({
+                    name: loan.name,
+                    amount: amount,
+                    date: paymentDate,
+                    installment: loan.paid_installments + 1,
+                    totalInstallments: loan.term_months
+                });
+            }
+        }
+
+        // Track overall progress
+        totalInstallments += loan.term_months;
+        paidInstallments += loan.paid_installments;
+    });
+
+    return {
+        totalPayment,
+        loanCount,
+        totalInstallments,
+        paidInstallments,
+        payments
+    };
+}
+
+// Update Simple Dashboard (Option 3)
+function updateSimpleDashboard(summary, recurringMonthly, loanMonthly) {
+    // Calculate totals
+    const regularIncome = summary.income.formatted || 0;
+    const recurringIncome = recurringMonthly.income || 0;
+    const totalIncome = regularIncome + recurringIncome;
+
+    const regularExpense = summary.expense.formatted || 0;
+    const recurringExpense = recurringMonthly.expense || 0;
+    const loanExpense = loanMonthly.totalPayment || 0;
+    const totalExpense = regularExpense + recurringExpense + loanExpense;
+
+    const netBalance = totalIncome - totalExpense;
+
+    // Format function
+    const formatAmount = (amount) => '฿' + amount.toLocaleString('th-TH', { minimumFractionDigits: 0 });
+
+    // Update Main 3 Cards
+    document.getElementById('total-income').textContent = formatAmount(totalIncome);
+    document.getElementById('total-expense').textContent = formatAmount(totalExpense);
+    document.getElementById('net-balance').textContent = formatAmount(netBalance);
+
+    // Update expense note
+    const expenseNote = document.getElementById('expense-note');
+    if (loanExpense > 0) {
+        expenseNote.textContent = `(รวมสินเชื่อ ฿${loanExpense.toLocaleString()})`;
+        expenseNote.style.display = 'block';
+    } else {
+        expenseNote.style.display = 'none';
+    }
+
+    // Update balance status
+    const balanceCard = document.getElementById('balance-card');
+    const balanceStatus = document.getElementById('balance-status');
+    balanceCard.classList.remove('positive', 'negative');
+
+    if (netBalance >= 0) {
+        balanceCard.classList.add('positive');
+        if (netBalance > totalIncome * 0.2) {
+            balanceStatus.textContent = '💚 ดีมาก!';
+        } else {
+            balanceStatus.textContent = '💛 พอใช้';
+        }
+    } else {
+        balanceCard.classList.add('negative');
+        balanceStatus.textContent = '❌ ขาดทุน';
+    }
+
+    // Update Expense Breakdown
+    const calcPercent = (amount) => totalExpense > 0 ? ((amount / totalExpense) * 100).toFixed(1) : 0;
+
+    document.getElementById('expense-regular').textContent = formatAmount(regularExpense);
+    document.getElementById('expense-regular-pct').textContent = `(${calcPercent(regularExpense)}%)`;
+
+    document.getElementById('expense-recurring').textContent = formatAmount(recurringExpense);
+    document.getElementById('expense-recurring-pct').textContent = `(${calcPercent(recurringExpense)}%)`;
+
+    document.getElementById('expense-loan').textContent = formatAmount(loanExpense);
+    document.getElementById('expense-loan-pct').textContent = `(${calcPercent(loanExpense)}%)`;
+
+    // Update loan installment badge
+    const loanInstallment = document.getElementById('loan-installment');
+    if (loanMonthly.loanCount > 0 && loanMonthly.payments.length > 0) {
+        // Show first loan's installment
+        const firstLoan = loanMonthly.payments[0];
+        loanInstallment.textContent = `งวด ${firstLoan.installment}/${firstLoan.totalInstallments}`;
+        loanInstallment.style.display = 'inline-block';
+    } else {
+        loanInstallment.style.display = 'none';
+    }
+
+    document.getElementById('expense-total-detail').textContent = formatAmount(totalExpense);
+
+    // Refresh icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
     }
 }
 

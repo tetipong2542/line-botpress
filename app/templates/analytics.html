@@ -11,7 +11,7 @@
                 <i data-lucide="bar-chart-2"></i>
                 รายงาน
             </h1>
-            <p class="subtitle">วิเคราะห์รายรับรายจ่าย</p>
+            <p class="subtitle">ภาพรวมการเงินเดือนนี้</p>
         </div>
         <div class="analytics-actions">
             <a href="/analytics/advanced" class="btn-secondary">
@@ -38,83 +38,90 @@
         </button>
     </div>
 
-    <!-- Summary Cards with Recurring Breakdown -->
-    <div class="analytics-summary-grid">
-        <!-- Row 1: Income Breakdown -->
-        <div class="summary-row income-row">
-            <div class="summary-card regular-income">
-                <div class="summary-icon">
-                    <i data-lucide="circle"></i>
-                </div>
-                <div class="summary-content">
-                    <div class="summary-label">ปกติ รายรับ</div>
-                    <div class="summary-amount">฿0</div>
-                </div>
-            </div>
-
-            <div class="summary-card recurring-income">
-                <div class="summary-icon">
-                    <i data-lucide="repeat"></i>
-                </div>
-                <div class="summary-content">
-                    <div class="summary-label">ประจำ รายรับ</div>
-                    <div class="summary-amount">฿0</div>
-                </div>
-            </div>
-
-            <div class="summary-card total-income highlight">
-                <div class="summary-icon">
+    <!-- ===== OPTION 3: Simple Summary Dashboard ===== -->
+    <div class="simple-summary-dashboard">
+        <!-- Main 3 Cards: รายรับ | รายจ่ายทั้งหมด | คงเหลือ -->
+        <div class="main-summary-cards">
+            <div class="main-card income">
+                <div class="main-card-icon">
                     <i data-lucide="trending-up"></i>
                 </div>
-                <div class="summary-content">
-                    <div class="summary-label">รวม รายรับ</div>
-                    <div class="summary-amount">฿0</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Row 2: Expense Breakdown -->
-        <div class="summary-row expense-row">
-            <div class="summary-card regular-expense">
-                <div class="summary-icon">
-                    <i data-lucide="circle"></i>
-                </div>
-                <div class="summary-content">
-                    <div class="summary-label">ปกติ รายจ่าย</div>
-                    <div class="summary-amount">฿0</div>
+                <div class="main-card-content">
+                    <span class="main-card-label">รายรับ</span>
+                    <span class="main-card-amount" id="total-income">฿0</span>
                 </div>
             </div>
 
-            <div class="summary-card recurring-expense">
-                <div class="summary-icon">
-                    <i data-lucide="repeat"></i>
-                </div>
-                <div class="summary-content">
-                    <div class="summary-label">ประจำ รายจ่าย</div>
-                    <div class="summary-amount">฿0</div>
-                </div>
-            </div>
-
-            <div class="summary-card total-expense highlight">
-                <div class="summary-icon">
+            <div class="main-card expense">
+                <div class="main-card-icon">
                     <i data-lucide="trending-down"></i>
                 </div>
-                <div class="summary-content">
-                    <div class="summary-label">รวม รายจ่าย</div>
-                    <div class="summary-amount">฿0</div>
+                <div class="main-card-content">
+                    <span class="main-card-label">รายจ่ายทั้งหมด</span>
+                    <span class="main-card-amount" id="total-expense">฿0</span>
+                    <span class="main-card-note" id="expense-note">(รวมสินเชื่อ)</span>
+                </div>
+            </div>
+
+            <div class="main-card balance" id="balance-card">
+                <div class="main-card-icon">
+                    <i data-lucide="wallet"></i>
+                </div>
+                <div class="main-card-content">
+                    <span class="main-card-label">คงเหลือ</span>
+                    <span class="main-card-amount" id="net-balance">฿0</span>
+                    <span class="main-card-status" id="balance-status">💚 ดีมาก!</span>
                 </div>
             </div>
         </div>
 
-        <!-- Row 3: Net Balance (Full Width) -->
-        <div class="summary-row balance-row">
-            <div class="summary-card net-balance highlight">
-                <div class="summary-icon">
-                    <i data-lucide="wallet"></i>
+        <!-- Expense Breakdown Detail -->
+        <div class="expense-breakdown-card">
+            <div class="breakdown-header">
+                <i data-lucide="list"></i>
+                <span>รายละเอียดรายจ่าย</span>
+            </div>
+            <div class="breakdown-list">
+                <div class="breakdown-item">
+                    <div class="breakdown-left">
+                        <span class="breakdown-dot regular"></span>
+                        <span class="breakdown-name">ปกติ</span>
+                    </div>
+                    <div class="breakdown-right">
+                        <span class="breakdown-amount" id="expense-regular">฿0</span>
+                        <span class="breakdown-percent" id="expense-regular-pct">(0%)</span>
+                    </div>
                 </div>
-                <div class="summary-content">
-                    <div class="summary-label">คงเหลือสุทธิ</div>
-                    <div class="summary-amount">฿0</div>
+                <div class="breakdown-item">
+                    <div class="breakdown-left">
+                        <span class="breakdown-dot recurring"></span>
+                        <span class="breakdown-name">ประจำ</span>
+                    </div>
+                    <div class="breakdown-right">
+                        <span class="breakdown-amount" id="expense-recurring">฿0</span>
+                        <span class="breakdown-percent" id="expense-recurring-pct">(0%)</span>
+                    </div>
+                </div>
+                <div class="breakdown-item loan">
+                    <div class="breakdown-left">
+                        <span class="breakdown-dot loan"></span>
+                        <span class="breakdown-name">สินเชื่อ</span>
+                        <span class="breakdown-badge" id="loan-installment">งวด 0/0</span>
+                    </div>
+                    <div class="breakdown-right">
+                        <span class="breakdown-amount" id="expense-loan">฿0</span>
+                        <span class="breakdown-percent" id="expense-loan-pct">(0%)</span>
+                    </div>
+                </div>
+                <div class="breakdown-divider"></div>
+                <div class="breakdown-item total">
+                    <div class="breakdown-left">
+                        <span class="breakdown-name">รวมทั้งหมด</span>
+                    </div>
+                    <div class="breakdown-right">
+                        <span class="breakdown-amount" id="expense-total-detail">฿0</span>
+                        <span class="breakdown-percent">(100%)</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -124,7 +131,7 @@
     <div class="section">
         <div class="section-header">
             <h2>
-                <i data-lucide="bar-chart-2"></i>
+                <i data-lucide="pie-chart"></i>
                 สัดส่วนรายจ่ายตามหมวดหมู่
             </h2>
         </div>
@@ -137,7 +144,7 @@
     <div class="section">
         <div class="section-header">
             <h2>
-                <i data-lucide="trending-up"></i>
+                <i data-lucide="layers"></i>
                 หมวดหมู่ทั้งหมด
             </h2>
         </div>
@@ -153,37 +160,6 @@
                 <i data-lucide="calendar-check"></i>
                 รายการต้องจ่ายเดือนนี้
             </h2>
-        </div>
-
-        <!-- Payment Summary Cards -->
-        <div class="payment-summary-grid" id="payment-summary">
-            <div class="payment-summary-card">
-                <div class="payment-icon recurring">
-                    <i data-lucide="repeat"></i>
-                </div>
-                <div class="payment-info">
-                    <span class="payment-label">รายจ่ายประจำ</span>
-                    <span class="payment-value" id="monthly-recurring-expense">฿0</span>
-                </div>
-            </div>
-            <div class="payment-summary-card">
-                <div class="payment-icon loan">
-                    <i data-lucide="landmark"></i>
-                </div>
-                <div class="payment-info">
-                    <span class="payment-label">ค่างวดสินเชื่อ</span>
-                    <span class="payment-value" id="monthly-loan-payment">฿0</span>
-                </div>
-            </div>
-            <div class="payment-summary-card total">
-                <div class="payment-icon total">
-                    <i data-lucide="calculator"></i>
-                </div>
-                <div class="payment-info">
-                    <span class="payment-label">รวมต้องจ่าย</span>
-                    <span class="payment-value" id="monthly-total-payment">฿0</span>
-                </div>
-            </div>
         </div>
 
         <!-- Payment List -->
