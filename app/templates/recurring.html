@@ -682,12 +682,16 @@
     async function loadRecurringRules() {
         try {
             const result = await API.get(buildApiUrl('recurring') + '?active_only=true');
+            console.log('📋 Recurring API Response:', result);
 
             const recurringList = document.querySelector('.recurring-list');
+            console.log('📋 recurring-list element:', recurringList);
 
             if (result.recurring_rules && result.recurring_rules.length > 0) {
+                console.log('📋 Found', result.recurring_rules.length, 'rules, rendering...');
                 renderRecurringRules(result.recurring_rules);
             } else {
+                console.log('📋 No recurring rules found, showing empty state');
                 // Show empty state
                 recurringList.innerHTML = `
                 <div class="empty-state">
