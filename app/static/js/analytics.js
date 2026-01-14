@@ -140,7 +140,8 @@ function calculateMonthlyRecurring(rules, month, year) {
                         type: 'recurring',
                         icon: rule.category?.icon || 'repeat',
                         color: rule.category?.color || '#8b5cf6',
-                        category_id: rule.category_id
+                        category_id: rule.category_id,
+                        isPaid: rule.is_paid_this_period || false
                     });
 
                     // Track by category

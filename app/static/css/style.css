@@ -11201,3 +11201,41 @@ a:focus-visible {
     background: #3b82f6;
     transition: width 1s linear;
 }
+
+/* ===== Cancel Payment Button ===== */
+.btn-cancel-payment {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    background: #ef444420;
+    border: 1px solid #ef444440;
+    border-radius: 8px;
+    color: #ef4444;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-cancel-payment:hover {
+    background: #ef4444;
+    color: white;
+    border-color: #ef4444;
+}
+
+.btn-cancel-payment svg {
+    width: 14px;
+    height: 14px;
+}
+
+.paid-count-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    background: #10b98120;
+    color: #10b981;
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: 12px;
+}

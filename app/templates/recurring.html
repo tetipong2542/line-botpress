@@ -896,14 +896,22 @@
             ` : ''}
 
             <div class="card-actions">
-                <button class="btn-mark ${rule.is_paid_this_period ? 'marked' : ''}" 
-                        onclick="markRecurringPaid('${rule.id}', event)" 
-                        title="${rule.is_paid_this_period ? 'ชำระแล้วงวดนี้' : 'ชำระเดือนนี้'}"
-                        ${rule.is_paid_this_period ? 'disabled' : ''}>
-                    <i data-lucide="${rule.is_paid_this_period ? 'check-circle' : 'check'}"></i>
-                    <span>${rule.is_paid_this_period ? '✓ จ่ายแล้ว' : 'จ่ายแล้ว'}</span>
-                    ${rule.paid_count > 0 ? `<span class="paid-count">${rule.paid_count}</span>` : ''}
-                </button>
+                ${rule.is_paid_this_period ? `
+                    <button class="btn-cancel-payment" 
+                            onclick="cancelRecurringPayment('${rule.id}', event)" 
+                            title="ยกเลิกการชำระงวดนี้">
+                        <i data-lucide="x-circle"></i>
+                        <span>ยกเลิก</span>
+                    </button>
+                ` : `
+                    <button class="btn-mark" 
+                            onclick="markRecurringPaid('${rule.id}', event)" 
+                            title="ชำระเดือนนี้">
+                        <i data-lucide="check"></i>
+                        <span>จ่ายแล้ว</span>
+                    </button>
+                `}
+                ${rule.paid_count > 0 ? `<span class="paid-count-badge">${rule.paid_count} ครั้ง</span>` : ''}
                 <button class="card-action-btn" onclick="editRecurring('${rule.id}')" title="แก้ไข">
                     <i data-lucide="edit-2"></i>
                 </button>
@@ -1191,6 +1199,45 @@
 
     function hideUndoToast() {
         document.getElementById('undo-toast').classList.remove('show');
+    }
+
+    // Cancel recurring payment (reset paid status for this period)
+    async function cancelRecurringPayment(recurringId, event) {
+        event.stopPropagation();
+
+        const rule = allRecurringRules.find(r => r.id === recurringId);
+        if (!rule) return;
+
+        // Show confirm before cancel
+        const confirmed = confirm(`ยกเลิกการชำระ "${rule.category?.name_th || rule.note || 'รายการประจำ'}" งวดนี้?
+
+⚠️ หมายเหตุ: รายการที่สร้างไว้จะยังคงอยู่ ต้องไปลบเองที่หน้า Transactions`);
+
+        if (!confirmed) return;
+
+        const btn = event.target.closest('.btn-cancel-payment');
+        const originalContent = btn.innerHTML;
+
+        try {
+            btn.innerHTML = '<i data-lucide="loader" class="spinning"></i>';
+            btn.disabled = true;
+            lucide.createIcons();
+
+            // Call cancel API
+            await API.post(buildApiUrl(`recurring/${recurringId}/cancel-payment`));
+
+            showToast('ยกเลิกการชำระเรียบร้อย', 'success');
+
+            // Reload to show updated state
+            await loadRecurringRules();
+
+        } catch (error) {
+            console.error('Cancel payment error:', error);
+            showToast(error.message || 'เกิดข้อผิดพลาด', 'error');
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+            lucide.createIcons();
+        }
     }
 
 
