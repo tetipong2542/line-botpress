@@ -407,21 +407,44 @@ function updateLoanDetailList(loanPayments, formatAmount) {
     const container = document.getElementById('loan-detail-list');
     if (!container || !loanPayments || loanPayments.length === 0) return;
 
-    container.innerHTML = loanPayments.map((loan, index) => {
+    // Calculate summary
+    const paidLoans = loanPayments.filter(l => l.isPaid);
+    const pendingLoans = loanPayments.filter(l => !l.isPaid);
+    const paidAmount = paidLoans.reduce((sum, l) => sum + l.amount, 0);
+    const pendingAmount = pendingLoans.reduce((sum, l) => sum + l.amount, 0);
+
+    // Build loan items HTML
+    const loanItemsHtml = loanPayments.map((loan, index) => {
         const isLast = index === loanPayments.length - 1;
         const isPaid = loan.isPaid;
         const badgeClass = isPaid ? 'paid' : 'pending';
         const badgeText = isPaid ? '✓ ชำระแล้ว' : `งวด ${loan.installment}/${loan.totalInstallments}`;
+        const amountClass = isPaid ? 'paid' : '';
         
         return `
-            <div class="loan-detail-item ${isLast ? 'last' : ''}">
+            <div class="loan-detail-item ${isLast ? 'last' : ''} ${isPaid ? 'is-paid' : ''}">
                 <span class="loan-detail-connector">${isLast ? '└─' : '├─'}</span>
-                <span class="loan-detail-name">${loan.name}</span>
-                <span class="loan-detail-amount">${formatAmount(loan.amount)}</span>
+                <span class="loan-detail-name ${isPaid ? 'paid' : ''}">${loan.name}</span>
+                <span class="loan-detail-amount ${amountClass}">${formatAmount(loan.amount)}</span>
                 <span class="loan-detail-badge ${badgeClass}">${badgeText}</span>
             </div>
         `;
     }).join('');
+
+    // Build summary HTML
+    const summaryHtml = `
+        <div class="loan-summary-divider"></div>
+        <div class="loan-summary-row">
+            <span class="loan-summary-label">✅ ชำระแล้ว (${paidLoans.length})</span>
+            <span class="loan-summary-amount paid">${formatAmount(paidAmount)}</span>
+        </div>
+        <div class="loan-summary-row">
+            <span class="loan-summary-label">⏳ คงเหลือ (${pendingLoans.length})</span>
+            <span class="loan-summary-amount pending">${formatAmount(pendingAmount)}</span>
+        </div>
+    `;
+
+    container.innerHTML = loanItemsHtml + summaryHtml;
 }
 
 // Toggle Loan Detail visibility

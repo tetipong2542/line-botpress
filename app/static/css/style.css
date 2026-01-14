@@ -10807,6 +10807,52 @@ a:focus-visible {
     color: #10b981;
 }
 
+/* Loan Detail Paid State */
+.loan-detail-item.is-paid {
+    opacity: 0.7;
+}
+
+.loan-detail-name.paid {
+    text-decoration: line-through;
+    color: var(--text-secondary);
+}
+
+.loan-detail-amount.paid {
+    text-decoration: line-through;
+    color: #10b981;
+}
+
+/* Loan Summary Section */
+.loan-summary-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 0;
+}
+
+.loan-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 12px;
+}
+
+.loan-summary-label {
+    color: var(--text-secondary);
+}
+
+.loan-summary-amount {
+    font-weight: 600;
+}
+
+.loan-summary-amount.paid {
+    color: #10b981;
+}
+
+.loan-summary-amount.pending {
+    color: #ef4444;
+}
+
 /* ===== Payment Badge ===== */
 .payment-badge {
     font-size: 10px;
