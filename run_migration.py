@@ -5,6 +5,7 @@ from app import create_app, db
 from app.migrations.add_invite_fields import upgrade
 from app.migrations.add_advanced_analytics_tables import migrate
 from app.migrations.add_payment_history_columns import upgrade as upgrade_payment_history
+from app.migrations.auto_migrate import run_auto_migration
 
 app = create_app()
 
@@ -26,5 +27,7 @@ with app.app_context():
     except Exception as e:
         print(f"⚠️  payment_history_columns migration skipped: {e}")
 
-    print("\nDone!")
+    # Run Smart Auto-Migration (catches any missing columns)
+    run_auto_migration()
 
+    print("\n✅ All migrations complete!")
