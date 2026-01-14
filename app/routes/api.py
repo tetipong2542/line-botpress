@@ -3,6 +3,7 @@ Core API routes - CRUD operations for web and bot
 """
 import re
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from sqlalchemy.orm import joinedload
 from flask import Blueprint, request, jsonify, session
 from app.services.transaction_service import TransactionService
@@ -2501,6 +2502,431 @@ def withdraw_from_goal(project_id, goal_id):
             'goal': goal.to_dict(),
             'message': f'ถอนเงิน ฿{amount/100:,.0f} สำเร็จ'
         }), 200
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+# ============================================================================
+# LOANS ENDPOINTS - สินเชื่อ/ผ่อนชำระ
+# ============================================================================
+
+@bp.route('/projects/<project_id>/loans', methods=['GET'])
+def get_loans(project_id):
+    """Get all loans for project"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.models.loan import Loan
+        
+        active_only = request.args.get('active_only', 'true').lower() == 'true'
+        
+        query = Loan.query.filter_by(project_id=project_id)
+        if active_only:
+            query = query.filter_by(is_active=True)
+        
+        loans = query.order_by(Loan.created_at.desc()).all()
+
+        return jsonify({
+            'loans': [loan.to_dict() for loan in loans]
+        })
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/loans', methods=['POST'])
+def create_loan(project_id):
+    """Create new loan"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    data = request.json
+
+    # Validate required fields
+    required_fields = ['name', 'principal', 'interest_rate', 'term_months', 'start_date']
+    for field in required_fields:
+        if not data.get(field):
+            return jsonify({
+                "error": {"message": f"Missing required field: {field}"}
+            }), 400
+
+    try:
+        from app.models.loan import Loan
+        from datetime import datetime
+        
+        # Parse start_date
+        start_date = datetime.fromisoformat(data['start_date'].replace('Z', '+00:00')).date()
+        
+        # Convert amount to satang
+        principal = baht_to_satang(float(data['principal']))
+        
+        loan = Loan(
+            project_id=project_id,
+            name=data['name'],
+            principal=principal,
+            interest_rate=float(data['interest_rate']),
+            term_months=int(data['term_months']),
+            start_date=start_date,
+            interest_type=data.get('interest_type', 'reducing'),
+            note=data.get('note')
+        )
+        
+        db.session.add(loan)
+        db.session.commit()
+
+        return jsonify({
+            'loan': loan.to_dict(),
+            'message': 'สร้างสินเชื่อสำเร็จ'
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/loans/<loan_id>', methods=['GET'])
+def get_loan(project_id, loan_id):
+    """Get a single loan"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.models.loan import Loan
+        
+        loan = Loan.get_loan(loan_id, project_id)
+        if not loan:
+            return jsonify({
+                "error": {"message": "Loan not found"}
+            }), 404
+
+        return jsonify({
+            'loan': loan.to_dict()
+        })
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/loans/<loan_id>', methods=['PUT'])
+def update_loan(project_id, loan_id):
+    """Update loan"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    data = request.json
+
+    try:
+        from app.models.loan import Loan
+        from datetime import datetime
+        
+        loan = Loan.get_loan(loan_id, project_id)
+        if not loan:
+            return jsonify({
+                "error": {"message": "Loan not found"}
+            }), 404
+
+        # Update allowed fields
+        if 'name' in data:
+            loan.name = data['name']
+        if 'note' in data:
+            loan.note = data['note']
+        if 'is_active' in data:
+            loan.is_active = data['is_active']
+        
+        # If changing loan terms, recalculate
+        recalculate = False
+        if 'principal' in data:
+            loan.principal = baht_to_satang(float(data['principal']))
+            recalculate = True
+        if 'interest_rate' in data:
+            loan.interest_rate = float(data['interest_rate'])
+            recalculate = True
+        if 'term_months' in data:
+            loan.term_months = int(data['term_months'])
+            recalculate = True
+        if 'interest_type' in data:
+            loan.interest_type = data['interest_type']
+            recalculate = True
+        if 'start_date' in data:
+            loan.start_date = datetime.fromisoformat(data['start_date'].replace('Z', '+00:00')).date()
+        
+        if recalculate:
+            monthly_payment, total_interest = Loan.calculate_payment(
+                loan.principal, loan.interest_rate, loan.term_months, loan.interest_type
+            )
+            loan.monthly_payment = monthly_payment
+            loan.total_interest = total_interest
+        
+        loan.updated_at = datetime.utcnow()
+        db.session.commit()
+
+        return jsonify({
+            'loan': loan.to_dict(),
+            'message': 'อัพเดทสินเชื่อสำเร็จ'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/loans/<loan_id>', methods=['DELETE'])
+def delete_loan(project_id, loan_id):
+    """Delete (deactivate) loan"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.models.loan import Loan
+        
+        loan = Loan.get_loan(loan_id, project_id)
+        if not loan:
+            return jsonify({
+                "error": {"message": "Loan not found"}
+            }), 404
+
+        loan.is_active = False
+        loan.updated_at = datetime.utcnow()
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'ลบสินเชื่อสำเร็จ'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/loans/<loan_id>/pay', methods=['POST'])
+def record_loan_payment(project_id, loan_id):
+    """Record a loan payment"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    data = request.json
+
+    try:
+        from app.models.loan import Loan
+        from app.models.loan_payment import LoanPayment
+        from datetime import date
+        
+        loan = Loan.get_loan(loan_id, project_id)
+        if not loan:
+            return jsonify({
+                "error": {"message": "Loan not found"}
+            }), 404
+
+        if loan.is_completed:
+            return jsonify({
+                "error": {"message": "สินเชื่อนี้ปิดแล้ว"}
+            }), 400
+
+        # Get schedule for current installment
+        schedule = loan.get_amortization_schedule()
+        current_installment = schedule[loan.paid_installments]
+        
+        # Use provided amounts or default from schedule
+        principal_paid = data.get('principal_paid', current_installment['principal'])
+        interest_paid = data.get('interest_paid', current_installment['interest'])
+        payment_date = date.today()
+        if data.get('payment_date'):
+            payment_date = datetime.fromisoformat(data['payment_date'].replace('Z', '+00:00')).date()
+        
+        # Record payment
+        payment_info = loan.record_payment(principal_paid, interest_paid)
+        
+        # Create payment record
+        payment = LoanPayment(
+            loan_id=loan.id,
+            installment_number=payment_info['installment_number'],
+            payment_date=payment_date,
+            due_date=loan.start_date + relativedelta(months=payment_info['installment_number'] - 1),
+            principal_paid=principal_paid,
+            interest_paid=interest_paid,
+            remaining_balance=payment_info['remaining_balance'],
+            note=data.get('note')
+        )
+        
+        db.session.add(payment)
+        db.session.commit()
+
+        return jsonify({
+            'payment': payment.to_dict(),
+            'loan': loan.to_dict(),
+            'message': f'บันทึกการชำระงวดที่ {payment_info["installment_number"]} สำเร็จ'
+        }), 201
+
+    except ValueError as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/loans/<loan_id>/schedule', methods=['GET'])
+def get_loan_schedule(project_id, loan_id):
+    """Get loan amortization schedule"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.models.loan import Loan
+        
+        loan = Loan.get_loan(loan_id, project_id)
+        if not loan:
+            return jsonify({
+                "error": {"message": "Loan not found"}
+            }), 404
+
+        schedule = loan.get_amortization_schedule()
+
+        return jsonify({
+            'loan_id': loan.id,
+            'loan_name': loan.name,
+            'schedule': schedule,
+            'summary': {
+                'principal': loan.principal,
+                'total_interest': loan.total_interest,
+                'total_amount': loan.principal + loan.total_interest,
+                'monthly_payment': loan.monthly_payment,
+                'term_months': loan.term_months,
+                'paid_installments': loan.paid_installments
+            }
+        })
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/loans/<loan_id>/payments', methods=['GET'])
+def get_loan_payments(project_id, loan_id):
+    """Get payment history for a loan"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.models.loan import Loan
+        from app.models.loan_payment import LoanPayment
+        
+        loan = Loan.get_loan(loan_id, project_id)
+        if not loan:
+            return jsonify({
+                "error": {"message": "Loan not found"}
+            }), 404
+
+        payments = LoanPayment.get_payments_for_loan(loan_id)
+
+        return jsonify({
+            'loan_id': loan.id,
+            'loan_name': loan.name,
+            'payments': [p.to_dict() for p in payments]
+        })
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/loans/calculate', methods=['POST'])
+def calculate_loan(project_id):
+    """Quick calculate loan without saving"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    data = request.json
+
+    # Validate required fields
+    required_fields = ['principal', 'interest_rate', 'term_months']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({
+                "error": {"message": f"Missing required field: {field}"}
+            }), 400
+
+    try:
+        from app.models.loan import Loan
+        
+        principal = baht_to_satang(float(data['principal']))
+        interest_rate = float(data['interest_rate'])
+        term_months = int(data['term_months'])
+        interest_type = data.get('interest_type', 'reducing')
+        
+        monthly_payment, total_interest = Loan.calculate_payment(
+            principal, interest_rate, term_months, interest_type
+        )
+        
+        total_amount = principal + total_interest
+
+        return jsonify({
+            'calculation': {
+                'principal': principal,
+                'principal_formatted': principal / 100,
+                'interest_rate': interest_rate,
+                'interest_type': interest_type,
+                'interest_type_label': 'ลดต้นลดดอก' if interest_type == 'reducing' else 'Flat Rate',
+                'term_months': term_months,
+                'monthly_payment': monthly_payment,
+                'monthly_payment_formatted': monthly_payment / 100,
+                'total_interest': total_interest,
+                'total_interest_formatted': total_interest / 100,
+                'total_amount': total_amount,
+                'total_amount_formatted': total_amount / 100
+            }
+        })
+
+    except Exception as e:
+        return jsonify({
+            "error": {"message": str(e)}
+        }), 500
+
+
+@bp.route('/projects/<project_id>/loans/summary', methods=['GET'])
+def get_loans_summary(project_id):
+    """Get loans summary for dashboard"""
+    auth_error = require_auth()
+    if auth_error:
+        return auth_error
+
+    try:
+        from app.models.loan import Loan
+        
+        summary = Loan.get_summary(project_id)
+
+        return jsonify({
+            'summary': summary
+        })
 
     except Exception as e:
         return jsonify({

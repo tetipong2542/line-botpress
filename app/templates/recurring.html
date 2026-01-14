@@ -11,74 +11,140 @@
                 <i data-lucide="refresh-cw"></i>
                 รายการประจำ{% if user %} - {{ user.display_name }}{% endif %}
             </h1>
-            <p class="subtitle">จัดการรายการที่เกิดซ้ำ</p>
+            <p class="subtitle">จัดการรายการที่เกิดซ้ำและสินเชื่อ</p>
         </div>
     </div>
 
-    <!-- Recurring Stats Cards (Simplified - 3 cards) -->
-    <div class="recurring-stats">
-        <div class="stat-card">
-            <div class="stat-icon">
-                <i data-lucide="list-checks"></i>
+    <!-- Tab Switcher -->
+    <div class="tab-switcher">
+        <button class="tab-btn active" data-tab="recurring" onclick="switchTab('recurring')">
+            <i data-lucide="refresh-cw"></i>
+            <span>รายการประจำ</span>
+        </button>
+        <button class="tab-btn" data-tab="loans" onclick="switchTab('loans')">
+            <i data-lucide="credit-card"></i>
+            <span>สินเชื่อ/ผ่อนชำระ</span>
+        </button>
+    </div>
+
+    <!-- ========== TAB: รายการประจำ ========== -->
+    <div class="tab-content" id="tab-recurring">
+        <!-- Recurring Stats Cards (Simplified - 3 cards) -->
+        <div class="recurring-stats">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i data-lucide="list-checks"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="active-count">0</div>
+                    <div class="stat-label">รายการทั้งหมด</div>
+                </div>
             </div>
-            <div class="stat-content">
-                <div class="stat-value" id="active-count">0</div>
-                <div class="stat-label">รายการทั้งหมด</div>
+
+            <div class="stat-card income">
+                <div class="stat-icon">
+                    <i data-lucide="trending-up"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="income-total">฿0</div>
+                    <div class="stat-label">รายรับ/เดือน</div>
+                </div>
+            </div>
+
+            <div class="stat-card expense">
+                <div class="stat-icon">
+                    <i data-lucide="trending-down"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="expense-total">฿0</div>
+                    <div class="stat-label">รายจ่าย/เดือน</div>
+                </div>
             </div>
         </div>
-        
-        <div class="stat-card income">
-            <div class="stat-icon">
-                <i data-lucide="trending-up"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-value" id="income-total">฿0</div>
-                <div class="stat-label">รายรับ/เดือน</div>
+
+        <!-- Simple Filter Bar -->
+        <div class="section">
+            <div class="simple-filter-bar">
+                <!-- Search -->
+                <div class="filter-search">
+                    <i data-lucide="search"></i>
+                    <input type="text" id="search-input" placeholder="ค้นหารายการ...">
+                </div>
+
+                <!-- Sort Options -->
+                <div class="filter-sort">
+                    <button class="sort-btn active" data-sort="next_run_date" onclick="setSortBy('next_run_date')">
+                        <i data-lucide="calendar"></i>
+                        <span>วันที่</span>
+                    </button>
+                    <button class="sort-btn" data-sort="amount" onclick="setSortBy('amount')">
+                        <i data-lucide="dollar-sign"></i>
+                        <span>จำนวนเงิน</span>
+                    </button>
+                </div>
             </div>
         </div>
-        
-        <div class="stat-card expense">
-            <div class="stat-icon">
-                <i data-lucide="trending-down"></i>
-            </div>
-            <div class="stat-content">
-                <div class="stat-value" id="expense-total">฿0</div>
-                <div class="stat-label">รายจ่าย/เดือน</div>
+
+        <!-- Recurring List -->
+        <div class="section">
+            <div class="recurring-list">
+                <!-- Empty State (will be replaced by JavaScript when data loads) -->
+                <div class="empty-state">
+                    <i data-lucide="calendar-off"></i>
+                    <p>ยังไม่มีรายการประจำ</p>
+                    <p class="empty-subtitle">เพิ่มรายการที่เกิดซ้ำ เช่น Netflix, ค่าเช่า, เงินเดือน</p>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Simple Filter Bar -->
-    <div class="section">
-        <div class="simple-filter-bar">
-            <!-- Search -->
-            <div class="filter-search">
-                <i data-lucide="search"></i>
-                <input type="text" id="search-input" placeholder="ค้นหารายการ...">
+    <!-- ========== TAB: สินเชื่อ/ผ่อนชำระ ========== -->
+    <div class="tab-content hidden" id="tab-loans">
+        <!-- Loan Stats Cards -->
+        <div class="recurring-stats">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i data-lucide="file-text"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="loan-count">0</div>
+                    <div class="stat-label">สินเชื่อ</div>
+                </div>
             </div>
 
-            <!-- Sort Options -->
-            <div class="filter-sort">
-                <button class="sort-btn active" data-sort="next_run_date" onclick="setSortBy('next_run_date')">
-                    <i data-lucide="calendar"></i>
-                    <span>วันที่</span>
-                </button>
-                <button class="sort-btn" data-sort="amount" onclick="setSortBy('amount')">
-                    <i data-lucide="dollar-sign"></i>
-                    <span>จำนวนเงิน</span>
-                </button>
+            <div class="stat-card expense">
+                <div class="stat-icon">
+                    <i data-lucide="wallet"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="loan-balance">฿0</div>
+                    <div class="stat-label">ยอดคงเหลือ</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i data-lucide="calendar-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="loan-next-payment">-</div>
+                    <div class="stat-label">งวดถัดไป</div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Recurring List -->
-    <div class="section">
-        <div class="recurring-list">
-            <!-- Empty State (will be replaced by JavaScript when data loads) -->
-            <div class="empty-state">
-                <i data-lucide="calendar-off"></i>
-                <p>ยังไม่มีรายการประจำ</p>
-                <p class="empty-subtitle">เพิ่มรายการที่เกิดซ้ำ เช่น Netflix, ค่าเช่า, เงินเดือน</p>
+        <!-- Loan List -->
+        <div class="section">
+            <div class="loan-list" id="loan-list">
+                <!-- Empty State -->
+                <div class="empty-state" id="loan-empty-state">
+                    <i data-lucide="credit-card"></i>
+                    <p>ยังไม่มีสินเชื่อ</p>
+                    <p class="empty-subtitle">เพิ่มสินเชื่อเพื่อติดตามการผ่อนชำระ</p>
+                    <button class="btn-primary" onclick="openLoanModal()">
+                        <i data-lucide="plus"></i> เพิ่มสินเชื่อ
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -178,14 +244,16 @@
             <!-- บันทึก -->
             <div class="form-group">
                 <label class="form-label">บันทึกรายจ่าย/รายรับ</label>
-                <textarea class="form-textarea" id="recurring-note" placeholder="ระบุรายละเอียดสั้นๆ" rows="2"></textarea>
+                <textarea class="form-textarea" id="recurring-note" placeholder="ระบุรายละเอียดสั้นๆ"
+                    rows="2"></textarea>
             </div>
 
             <!-- จำนวนเงิน -->
             <div class="form-group">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <label class="form-label" style="margin-bottom: 0;">จำนวนเงิน (THB)</label>
-                    <button type="button" class="btn-auto-suggest" onclick="toggleRecurringAmountHint()" title="แสดงคำแนะนำจากประวัติ">
+                    <button type="button" class="btn-auto-suggest" onclick="toggleRecurringAmountHint()"
+                        title="แสดงคำแนะนำจากประวัติ">
                         <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i>
                         Auto Suggest
                     </button>
@@ -204,7 +272,8 @@
 
                 <div class="amount-input-wrapper">
                     <span class="currency">฿</span>
-                    <input type="number" class="form-input amount-input" id="recurring-amount" placeholder="0.00" step="0.01" required>
+                    <input type="number" class="form-input amount-input" id="recurring-amount" placeholder="0.00"
+                        step="0.01" required>
                 </div>
             </div>
 
@@ -217,6 +286,168 @@
     </div>
 </div>
 
+<!-- Modal: Add/Edit Loan -->
+<div class="modal" id="loan-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content modal-large">
+        <div class="modal-header expense">
+            <h2 id="loan-modal-title">เพิ่มสินเชื่อ</h2>
+            <button class="modal-close" onclick="closeLoanModal()">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <form class="modal-body" id="loan-form">
+            <input type="hidden" id="loan-edit-id">
+
+            <!-- ชื่อสินเชื่อ -->
+            <div class="form-group">
+                <label class="form-label">ชื่อสินเชื่อ</label>
+                <input type="text" class="form-input" id="loan-name" placeholder="เช่น สินเชื่อบ้าน, รถยนต์" required>
+            </div>
+
+            <!-- ยอดเงินต้น -->
+            <div class="form-group">
+                <label class="form-label">ยอดเงินต้น (บาท)</label>
+                <div class="amount-input-wrapper">
+                    <span class="currency">฿</span>
+                    <input type="number" class="form-input amount-input" id="loan-principal" placeholder="500000"
+                        required>
+                </div>
+            </div>
+
+            <!-- ดอกเบี้ย -->
+            <div class="form-group">
+                <label class="form-label">อัตราดอกเบี้ย (% ต่อปี)</label>
+                <input type="number" class="form-input" id="loan-interest-rate" placeholder="3.5" step="0.01" required>
+            </div>
+
+            <!-- ประเภทดอกเบี้ย -->
+            <div class="form-group">
+                <label class="form-label">ประเภทดอกเบี้ย</label>
+                <select class="form-select" id="loan-interest-type">
+                    <option value="reducing">ลดต้นลดดอก (Reducing Balance)</option>
+                    <option value="flat">Flat Rate (คงที่)</option>
+                </select>
+            </div>
+
+            <!-- ระยะเวลา -->
+            <div class="form-group">
+                <label class="form-label">ระยะเวลาผ่อน (เดือน)</label>
+                <input type="number" class="form-input" id="loan-term-months" placeholder="60" min="1" max="600"
+                    required>
+            </div>
+
+            <!-- วันที่เริ่มต้น -->
+            <div class="form-group">
+                <label class="form-label">วันที่เริ่มต้น</label>
+                <input type="date" class="form-input" id="loan-start-date" required>
+            </div>
+
+            <!-- หมายเหตุ -->
+            <div class="form-group">
+                <label class="form-label">หมายเหตุ (ไม่บังคับ)</label>
+                <textarea class="form-textarea" id="loan-note" placeholder="รายละเอียดเพิ่มเติม" rows="2"></textarea>
+            </div>
+
+            <!-- Preview Calculation -->
+            <div class="loan-preview" id="loan-preview" style="display: none;">
+                <div class="preview-header">
+                    <i data-lucide="calculator"></i>
+                    <span>ผลการคำนวณ</span>
+                </div>
+                <div class="preview-grid">
+                    <div class="preview-item">
+                        <span class="preview-label">ค่างวดต่อเดือน</span>
+                        <span class="preview-value" id="preview-monthly">฿0</span>
+                    </div>
+                    <div class="preview-item">
+                        <span class="preview-label">ดอกเบี้ยรวม</span>
+                        <span class="preview-value" id="preview-interest">฿0</span>
+                    </div>
+                    <div class="preview-item">
+                        <span class="preview-label">ยอดรวมทั้งหมด</span>
+                        <span class="preview-value" id="preview-total">฿0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn-primary">
+                <i data-lucide="check"></i>
+                <span id="loan-submit-text">บันทึก</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Record Payment -->
+<div class="modal" id="payment-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header income">
+            <h2>บันทึกการชำระ</h2>
+            <button class="modal-close" onclick="closePaymentModal()">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <form class="modal-body" id="payment-form">
+            <input type="hidden" id="payment-loan-id">
+
+            <!-- Payment Info -->
+            <div class="payment-info" id="payment-info">
+                <!-- Populated by JavaScript -->
+            </div>
+
+            <!-- วันที่ชำระ -->
+            <div class="form-group">
+                <label class="form-label">วันที่ชำระ</label>
+                <input type="date" class="form-input" id="payment-date" required>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn-primary">
+                <i data-lucide="check"></i>
+                <span>บันทึกการชำระ</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Amortization Schedule -->
+<div class="modal" id="schedule-modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h2 id="schedule-title">ตารางผ่อนชำระ</h2>
+            <button class="modal-close" onclick="closeScheduleModal()">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="schedule-summary" id="schedule-summary">
+                <!-- Populated by JavaScript -->
+            </div>
+            <div class="schedule-table-container">
+                <table class="schedule-table" id="schedule-table">
+                    <thead>
+                        <tr>
+                            <th>งวด</th>
+                            <th>วันที่</th>
+                            <th>เงินต้น</th>
+                            <th>ดอกเบี้ย</th>
+                            <th>รวม</th>
+                            <th>คงเหลือ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schedule-body">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Sticky Footer Menu -->
 {% set current_page = 'recurring' %}
 {% include 'components/footer_menu.html' %}
@@ -224,372 +455,372 @@
 
 {% block extra_js %}
 <script>
-// Book Switcher
-const bookPills = document.querySelectorAll('.book-pill');
-bookPills.forEach(pill => {
-    pill.addEventListener('click', () => {
-        bookPills.forEach(p => p.classList.remove('active'));
-        pill.classList.add('active');
-        // TODO: Load data for selected book
+    // Book Switcher
+    const bookPills = document.querySelectorAll('.book-pill');
+    bookPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+            bookPills.forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            // TODO: Load data for selected book
+        });
     });
-});
 
-// Modal controls
-const modal = document.getElementById('recurring-modal');
-const addBtn = document.getElementById('add-recurring-btn');
-const closeBtn = modal.querySelector('.modal-close');
-const overlay = modal.querySelector('.modal-overlay');
+    // Modal controls
+    const modal = document.getElementById('recurring-modal');
+    const addBtn = document.getElementById('add-recurring-btn');
+    const closeBtn = modal.querySelector('.modal-close');
+    const overlay = modal.querySelector('.modal-overlay');
 
-function openModal() {
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeModal() {
-    modal.classList.remove('active');
-    document.body.style.overflow = '';
-}
-
-addBtn.addEventListener('click', openModal);
-closeBtn.addEventListener('click', closeModal);
-overlay.addEventListener('click', closeModal);
-
-// Type change - toggle header color and category options
-const typeSelect = document.getElementById('recurring-type');
-const modalHeader = modal.querySelector('.modal-header');
-const expenseCategories = document.getElementById('expense-categories');
-const incomeCategories = document.getElementById('income-categories');
-
-typeSelect.addEventListener('change', (e) => {
-    const type = e.target.value;
-
-    if (type === 'expense') {
-        modalHeader.classList.remove('income');
-        modalHeader.classList.add('expense');
-        expenseCategories.style.display = '';
-        incomeCategories.style.display = 'none';
-    } else {
-        modalHeader.classList.remove('expense');
-        modalHeader.classList.add('income');
-        expenseCategories.style.display = 'none';
-        incomeCategories.style.display = '';
-    }
-});
-
-// Calculate and update next run date
-function updateNextRunDate() {
-    const startDateInput = document.getElementById('recurring-start-date');
-    const frequencySelect = document.getElementById('recurring-frequency');
-    const nextDateInput = document.getElementById('recurring-next-date');
-
-    const startDate = startDateInput.value;
-    const frequency = frequencySelect.value;
-
-    if (!startDate) {
-        nextDateInput.value = '-';
-        return;
+    function openModal() {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
     }
 
-    // Parse start date
-    const [year, month, day] = startDate.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
-
-    // Calculate next run date based on frequency
-    let nextDate = new Date(date);
-
-    if (frequency === 'daily') {
-        nextDate.setDate(nextDate.getDate() + 1);
-    } else if (frequency === 'weekly') {
-        nextDate.setDate(nextDate.getDate() + 7);
-    } else if (frequency === 'monthly') {
-        // Add 1 month
-        let nextMonth = nextDate.getMonth() + 1;
-        let nextYear = nextDate.getFullYear();
-        if (nextMonth > 11) {
-            nextMonth = 0;
-            nextYear++;
-        }
-
-        // Handle day overflow (e.g., Jan 31 -> Feb 28/29)
-        const targetDay = nextDate.getDate();
-        nextDate = new Date(nextYear, nextMonth, 1);
-        const lastDayOfMonth = new Date(nextYear, nextMonth + 1, 0).getDate();
-        nextDate.setDate(Math.min(targetDay, lastDayOfMonth));
-    } else if (frequency === 'yearly') {
-        nextDate.setFullYear(nextDate.getFullYear() + 1);
+    function closeModal() {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
     }
 
-    // Format as DD/MM/YYYY
-    const nextDay = String(nextDate.getDate()).padStart(2, '0');
-    const nextMonth = String(nextDate.getMonth() + 1).padStart(2, '0');
-    const nextYear = nextDate.getFullYear();
+    addBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', closeModal);
 
-    nextDateInput.value = `${nextDay}/${nextMonth}/${nextYear}`;
-}
+    // Type change - toggle header color and category options
+    const typeSelect = document.getElementById('recurring-type');
+    const modalHeader = modal.querySelector('.modal-header');
+    const expenseCategories = document.getElementById('expense-categories');
+    const incomeCategories = document.getElementById('income-categories');
 
-// Listen to start date and frequency changes
-document.getElementById('recurring-start-date').addEventListener('change', updateNextRunDate);
-document.getElementById('recurring-frequency').addEventListener('change', updateNextRunDate);
+    typeSelect.addEventListener('change', (e) => {
+        const type = e.target.value;
 
-// Initialize next run date on page load
-updateNextRunDate();
-
-// Form submission
-document.getElementById('recurring-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    const originalBtnContent = submitBtn.innerHTML;
-
-    // Get form values
-    const frequency = document.getElementById('recurring-frequency').value;
-    const amount = parseFloat(document.getElementById('recurring-amount').value);
-    const category_id = document.getElementById('recurring-category').value;
-    const start_date = document.getElementById('recurring-start-date').value;
-    const end_date = document.getElementById('recurring-end-date').value;
-
-    // Validation
-    if (!category_id) {
-        showToast('กรุณาเลือกหมวดหมู่', 'error');
-        return;
-    }
-    if (!amount || amount <= 0) {
-        showToast('กรุณากรอกจำนวนเงินที่ถูกต้อง', 'error');
-        return;
-    }
-    if (!start_date) {
-        showToast('กรุณาเลือกวันที่เริ่มต้น', 'error');
-        return;
-    }
-
-    // Validate end_date > start_date
-    if (end_date && end_date <= start_date) {
-        showToast('วันที่สิ้นสุดต้องหลังวันที่เริ่มต้น', 'error');
-        return;
-    }
-
-    // Loading state
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังบันทึก...</span>';
-    lucide.createIcons();
-
-    // Extract day from start_date
-    const startDateObj = new Date(start_date);
-    const day_of_month = startDateObj.getDate(); // 1-31
-    const day_of_week = startDateObj.getDay(); // 0=Sunday, 6=Saturday
-
-    // Prepare payload
-    const payload = {
-        type: document.getElementById('recurring-type').value,
-        category_id: category_id,
-        amount: parseFloat(amount), // Backend will convert to satang
-        freq: frequency,
-        start_date: start_date,
-        end_date: end_date || null,
-        remind_days: parseInt(document.getElementById('recurring-reminder').value) || 0,
-        note: document.getElementById('recurring-note').value || null
-    };
-
-    // Add day_of_month for monthly or day_of_week for weekly (from start_date)
-    if (frequency === 'monthly') {
-        payload.day_of_month = day_of_month;
-    } else if (frequency === 'weekly') {
-        payload.day_of_week = day_of_week;
-    }
-
-    try {
-        let result;
-        if (editingRecurringId) {
-            // Update existing recurring rule
-            result = await API.put(buildApiUrl('recurring', editingRecurringId), payload);
-            showToast('อัพเดทรายการประจำสำเร็จ!', 'success');
+        if (type === 'expense') {
+            modalHeader.classList.remove('income');
+            modalHeader.classList.add('expense');
+            expenseCategories.style.display = '';
+            incomeCategories.style.display = 'none';
         } else {
-            // Create new recurring rule
-            result = await API.post(buildApiUrl('recurring'), payload);
-            showToast('บันทึกรายการประจำสำเร็จ!', 'success');
+            modalHeader.classList.remove('expense');
+            modalHeader.classList.add('income');
+            expenseCategories.style.display = 'none';
+            incomeCategories.style.display = '';
+        }
+    });
+
+    // Calculate and update next run date
+    function updateNextRunDate() {
+        const startDateInput = document.getElementById('recurring-start-date');
+        const frequencySelect = document.getElementById('recurring-frequency');
+        const nextDateInput = document.getElementById('recurring-next-date');
+
+        const startDate = startDateInput.value;
+        const frequency = frequencySelect.value;
+
+        if (!startDate) {
+            nextDateInput.value = '-';
+            return;
         }
 
-        // Reset form and state
-        document.getElementById('recurring-form').reset();
-        editingRecurringId = null;
+        // Parse start date
+        const [year, month, day] = startDate.split('-').map(Number);
+        const date = new Date(year, month - 1, day);
 
-        // Reset modal header and button text
-        const modalHeader = modal.querySelector('.modal-header h2');
-        modalHeader.textContent = 'รายการประจำ';
-        const submitBtn = document.querySelector('#recurring-form button[type="submit"] span');
-        submitBtn.textContent = 'บันทึก';
+        // Calculate next run date based on frequency
+        let nextDate = new Date(date);
 
-        closeModal();
+        if (frequency === 'daily') {
+            nextDate.setDate(nextDate.getDate() + 1);
+        } else if (frequency === 'weekly') {
+            nextDate.setDate(nextDate.getDate() + 7);
+        } else if (frequency === 'monthly') {
+            // Add 1 month
+            let nextMonth = nextDate.getMonth() + 1;
+            let nextYear = nextDate.getFullYear();
+            if (nextMonth > 11) {
+                nextMonth = 0;
+                nextYear++;
+            }
 
-        // Reload recurring list
-        await loadRecurringRules();
+            // Handle day overflow (e.g., Jan 31 -> Feb 28/29)
+            const targetDay = nextDate.getDate();
+            nextDate = new Date(nextYear, nextMonth, 1);
+            const lastDayOfMonth = new Date(nextYear, nextMonth + 1, 0).getDate();
+            nextDate.setDate(Math.min(targetDay, lastDayOfMonth));
+        } else if (frequency === 'yearly') {
+            nextDate.setFullYear(nextDate.getFullYear() + 1);
+        }
 
-    } catch (error) {
-        console.error('Recurring error:', error);
-        showToast(error.message || 'ไม่สามารถบันทึกได้ กรุณาลองใหม่', 'error');
+        // Format as DD/MM/YYYY
+        const nextDay = String(nextDate.getDate()).padStart(2, '0');
+        const nextMonth = String(nextDate.getMonth() + 1).padStart(2, '0');
+        const nextYear = nextDate.getFullYear();
 
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnContent;
+        nextDateInput.value = `${nextDay}/${nextMonth}/${nextYear}`;
+    }
+
+    // Listen to start date and frequency changes
+    document.getElementById('recurring-start-date').addEventListener('change', updateNextRunDate);
+    document.getElementById('recurring-frequency').addEventListener('change', updateNextRunDate);
+
+    // Initialize next run date on page load
+    updateNextRunDate();
+
+    // Form submission
+    document.getElementById('recurring-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalBtnContent = submitBtn.innerHTML;
+
+        // Get form values
+        const frequency = document.getElementById('recurring-frequency').value;
+        const amount = parseFloat(document.getElementById('recurring-amount').value);
+        const category_id = document.getElementById('recurring-category').value;
+        const start_date = document.getElementById('recurring-start-date').value;
+        const end_date = document.getElementById('recurring-end-date').value;
+
+        // Validation
+        if (!category_id) {
+            showToast('กรุณาเลือกหมวดหมู่', 'error');
+            return;
+        }
+        if (!amount || amount <= 0) {
+            showToast('กรุณากรอกจำนวนเงินที่ถูกต้อง', 'error');
+            return;
+        }
+        if (!start_date) {
+            showToast('กรุณาเลือกวันที่เริ่มต้น', 'error');
+            return;
+        }
+
+        // Validate end_date > start_date
+        if (end_date && end_date <= start_date) {
+            showToast('วันที่สิ้นสุดต้องหลังวันที่เริ่มต้น', 'error');
+            return;
+        }
+
+        // Loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i><span>กำลังบันทึก...</span>';
         lucide.createIcons();
-    }
-});
 
-// Set default start date to today
-document.getElementById('recurring-start-date').valueAsDate = new Date();
+        // Extract day from start_date
+        const startDateObj = new Date(start_date);
+        const day_of_month = startDateObj.getDate(); // 1-31
+        const day_of_week = startDateObj.getDay(); // 0=Sunday, 6=Saturday
 
-// Load recurring rules
-async function loadRecurringRules() {
-    try {
-        const result = await API.get(buildApiUrl('recurring') + '?active_only=true');
+        // Prepare payload
+        const payload = {
+            type: document.getElementById('recurring-type').value,
+            category_id: category_id,
+            amount: parseFloat(amount), // Backend will convert to satang
+            freq: frequency,
+            start_date: start_date,
+            end_date: end_date || null,
+            remind_days: parseInt(document.getElementById('recurring-reminder').value) || 0,
+            note: document.getElementById('recurring-note').value || null
+        };
 
-        const recurringList = document.querySelector('.recurring-list');
+        // Add day_of_month for monthly or day_of_week for weekly (from start_date)
+        if (frequency === 'monthly') {
+            payload.day_of_month = day_of_month;
+        } else if (frequency === 'weekly') {
+            payload.day_of_week = day_of_week;
+        }
 
-        if (result.recurring_rules && result.recurring_rules.length > 0) {
-            renderRecurringRules(result.recurring_rules);
-        } else {
-            // Show empty state
-            recurringList.innerHTML = `
+        try {
+            let result;
+            if (editingRecurringId) {
+                // Update existing recurring rule
+                result = await API.put(buildApiUrl('recurring', editingRecurringId), payload);
+                showToast('อัพเดทรายการประจำสำเร็จ!', 'success');
+            } else {
+                // Create new recurring rule
+                result = await API.post(buildApiUrl('recurring'), payload);
+                showToast('บันทึกรายการประจำสำเร็จ!', 'success');
+            }
+
+            // Reset form and state
+            document.getElementById('recurring-form').reset();
+            editingRecurringId = null;
+
+            // Reset modal header and button text
+            const modalHeader = modal.querySelector('.modal-header h2');
+            modalHeader.textContent = 'รายการประจำ';
+            const submitBtn = document.querySelector('#recurring-form button[type="submit"] span');
+            submitBtn.textContent = 'บันทึก';
+
+            closeModal();
+
+            // Reload recurring list
+            await loadRecurringRules();
+
+        } catch (error) {
+            console.error('Recurring error:', error);
+            showToast(error.message || 'ไม่สามารถบันทึกได้ กรุณาลองใหม่', 'error');
+
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnContent;
+            lucide.createIcons();
+        }
+    });
+
+    // Set default start date to today
+    document.getElementById('recurring-start-date').valueAsDate = new Date();
+
+    // Load recurring rules
+    async function loadRecurringRules() {
+        try {
+            const result = await API.get(buildApiUrl('recurring') + '?active_only=true');
+
+            const recurringList = document.querySelector('.recurring-list');
+
+            if (result.recurring_rules && result.recurring_rules.length > 0) {
+                renderRecurringRules(result.recurring_rules);
+            } else {
+                // Show empty state
+                recurringList.innerHTML = `
                 <div class="empty-state">
                     <i data-lucide="calendar-off"></i>
                     <p>ยังไม่มีรายการประจำ</p>
                     <p class="empty-subtitle">เพิ่มรายการที่เกิดซ้ำ เช่น Netflix, ค่าเช่า, เงินเดือน</p>
                 </div>
             `;
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
             }
+        } catch (error) {
+            console.error('Error loading recurring rules:', error);
         }
-    } catch (error) {
-        console.error('Error loading recurring rules:', error);
     }
-}
 
-// ===== GLOBAL STATE (SIMPLIFIED) =====
-let allRecurringRules = [];
-let filteredRules = [];
-let currentFilter = {
-    search: ''
-};
-let currentSort = 'next_run_date';
-
-// ===== RENDER FUNCTIONS =====
-function renderRecurringRules(rules) {
-    allRecurringRules = rules;
-    
-    // Update stats cards
-    updateRecurringStats(rules);
-    
-    // Apply filters and sort
-    applyFilters();
-}
-
-// ===== STATS CARDS UPDATE =====
-function updateRecurringStats(rules) {
-    const activeRules = rules.filter(r => r.is_active);
-    
-    const incomeTotal = activeRules
-        .filter(r => r.type === 'income')
-        .reduce((sum, r) => sum + r.amount, 0);
-    
-    const expenseTotal = activeRules
-        .filter(r => r.type === 'expense')
-        .reduce((sum, r) => sum + r.amount, 0);
-    
-    const formatAmount = (amount) => {
-        return '฿' + (amount / 100).toLocaleString('th-TH', {minimumFractionDigits: 0});
+    // ===== GLOBAL STATE (SIMPLIFIED) =====
+    let allRecurringRules = [];
+    let filteredRules = [];
+    let currentFilter = {
+        search: ''
     };
-    
-    document.getElementById('active-count').textContent = activeRules.length;
-    document.getElementById('income-total').textContent = formatAmount(incomeTotal);
-    document.getElementById('expense-total').textContent = formatAmount(expenseTotal);
-}
+    let currentSort = 'next_run_date';
 
-function applyFilters() {
-    let filtered = [...allRecurringRules];
-    
-    // Filter by search
-    if (currentFilter.search) {
-        const searchLower = currentFilter.search.toLowerCase();
-        filtered = filtered.filter(r => 
-            (r.category?.name_th || '').toLowerCase().includes(searchLower) ||
-            (r.category?.name_en || '').toLowerCase().includes(searchLower) ||
-            (r.note || '').toLowerCase().includes(searchLower)
-        );
-    }
-    
-    // Apply sort
-    filtered = sortRules(filtered, currentSort);
-    
-    filteredRules = filtered;
-    renderCards(filtered);
-}
+    // ===== RENDER FUNCTIONS =====
+    function renderRecurringRules(rules) {
+        allRecurringRules = rules;
 
-function sortRules(rules, sortBy) {
-    const sorted = [...rules];
-    
-    switch(sortBy) {
-        case 'next_run_date':
-            sorted.sort((a, b) => {
-                const dateA = new Date(a.next_run_date);
-                const dateB = new Date(b.next_run_date);
-                return dateA - dateB;
-            });
-            break;
-        case 'amount':
-            sorted.sort((a, b) => b.amount - a.amount);
-            break;
-    }
-    
-    return sorted;
-}
+        // Update stats cards
+        updateRecurringStats(rules);
 
-function renderCards(rules) {
-    const recurringList = document.querySelector('.recurring-list');
-    
-    if (rules.length === 0) {
-        renderEmptyState();
-        return;
+        // Apply filters and sort
+        applyFilters();
     }
-    
-    recurringList.innerHTML = rules.map(rule => renderCard(rule)).join('');
-    
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-}
 
-function renderCard(rule) {
-    const formatDate = (dateStr) => {
-        // Fix timezone issue by parsing as local date
-        const [year, month, day] = dateStr.split('-').map(Number);
-        const date = new Date(year, month - 1, day); // month is 0-indexed
-        return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
-    };
-    
-    const formatAmount = (amount) => {
-        return (amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 0 });
-    };
-    
-    const formatFrequency = (freq, dayOfWeek, dayOfMonth) => {
-        if (freq === 'daily') return 'รายวัน';
-        if (freq === 'weekly') {
-            const weekdays = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
-            return `รายสัปดาห์ (${weekdays[dayOfWeek] || 'ทุกสัปดาห์'})`;
+    // ===== STATS CARDS UPDATE =====
+    function updateRecurringStats(rules) {
+        const activeRules = rules.filter(r => r.is_active);
+
+        const incomeTotal = activeRules
+            .filter(r => r.type === 'income')
+            .reduce((sum, r) => sum + r.amount, 0);
+
+        const expenseTotal = activeRules
+            .filter(r => r.type === 'expense')
+            .reduce((sum, r) => sum + r.amount, 0);
+
+        const formatAmount = (amount) => {
+            return '฿' + (amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 0 });
+        };
+
+        document.getElementById('active-count').textContent = activeRules.length;
+        document.getElementById('income-total').textContent = formatAmount(incomeTotal);
+        document.getElementById('expense-total').textContent = formatAmount(expenseTotal);
+    }
+
+    function applyFilters() {
+        let filtered = [...allRecurringRules];
+
+        // Filter by search
+        if (currentFilter.search) {
+            const searchLower = currentFilter.search.toLowerCase();
+            filtered = filtered.filter(r =>
+                (r.category?.name_th || '').toLowerCase().includes(searchLower) ||
+                (r.category?.name_en || '').toLowerCase().includes(searchLower) ||
+                (r.note || '').toLowerCase().includes(searchLower)
+            );
         }
-        if (freq === 'monthly') return `รายเดือน (วันที่ ${dayOfMonth})`;
-        if (freq === 'yearly') return 'รายปี';
-        return freq;
-    };
-    
-    const renderIcon = (iconName) => {
-        if (!iconName) return '<i data-lucide="circle-dashed"></i>';
-        const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(iconName);
-        if (isEmoji) return iconName;
-        return `<i data-lucide="${iconName}"></i>`;
-    };
-    
-    return `
+
+        // Apply sort
+        filtered = sortRules(filtered, currentSort);
+
+        filteredRules = filtered;
+        renderCards(filtered);
+    }
+
+    function sortRules(rules, sortBy) {
+        const sorted = [...rules];
+
+        switch (sortBy) {
+            case 'next_run_date':
+                sorted.sort((a, b) => {
+                    const dateA = new Date(a.next_run_date);
+                    const dateB = new Date(b.next_run_date);
+                    return dateA - dateB;
+                });
+                break;
+            case 'amount':
+                sorted.sort((a, b) => b.amount - a.amount);
+                break;
+        }
+
+        return sorted;
+    }
+
+    function renderCards(rules) {
+        const recurringList = document.querySelector('.recurring-list');
+
+        if (rules.length === 0) {
+            renderEmptyState();
+            return;
+        }
+
+        recurringList.innerHTML = rules.map(rule => renderCard(rule)).join('');
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    function renderCard(rule) {
+        const formatDate = (dateStr) => {
+            // Fix timezone issue by parsing as local date
+            const [year, month, day] = dateStr.split('-').map(Number);
+            const date = new Date(year, month - 1, day); // month is 0-indexed
+            return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+        };
+
+        const formatAmount = (amount) => {
+            return (amount / 100).toLocaleString('th-TH', { minimumFractionDigits: 0 });
+        };
+
+        const formatFrequency = (freq, dayOfWeek, dayOfMonth) => {
+            if (freq === 'daily') return 'รายวัน';
+            if (freq === 'weekly') {
+                const weekdays = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+                return `รายสัปดาห์ (${weekdays[dayOfWeek] || 'ทุกสัปดาห์'})`;
+            }
+            if (freq === 'monthly') return `รายเดือน (วันที่ ${dayOfMonth})`;
+            if (freq === 'yearly') return 'รายปี';
+            return freq;
+        };
+
+        const renderIcon = (iconName) => {
+            if (!iconName) return '<i data-lucide="circle-dashed"></i>';
+            const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(iconName);
+            if (isEmoji) return iconName;
+            return `<i data-lucide="${iconName}"></i>`;
+        };
+
+        return `
         <div class="recurring-card-v2 ${rule.type}" data-id="${rule.id}">
             <div class="card-header">
                 <div class="card-icon ${rule.type}">
@@ -631,14 +862,14 @@ function renderCard(rule) {
             </div>
         </div>
     `;
-}
+    }
 
-function renderEmptyState() {
-    const recurringList = document.querySelector('.recurring-list');
-    const isFiltered = currentFilter.search;
-    
-    if (isFiltered) {
-        recurringList.innerHTML = `
+    function renderEmptyState() {
+        const recurringList = document.querySelector('.recurring-list');
+        const isFiltered = currentFilter.search;
+
+        if (isFiltered) {
+            recurringList.innerHTML = `
             <div class="empty-state">
                 <i data-lucide="search-x"></i>
                 <h3>ไม่พบรายการที่ค้นหา</h3>
@@ -648,8 +879,8 @@ function renderEmptyState() {
                 </button>
             </div>
         `;
-    } else {
-        recurringList.innerHTML = `
+        } else {
+            recurringList.innerHTML = `
             <div class="empty-state">
                 <i data-lucide="calendar-plus"></i>
                 <h3>ยังไม่มีรายการประจำ</h3>
@@ -659,241 +890,797 @@ function renderEmptyState() {
                 </button>
             </div>
         `;
+        }
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
     }
-    
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-}
 
-// ===== FILTER & SORT HANDLERS =====
-function setSortBy(sortBy) {
-    currentSort = sortBy;
-    
-    document.querySelectorAll('.sort-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.sort === sortBy);
-    });
-    
-    applyFilters();
-}
+    // ===== FILTER & SORT HANDLERS =====
+    function setSortBy(sortBy) {
+        currentSort = sortBy;
 
-function clearSearch() {
-    document.getElementById('search-input').value = '';
-    currentFilter.search = '';
-    applyFilters();
-}
-
-// Real-time search
-document.addEventListener('DOMContentLoaded', () => {
-    const searchInput = document.getElementById('search-input');
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            currentFilter.search = e.target.value;
-            applyFilters();
+        document.querySelectorAll('.sort-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.sort === sortBy);
         });
-    }
-});
 
-// ===== EDIT & DELETE =====
-let editingRecurringId = null;
-
-async function editRecurring(recurringId) {
-    try {
-        // Fetch recurring rule details
-        const result = await API.get(buildApiUrl('recurring', recurringId));
-        const rule = result.recurring_rule;
-
-        editingRecurringId = recurringId;
-
-        // Pre-fill form
-        document.getElementById('recurring-type').value = rule.type;
-        document.getElementById('recurring-category').value = rule.category_id;
-        document.getElementById('recurring-frequency').value = rule.freq;
-        document.getElementById('recurring-start-date').value = rule.start_date;
-        document.getElementById('recurring-end-date').value = rule.end_date || '';
-        document.getElementById('recurring-reminder').value = rule.remind_days || 0;
-        document.getElementById('recurring-note').value = rule.note || '';
-        document.getElementById('recurring-amount').value = (rule.amount / 100).toFixed(2);
-
-        // Trigger type change to show correct categories
-        document.getElementById('recurring-type').dispatchEvent(new Event('change'));
-
-        // Update next run date based on start_date and frequency
-        updateNextRunDate();
-
-        // Change modal header and button text
-        const modalHeader = modal.querySelector('.modal-header h2');
-        modalHeader.textContent = 'แก้ไขรายการประจำ';
-
-        const submitBtn = document.querySelector('#recurring-form button[type="submit"] span');
-        submitBtn.textContent = 'อัพเดท';
-
-        openModal();
-
-    } catch (error) {
-        showToast(error.message || 'ไม่สามารถโหลดข้อมูลได้', 'error');
-    }
-}
-
-// Delete recurring rule
-async function deleteRecurring(recurringId) {
-    if (!confirm('ต้องการลบรายการประจำนี้หรือไม่?')) {
-        return;
+        applyFilters();
     }
 
-    try {
-        await API.delete(buildApiUrl('recurring') + `/${recurringId}`);
-        showToast('ลบรายการประจำสำเร็จ!', 'success');
-        await loadRecurringRules();
-    } catch (error) {
-        showToast(error.message || 'เกิดข้อผิดพลาด', 'error');
+    function clearSearch() {
+        document.getElementById('search-input').value = '';
+        currentFilter.search = '';
+        applyFilters();
     }
-}
 
-// Load categories for dropdown
-async function loadCategories() {
-    try {
-        const result = await API.get(buildApiUrl('categories'));
-
-        if (result.categories && result.categories.length > 0) {
-            const categories = result.categories;
-
-            const expenseCategories = categories.filter(cat => cat.type === 'expense' && cat.is_active);
-            const incomeCategories = categories.filter(cat => cat.type === 'income' && cat.is_active);
-
-            const expenseGroup = document.getElementById('expense-categories');
-            const incomeGroup = document.getElementById('income-categories');
-
-            // Helper to get icon display (emoji stays as is, Lucide shows as text for dropdown)
-            const getIconDisplay = (icon) => {
-                // Check if it's emoji
-                const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(icon || '');
-                return isEmoji ? icon : '📁'; // Use folder emoji as fallback for Lucide icons in dropdown
-            };
-
-            if (expenseGroup) {
-                expenseGroup.innerHTML = expenseCategories.map(cat =>
-                    `<option value="${cat.id}">${getIconDisplay(cat.icon)} ${cat.name_th}</option>`
-                ).join('');
-            }
-
-            if (incomeGroup) {
-                incomeGroup.innerHTML = incomeCategories.map(cat =>
-                    `<option value="${cat.id}">${getIconDisplay(cat.icon)} ${cat.name_th}</option>`
-                ).join('');
-            }
+    // Real-time search
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                currentFilter.search = e.target.value;
+                applyFilters();
+            });
         }
-    } catch (error) {
-        console.error('Error loading categories:', error);
+    });
+
+    // ===== EDIT & DELETE =====
+    let editingRecurringId = null;
+
+    async function editRecurring(recurringId) {
+        try {
+            // Fetch recurring rule details
+            const result = await API.get(buildApiUrl('recurring', recurringId));
+            const rule = result.recurring_rule;
+
+            editingRecurringId = recurringId;
+
+            // Pre-fill form
+            document.getElementById('recurring-type').value = rule.type;
+            document.getElementById('recurring-category').value = rule.category_id;
+            document.getElementById('recurring-frequency').value = rule.freq;
+            document.getElementById('recurring-start-date').value = rule.start_date;
+            document.getElementById('recurring-end-date').value = rule.end_date || '';
+            document.getElementById('recurring-reminder').value = rule.remind_days || 0;
+            document.getElementById('recurring-note').value = rule.note || '';
+            document.getElementById('recurring-amount').value = (rule.amount / 100).toFixed(2);
+
+            // Trigger type change to show correct categories
+            document.getElementById('recurring-type').dispatchEvent(new Event('change'));
+
+            // Update next run date based on start_date and frequency
+            updateNextRunDate();
+
+            // Change modal header and button text
+            const modalHeader = modal.querySelector('.modal-header h2');
+            modalHeader.textContent = 'แก้ไขรายการประจำ';
+
+            const submitBtn = document.querySelector('#recurring-form button[type="submit"] span');
+            submitBtn.textContent = 'อัพเดท';
+
+            openModal();
+
+        } catch (error) {
+            showToast(error.message || 'ไม่สามารถโหลดข้อมูลได้', 'error');
+        }
     }
-}
 
-// ===== SMART AMOUNT SUGGESTIONS =====
-let recurringAmountSuggestionsCache = {};
-
-async function loadRecurringAmountSuggestions(categoryId, type) {
-    const hintEl = document.getElementById('recurring-amount-hint');
-    const hintTextEl = document.getElementById('recurring-amount-hint-text');
-    const quickButtonsEl = document.getElementById('recurring-quick-amount-buttons');
-
-    // Reset
-    hintEl.style.display = 'none';
-    quickButtonsEl.style.display = 'none';
-
-    // Check cache
-    const cacheKey = categoryId ? `${categoryId}_${type}` : `all_${type}`;
-    if (recurringAmountSuggestionsCache[cacheKey]) {
-        displayRecurringAmountSuggestions(recurringAmountSuggestionsCache[cacheKey]);
-        return;
-    }
-
-    try {
-        // Build URL with optional category_id
-        let url = `analytics/amount-suggestions?type=${type}`;
-        if (categoryId) {
-            url += `&category_id=${categoryId}`;
+    // Delete recurring rule
+    async function deleteRecurring(recurringId) {
+        if (!confirm('ต้องการลบรายการประจำนี้หรือไม่?')) {
+            return;
         }
 
-        const data = await API.get(buildApiUrl(url));
-        recurringAmountSuggestionsCache[cacheKey] = data;
-        displayRecurringAmountSuggestions(data);
-    } catch (error) {
-        console.error('Error loading amount suggestions:', error);
-    }
-}
-
-function displayRecurringAmountSuggestions(data) {
-    const hintEl = document.getElementById('recurring-amount-hint');
-    const hintTextEl = document.getElementById('recurring-amount-hint-text');
-    const quickButtonsEl = document.getElementById('recurring-quick-amount-buttons');
-
-    // Show hint if available
-    if (data.category_hint) {
-        hintTextEl.textContent = data.category_hint;
-        hintEl.style.display = 'flex';
-        lucide.createIcons();
+        try {
+            await API.delete(buildApiUrl('recurring') + `/${recurringId}`);
+            showToast('ลบรายการประจำสำเร็จ!', 'success');
+            await loadRecurringRules();
+        } catch (error) {
+            showToast(error.message || 'เกิดข้อผิดพลาด', 'error');
+        }
     }
 
-    // Show quick amount buttons
-    if (data.suggestions && data.suggestions.quick_amounts_formatted) {
-        const amounts = data.suggestions.quick_amounts_formatted;
-        quickButtonsEl.innerHTML = amounts.map(amount => `
+    // Load categories for dropdown
+    async function loadCategories() {
+        try {
+            const result = await API.get(buildApiUrl('categories'));
+
+            if (result.categories && result.categories.length > 0) {
+                const categories = result.categories;
+
+                const expenseCategories = categories.filter(cat => cat.type === 'expense' && cat.is_active);
+                const incomeCategories = categories.filter(cat => cat.type === 'income' && cat.is_active);
+
+                const expenseGroup = document.getElementById('expense-categories');
+                const incomeGroup = document.getElementById('income-categories');
+
+                // Helper to get icon display (emoji stays as is, Lucide shows as text for dropdown)
+                const getIconDisplay = (icon) => {
+                    // Check if it's emoji
+                    const isEmoji = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(icon || '');
+                    return isEmoji ? icon : '📁'; // Use folder emoji as fallback for Lucide icons in dropdown
+                };
+
+                if (expenseGroup) {
+                    expenseGroup.innerHTML = expenseCategories.map(cat =>
+                        `<option value="${cat.id}">${getIconDisplay(cat.icon)} ${cat.name_th}</option>`
+                    ).join('');
+                }
+
+                if (incomeGroup) {
+                    incomeGroup.innerHTML = incomeCategories.map(cat =>
+                        `<option value="${cat.id}">${getIconDisplay(cat.icon)} ${cat.name_th}</option>`
+                    ).join('');
+                }
+            }
+        } catch (error) {
+            console.error('Error loading categories:', error);
+        }
+    }
+
+    // ===== SMART AMOUNT SUGGESTIONS =====
+    let recurringAmountSuggestionsCache = {};
+
+    async function loadRecurringAmountSuggestions(categoryId, type) {
+        const hintEl = document.getElementById('recurring-amount-hint');
+        const hintTextEl = document.getElementById('recurring-amount-hint-text');
+        const quickButtonsEl = document.getElementById('recurring-quick-amount-buttons');
+
+        // Reset
+        hintEl.style.display = 'none';
+        quickButtonsEl.style.display = 'none';
+
+        // Check cache
+        const cacheKey = categoryId ? `${categoryId}_${type}` : `all_${type}`;
+        if (recurringAmountSuggestionsCache[cacheKey]) {
+            displayRecurringAmountSuggestions(recurringAmountSuggestionsCache[cacheKey]);
+            return;
+        }
+
+        try {
+            // Build URL with optional category_id
+            let url = `analytics/amount-suggestions?type=${type}`;
+            if (categoryId) {
+                url += `&category_id=${categoryId}`;
+            }
+
+            const data = await API.get(buildApiUrl(url));
+            recurringAmountSuggestionsCache[cacheKey] = data;
+            displayRecurringAmountSuggestions(data);
+        } catch (error) {
+            console.error('Error loading amount suggestions:', error);
+        }
+    }
+
+    function displayRecurringAmountSuggestions(data) {
+        const hintEl = document.getElementById('recurring-amount-hint');
+        const hintTextEl = document.getElementById('recurring-amount-hint-text');
+        const quickButtonsEl = document.getElementById('recurring-quick-amount-buttons');
+
+        // Show hint if available
+        if (data.category_hint) {
+            hintTextEl.textContent = data.category_hint;
+            hintEl.style.display = 'flex';
+            lucide.createIcons();
+        }
+
+        // Show quick amount buttons
+        if (data.suggestions && data.suggestions.quick_amounts_formatted) {
+            const amounts = data.suggestions.quick_amounts_formatted;
+            quickButtonsEl.innerHTML = amounts.map(amount => `
             <button type="button" class="quick-amount-btn" onclick="setRecurringQuickAmount(${amount})">
                 ฿${amount.toLocaleString('th-TH')}
             </button>
         `).join('');
-        quickButtonsEl.style.display = 'flex';
-    }
-}
-
-function setRecurringQuickAmount(amount) {
-    const amountInput = document.getElementById('recurring-amount');
-    const currentAmount = parseFloat(amountInput.value) || 0;
-    amountInput.value = (currentAmount + amount).toFixed(2);
-    // Highlight the button temporarily
-    document.querySelectorAll('.quick-amount-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-}
-
-function toggleRecurringAmountHint() {
-    const hintEl = document.getElementById('recurring-amount-hint');
-    const quickButtonsEl = document.getElementById('recurring-quick-amount-buttons');
-    const categorySelect = document.getElementById('recurring-category');
-    const typeSelect = document.getElementById('recurring-type');
-
-    // Toggle visibility
-    const isVisible = hintEl.style.display !== 'none';
-
-    if (isVisible) {
-        // Hide if currently visible
-        hintEl.style.display = 'none';
-        quickButtonsEl.style.display = 'none';
-    } else {
-        // Show if currently hidden - load suggestions from history
-        const categoryId = categorySelect ? categorySelect.value : null;
-        const type = typeSelect ? typeSelect.value : 'expense';
-
-        // Load suggestions (with or without category filter)
-        loadRecurringAmountSuggestions(categoryId || null, type);
-    }
-}
-
-// Load on page ready
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadCategories();
-    await loadRecurringRules();
-
-    // Remove loading class and fade in
-    const container = document.querySelector('.mobile-container');
-    if (container) {
-        container.classList.remove('page-loading');
-        container.classList.add('fade-in');
+            quickButtonsEl.style.display = 'flex';
+        }
     }
 
-    // Initialize icons
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
+    function setRecurringQuickAmount(amount) {
+        const amountInput = document.getElementById('recurring-amount');
+        const currentAmount = parseFloat(amountInput.value) || 0;
+        amountInput.value = (currentAmount + amount).toFixed(2);
+        // Highlight the button temporarily
+        document.querySelectorAll('.quick-amount-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
     }
-});
+
+    function toggleRecurringAmountHint() {
+        const hintEl = document.getElementById('recurring-amount-hint');
+        const quickButtonsEl = document.getElementById('recurring-quick-amount-buttons');
+        const categorySelect = document.getElementById('recurring-category');
+        const typeSelect = document.getElementById('recurring-type');
+
+        // Toggle visibility
+        const isVisible = hintEl.style.display !== 'none';
+
+        if (isVisible) {
+            // Hide if currently visible
+            hintEl.style.display = 'none';
+            quickButtonsEl.style.display = 'none';
+        } else {
+            // Show if currently hidden - load suggestions from history
+            const categoryId = categorySelect ? categorySelect.value : null;
+            const type = typeSelect ? typeSelect.value : 'expense';
+
+            // Load suggestions (with or without category filter)
+            loadRecurringAmountSuggestions(categoryId || null, type);
+        }
+    }
+
+    // ============================================================================
+    // TAB SWITCHER
+    // ============================================================================
+
+    let currentTab = 'recurring';
+
+    function switchTab(tabName) {
+        currentTab = tabName;
+
+        // Update tab buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tabName);
+        });
+
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.toggle('hidden', content.id !== `tab-${tabName}`);
+        });
+
+        // Update FAB based on tab
+        const fab = document.getElementById('add-recurring-btn');
+        if (fab) {
+            fab.onclick = tabName === 'loans' ? openLoanModal : openModal;
+        }
+
+        // Load data for the tab
+        if (tabName === 'loans') {
+            loadLoans();
+        }
+
+        // Re-initialize icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
+        // Check URL param and update
+        const url = new URL(window.location);
+        url.searchParams.set('tab', tabName);
+        window.history.replaceState({}, '', url);
+    }
+
+    // ============================================================================
+    // LOAN MANAGEMENT
+    // ============================================================================
+
+    let loansData = [];
+    const projectId = '{{ project.id if project else "" }}';
+
+    async function loadLoans() {
+        if (!projectId) return;
+
+        try {
+            const response = await fetch(`/api/v1/projects/${projectId}/loans`);
+            if (!response.ok) throw new Error('Failed to load loans');
+
+            const data = await response.json();
+            loansData = data.loans || [];
+
+            renderLoans();
+            updateLoanStats();
+
+        } catch (error) {
+            console.error('Error loading loans:', error);
+        }
+    }
+
+    function updateLoanStats() {
+        let totalBalance = 0;
+        let nextPayment = null;
+
+        loansData.forEach(loan => {
+            if (loan.is_active && !loan.is_completed) {
+                totalBalance += loan.remaining_balance;
+                if (loan.next_payment_date && (!nextPayment || loan.next_payment_date < nextPayment.date)) {
+                    nextPayment = {
+                        date: loan.next_payment_date,
+                        amount: loan.monthly_payment_formatted,
+                        name: loan.name
+                    };
+                }
+            }
+        });
+
+        document.getElementById('loan-count').textContent = loansData.filter(l => l.is_active && !l.is_completed).length;
+        document.getElementById('loan-balance').textContent = `฿${(totalBalance / 100).toLocaleString()}`;
+
+        if (nextPayment) {
+            const date = new Date(nextPayment.date);
+            const day = date.getDate();
+            const month = date.toLocaleDateString('th-TH', { month: 'short' });
+            document.getElementById('loan-next-payment').textContent = `${day} ${month}`;
+        } else {
+            document.getElementById('loan-next-payment').textContent = '-';
+        }
+    }
+
+    function renderLoans() {
+        const container = document.getElementById('loan-list');
+        const emptyState = document.getElementById('loan-empty-state');
+
+        const activeLoans = loansData.filter(l => l.is_active);
+
+        if (activeLoans.length === 0) {
+            container.innerHTML = '';
+            container.appendChild(emptyState.cloneNode(true));
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            return;
+        }
+
+        container.innerHTML = activeLoans.map(loan => `
+            <div class="loan-card ${loan.is_completed ? 'completed' : ''}" data-id="${loan.id}">
+                <div class="loan-card-header">
+                    <div class="loan-info">
+                        <h3 class="loan-name">${loan.name}</h3>
+                        <span class="loan-type-badge">${loan.interest_type_label}</span>
+                    </div>
+                    <div class="loan-actions">
+                        <button class="action-btn" onclick="showLoanMenu('${loan.id}')" title="เพิ่มเติม">
+                            <i data-lucide="more-vertical"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="loan-card-body">
+                    <div class="loan-progress-section">
+                        <div class="loan-progress-ring">
+                            <svg viewBox="0 0 36 36" class="circular-chart">
+                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                                <path class="circle" stroke-dasharray="${loan.progress_percentage}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                            </svg>
+                            <span class="progress-text">${Math.round(loan.progress_percentage)}%</span>
+                        </div>
+                        <div class="loan-progress-info">
+                            <div class="progress-item">
+                                <span class="label">ชำระแล้ว</span>
+                                <span class="value">${loan.paid_installments}/${loan.term_months} งวด</span>
+                            </div>
+                            <div class="progress-item">
+                                <span class="label">ยอดคงเหลือ</span>
+                                <span class="value expense-text">฿${loan.remaining_balance_formatted.toLocaleString()}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="loan-details">
+                        <div class="detail-item">
+                            <span class="label">ค่างวด/เดือน</span>
+                            <span class="value">฿${loan.monthly_payment_formatted.toLocaleString()}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">ดอกเบี้ย</span>
+                            <span class="value">${loan.interest_rate}% ต่อปี</span>
+                        </div>
+                        ${!loan.is_completed && loan.next_payment_date ? `
+                        <div class="detail-item next-payment">
+                            <span class="label">งวดถัดไป</span>
+                            <span class="value">${formatThaiDate(loan.next_payment_date)}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+                
+                ${!loan.is_completed ? `
+                <div class="loan-card-footer">
+                    <button class="btn-secondary" onclick="openScheduleModal('${loan.id}')">
+                        <i data-lucide="table"></i> ดูตาราง
+                    </button>
+                    <button class="btn-primary" onclick="openPaymentModal('${loan.id}')">
+                        <i data-lucide="check-circle"></i> ชำระงวด
+                    </button>
+                </div>
+                ` : `
+                <div class="loan-card-footer completed">
+                    <span class="completed-badge"><i data-lucide="check-circle"></i> ปิดสินเชื่อแล้ว</span>
+                </div>
+                `}
+            </div>
+        `).join('');
+
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function formatThaiDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: '2-digit' });
+    }
+
+    // ============================================================================
+    // LOAN MODAL
+    // ============================================================================
+
+    const loanModal = document.getElementById('loan-modal');
+    const loanForm = document.getElementById('loan-form');
+
+    function openLoanModal(loanId = null) {
+        const title = document.getElementById('loan-modal-title');
+        const submitText = document.getElementById('loan-submit-text');
+
+        // Reset form
+        loanForm.reset();
+        document.getElementById('loan-edit-id').value = '';
+        document.getElementById('loan-preview').style.display = 'none';
+
+        // Set default date to today
+        document.getElementById('loan-start-date').value = new Date().toISOString().split('T')[0];
+
+        if (loanId) {
+            // Edit mode
+            const loan = loansData.find(l => l.id === loanId);
+            if (loan) {
+                title.textContent = 'แก้ไขสินเชื่อ';
+                submitText.textContent = 'บันทึกการแก้ไข';
+                document.getElementById('loan-edit-id').value = loanId;
+                document.getElementById('loan-name').value = loan.name;
+                document.getElementById('loan-principal').value = loan.principal / 100;
+                document.getElementById('loan-interest-rate').value = loan.interest_rate;
+                document.getElementById('loan-interest-type').value = loan.interest_type;
+                document.getElementById('loan-term-months').value = loan.term_months;
+                document.getElementById('loan-start-date').value = loan.start_date;
+                document.getElementById('loan-note').value = loan.note || '';
+
+                // Show preview
+                calculateLoanPreview();
+            }
+        } else {
+            // Add mode
+            title.textContent = 'เพิ่มสินเชื่อ';
+            submitText.textContent = 'บันทึก';
+        }
+
+        loanModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function closeLoanModal() {
+        loanModal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // Calculate preview when inputs change
+    ['loan-principal', 'loan-interest-rate', 'loan-term-months', 'loan-interest-type'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', calculateLoanPreview);
+            el.addEventListener('change', calculateLoanPreview);
+        }
+    });
+
+    async function calculateLoanPreview() {
+        const principal = parseFloat(document.getElementById('loan-principal').value) || 0;
+        const interestRate = parseFloat(document.getElementById('loan-interest-rate').value) || 0;
+        const termMonths = parseInt(document.getElementById('loan-term-months').value) || 0;
+        const interestType = document.getElementById('loan-interest-type').value;
+
+        if (principal <= 0 || termMonths <= 0) {
+            document.getElementById('loan-preview').style.display = 'none';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/v1/projects/${projectId}/loans/calculate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ principal, interest_rate: interestRate, term_months: termMonths, interest_type: interestType })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const calc = data.calculation;
+
+                document.getElementById('preview-monthly').textContent = `฿${calc.monthly_payment_formatted.toLocaleString()}`;
+                document.getElementById('preview-interest').textContent = `฿${calc.total_interest_formatted.toLocaleString()}`;
+                document.getElementById('preview-total').textContent = `฿${calc.total_amount_formatted.toLocaleString()}`;
+                document.getElementById('loan-preview').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error calculating loan:', error);
+        }
+    }
+
+    loanForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const editId = document.getElementById('loan-edit-id').value;
+        const loanData = {
+            name: document.getElementById('loan-name').value,
+            principal: parseFloat(document.getElementById('loan-principal').value),
+            interest_rate: parseFloat(document.getElementById('loan-interest-rate').value),
+            interest_type: document.getElementById('loan-interest-type').value,
+            term_months: parseInt(document.getElementById('loan-term-months').value),
+            start_date: document.getElementById('loan-start-date').value,
+            note: document.getElementById('loan-note').value
+        };
+
+        try {
+            const url = editId
+                ? `/api/v1/projects/${projectId}/loans/${editId}`
+                : `/api/v1/projects/${projectId}/loans`;
+
+            const response = await fetch(url, {
+                method: editId ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(loanData)
+            });
+
+            if (response.ok) {
+                closeLoanModal();
+                await loadLoans();
+                showToast(editId ? 'แก้ไขสินเชื่อสำเร็จ' : 'เพิ่มสินเชื่อสำเร็จ', 'success');
+            } else {
+                const error = await response.json();
+                showToast(error.error?.message || 'เกิดข้อผิดพลาด', 'error');
+            }
+        } catch (error) {
+            console.error('Error saving loan:', error);
+            showToast('เกิดข้อผิดพลาด', 'error');
+        }
+    });
+
+    // ============================================================================
+    // PAYMENT MODAL
+    // ============================================================================
+
+    const paymentModal = document.getElementById('payment-modal');
+    const paymentForm = document.getElementById('payment-form');
+    let currentPaymentLoan = null;
+
+    async function openPaymentModal(loanId) {
+        currentPaymentLoan = loansData.find(l => l.id === loanId);
+        if (!currentPaymentLoan) return;
+
+        document.getElementById('payment-loan-id').value = loanId;
+        document.getElementById('payment-date').value = new Date().toISOString().split('T')[0];
+
+        // Fetch schedule to get current installment info
+        try {
+            const response = await fetch(`/api/v1/projects/${projectId}/loans/${loanId}/schedule`);
+            if (response.ok) {
+                const data = await response.json();
+                const nextInstallment = data.schedule.find(s => !s.is_paid);
+
+                if (nextInstallment) {
+                    document.getElementById('payment-info').innerHTML = `
+                        <div class="payment-info-card">
+                            <h4>${currentPaymentLoan.name}</h4>
+                            <div class="payment-details">
+                                <div class="detail-row">
+                                    <span>งวดที่</span>
+                                    <span>${nextInstallment.installment} / ${currentPaymentLoan.term_months}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>เงินต้น</span>
+                                    <span>฿${nextInstallment.principal_formatted.toLocaleString()}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>ดอกเบี้ย</span>
+                                    <span>฿${nextInstallment.interest_formatted.toLocaleString()}</span>
+                                </div>
+                                <div class="detail-row total">
+                                    <span>ยอดชำระ</span>
+                                    <span>฿${nextInstallment.total_formatted.toLocaleString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        } catch (error) {
+            console.error('Error loading payment info:', error);
+        }
+
+        paymentModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function closePaymentModal() {
+        paymentModal.classList.remove('active');
+        document.body.style.overflow = '';
+        currentPaymentLoan = null;
+    }
+
+    paymentForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const loanId = document.getElementById('payment-loan-id').value;
+        const paymentDate = document.getElementById('payment-date').value;
+
+        try {
+            const response = await fetch(`/api/v1/projects/${projectId}/loans/${loanId}/pay`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ payment_date: paymentDate })
+            });
+
+            if (response.ok) {
+                closePaymentModal();
+                await loadLoans();
+                showToast('บันทึกการชำระสำเร็จ', 'success');
+            } else {
+                const error = await response.json();
+                showToast(error.error?.message || 'เกิดข้อผิดพลาด', 'error');
+            }
+        } catch (error) {
+            console.error('Error recording payment:', error);
+            showToast('เกิดข้อผิดพลาด', 'error');
+        }
+    });
+
+    // ============================================================================
+    // SCHEDULE MODAL
+    // ============================================================================
+
+    const scheduleModal = document.getElementById('schedule-modal');
+
+    async function openScheduleModal(loanId) {
+        const loan = loansData.find(l => l.id === loanId);
+        if (!loan) return;
+
+        document.getElementById('schedule-title').textContent = `ตารางผ่อนชำระ - ${loan.name}`;
+
+        try {
+            const response = await fetch(`/api/v1/projects/${projectId}/loans/${loanId}/schedule`);
+            if (response.ok) {
+                const data = await response.json();
+
+                // Summary
+                document.getElementById('schedule-summary').innerHTML = `
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <span class="label">เงินต้น</span>
+                            <span class="value">฿${(data.summary.principal / 100).toLocaleString()}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">ดอกเบี้ยรวม</span>
+                            <span class="value">฿${(data.summary.total_interest / 100).toLocaleString()}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">ยอดรวม</span>
+                            <span class="value">฿${(data.summary.total_amount / 100).toLocaleString()}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="label">ค่างวด</span>
+                            <span class="value">฿${(data.summary.monthly_payment / 100).toLocaleString()}</span>
+                        </div>
+                    </div>
+                `;
+
+                // Table
+                document.getElementById('schedule-body').innerHTML = data.schedule.map(row => `
+                    <tr class="${row.is_paid ? 'paid' : ''}">
+                        <td>${row.installment}</td>
+                        <td>${formatThaiDate(row.payment_date)}</td>
+                        <td>฿${row.principal_formatted.toLocaleString()}</td>
+                        <td>฿${row.interest_formatted.toLocaleString()}</td>
+                        <td>฿${row.total_formatted.toLocaleString()}</td>
+                        <td>฿${row.remaining_balance_formatted.toLocaleString()}</td>
+                    </tr>
+                `).join('');
+            }
+        } catch (error) {
+            console.error('Error loading schedule:', error);
+        }
+
+        scheduleModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeScheduleModal() {
+        scheduleModal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // ============================================================================
+    // LOAN ACTIONS MENU
+    // ============================================================================
+
+    function showLoanMenu(loanId) {
+        const loan = loansData.find(l => l.id === loanId);
+        if (!loan) return;
+
+        // Simple menu using confirm/prompt
+        const action = prompt(
+            `${loan.name}\n\n` +
+            `เลือกการทำงาน:\n` +
+            `1 = แก้ไขสินเชื่อ\n` +
+            `2 = ลบสินเชื่อ\n` +
+            `\nพิมพ์ตัวเลขแล้วกด OK`
+        );
+
+        if (action === '1') {
+            openLoanModal(loanId);
+        } else if (action === '2') {
+            deleteLoan(loanId);
+        }
+    }
+
+    async function deleteLoan(loanId) {
+        const loan = loansData.find(l => l.id === loanId);
+        if (!loan) return;
+
+        if (!confirm(`ต้องการลบ "${loan.name}" หรือไม่?`)) return;
+
+        try {
+            const response = await fetch(`/api/v1/projects/${projectId}/loans/${loanId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                await loadLoans();
+                showToast('ลบสินเชื่อสำเร็จ', 'success');
+            } else {
+                const error = await response.json();
+                showToast(error.error?.message || 'เกิดข้อผิดพลาด', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting loan:', error);
+            showToast('เกิดข้อผิดพลาด', 'error');
+        }
+    }
+
+    // Toast notification
+    function showToast(message, type = 'info') {
+        const existing = document.querySelector('.toast');
+        if (existing) existing.remove();
+
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `
+            <i data-lucide="${type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'info'}"></i>
+            <span>${message}</span>
+        `;
+        document.body.appendChild(toast);
+
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // Set up modal overlay clicks
+    loanModal.querySelector('.modal-overlay').addEventListener('click', closeLoanModal);
+    paymentModal.querySelector('.modal-overlay').addEventListener('click', closePaymentModal);
+    scheduleModal.querySelector('.modal-overlay').addEventListener('click', closeScheduleModal);
+
+    // Load on page ready
+    document.addEventListener('DOMContentLoaded', async () => {
+        await loadCategories();
+        await loadRecurringRules();
+
+        // Check URL param for tab
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab');
+        if (tabParam === 'loans') {
+            switchTab('loans');
+        }
+
+        // Remove loading class and fade in
+        const container = document.querySelector('.mobile-container');
+        if (container) {
+            container.classList.remove('page-loading');
+            container.classList.add('fade-in');
+        }
+
+        // Initialize icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
 </script>
 {% endblock %}

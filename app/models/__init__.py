@@ -16,6 +16,8 @@ from app.models.scheduled_report import ScheduledReport
 from app.models.share_link import ShareLink
 from app.models.savings_goal import SavingsGoal
 from app.models.quick_template import QuickTemplate
+from app.models.loan import Loan
+from app.models.loan_payment import LoanPayment
 
 __all__ = [
     'User',
@@ -38,5 +40,8 @@ __all__ = [
     'ScheduledReport',
     'ShareLink',
     'SavingsGoal',
-    'QuickTemplate'
+    'QuickTemplate',
+    'Loan',
+    'LoanPayment'
 ]
+

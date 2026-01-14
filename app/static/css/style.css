@@ -9665,3 +9665,562 @@ a:focus-visible {
         }
     }
 }
+
+/* ============================================================================
+   LOAN FEATURE STYLES
+   ============================================================================ */
+
+/* Tab Switcher */
+.tab-switcher {
+    display: flex;
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 4px;
+    margin: 0 0 16px 0;
+    border: 1px solid var(--border);
+    gap: 4px;
+}
+
+.tab-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.tab-btn i {
+    width: 18px;
+    height: 18px;
+}
+
+.tab-btn:hover {
+    background: var(--bg-secondary);
+    color: var(--text);
+}
+
+.tab-btn.active {
+    background: var(--primary);
+    color: white;
+}
+
+[data-theme="dark"] .tab-btn.active {
+    background: #3b82f6;
+    color: white;
+}
+
+.tab-content.hidden {
+    display: none;
+}
+
+/* Loan Cards */
+.loan-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.loan-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.loan-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.loan-card.completed {
+    opacity: 0.7;
+}
+
+.loan-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.loan-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.loan-name {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.loan-type-badge {
+    font-size: 11px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 8px;
+    border-radius: 4px;
+    width: fit-content;
+}
+
+.loan-actions .action-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.loan-actions .action-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.loan-actions .action-btn i {
+    width: 18px;
+    height: 18px;
+}
+
+.loan-card-body {
+    padding: 16px;
+}
+
+.loan-progress-section {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Progress Ring */
+.loan-progress-ring {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+}
+
+.circular-chart {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.circle-bg {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 3;
+}
+
+.circle {
+    fill: none;
+    stroke: #10b981;
+    stroke-width: 3;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: stroke-dasharray 0.3s ease;
+}
+
+.progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.loan-progress-info {
+    flex: 1;
+}
+
+.progress-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.progress-item:last-child {
+    margin-bottom: 0;
+}
+
+.progress-item .label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.progress-item .value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.expense-text {
+    color: var(--error) !important;
+}
+
+/* Loan Details */
+.loan-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.loan-details .detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.loan-details .detail-item .label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.loan-details .detail-item .value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.loan-details .detail-item.next-payment {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: space-between;
+    padding-top: 12px;
+    margin-top: 4px;
+    border-top: 1px solid var(--border);
+}
+
+/* Loan Card Footer */
+.loan-card-footer {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+}
+
+.loan-card-footer button {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.loan-card-footer .btn-secondary {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    margin-top: 0;
+}
+
+.loan-card-footer .btn-secondary:hover {
+    background: var(--border);
+}
+
+.loan-card-footer .btn-primary {
+    background: #10b981;
+    border: none;
+    color: white;
+}
+
+.loan-card-footer .btn-primary:hover {
+    background: #059669;
+}
+
+.loan-card-footer button i {
+    width: 16px;
+    height: 16px;
+}
+
+.loan-card-footer.completed {
+    justify-content: center;
+}
+
+.completed-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #10b981;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.completed-badge i {
+    width: 18px;
+    height: 18px;
+}
+
+/* Loan Preview in Modal */
+.loan-preview {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.preview-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.preview-header i {
+    width: 18px;
+    height: 18px;
+    color: var(--success);
+}
+
+.preview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.preview-item {
+    text-align: center;
+}
+
+.preview-label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.preview-value {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* Payment Info Card */
+.payment-info-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.payment-info-card h4 {
+    margin: 0 0 12px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.payment-details .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+}
+
+.payment-details .detail-row:last-child {
+    border-bottom: none;
+}
+
+.payment-details .detail-row.total {
+    font-weight: 600;
+    font-size: 16px;
+    padding-top: 12px;
+    margin-top: 4px;
+    border-top: 2px solid var(--border);
+    border-bottom: none;
+    color: var(--success);
+}
+
+/* Schedule Modal */
+.schedule-summary {
+    margin-bottom: 20px;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.summary-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+}
+
+.summary-item .label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.summary-item .value {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* Schedule Table */
+.schedule-table-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+.schedule-table th,
+.schedule-table td {
+    padding: 10px 8px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+}
+
+.schedule-table th:first-child,
+.schedule-table td:first-child {
+    text-align: center;
+}
+
+.schedule-table th:nth-child(2),
+.schedule-table td:nth-child(2) {
+    text-align: left;
+}
+
+.schedule-table thead {
+    background: var(--bg-secondary);
+    position: sticky;
+    top: 0;
+}
+
+.schedule-table th {
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 11px;
+}
+
+.schedule-table tr.paid {
+    background: #10b98110;
+}
+
+.schedule-table tr.paid td:first-child::after {
+    content: " ✓";
+    color: #10b981;
+}
+
+/* Toast Notifications */
+.toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--primary);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 10000;
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.toast i {
+    width: 20px;
+    height: 20px;
+}
+
+.toast-success {
+    background: #10b981;
+}
+
+.toast-error {
+    background: #ef4444;
+}
+
+[data-theme="dark"] .toast {
+    background: #1f2937;
+    border: 1px solid #374151;
+}
+
+[data-theme="dark"] .toast-success {
+    background: #065f46;
+}
+
+[data-theme="dark"] .toast-error {
+    background: #991b1b;
+}
+
+/* Responsive Loan Cards */
+@media (max-width: 400px) {
+    .loan-details {
+        grid-template-columns: 1fr;
+    }
+
+    .preview-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .schedule-table {
+        font-size: 11px;
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+        padding: 8px 4px;
+    }
+}
