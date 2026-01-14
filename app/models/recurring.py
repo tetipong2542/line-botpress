@@ -140,22 +140,26 @@ class RecurringRule(db.Model):
 
     def is_paid_for_period(self):
         """Check if this recurring rule has been paid for the current period"""
-        if not self.last_paid_date or not self.next_run_date:
+        from datetime import date
+        
+        if not self.last_paid_date:
             return False
         
-        # For monthly: check if last_paid_date is in the same month as next_run_date
-        if self.freq == 'monthly':
-            return (self.last_paid_date.year == self.next_run_date.year and
-                    self.last_paid_date.month == self.next_run_date.month)
+        today = date.today()
         
-        # For weekly: check if last_paid_date is within 7 days before next_run_date
+        # For monthly: check if last_paid_date is in the current month
+        if self.freq == 'monthly':
+            return (self.last_paid_date.year == today.year and
+                    self.last_paid_date.month == today.month)
+        
+        # For weekly: check if last_paid_date is within the last 7 days
         elif self.freq == 'weekly':
-            days_diff = (self.next_run_date - self.last_paid_date).days
+            days_diff = (today - self.last_paid_date).days
             return 0 <= days_diff < 7
         
-        # For daily: check if last_paid_date is the same as next_run_date
+        # For daily: check if last_paid_date is today
         elif self.freq == 'daily':
-            return self.last_paid_date == self.next_run_date
+            return self.last_paid_date == today
         
         return False
 
