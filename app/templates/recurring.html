@@ -262,7 +262,8 @@
             <div class="form-group">
                 <label class="form-label">วันที่สิ้นสุด (ไม่บังคับ)</label>
                 <input type="date" class="form-input" id="recurring-end-date">
-                <small class="form-hint">ถ้าไม่ใส่จะทำงานไปเรื่อยๆ</small>
+                <small class="form-hint" id="end-date-hint">ถ้าไม่ใส่จะทำงานไปเรื่อยๆ</small>
+                <small class="form-warning" id="end-date-warning" style="display: none; color: #f59e0b;"></small>
             </div>
 
             <!-- ครบกำหนดครั้งถัดไป (Readonly) -->
@@ -607,13 +608,92 @@
         const nextMonth = String(nextDate.getMonth() + 1).padStart(2, '0');
         const nextYear = nextDate.getFullYear();
 
+
         nextDateInput.value = `${nextDay}/${nextMonth}/${nextYear}`;
+
+        // Also validate end date when next date updates
+        validateEndDate();
+    }
+
+    // Validate end date and show count/warning
+    function validateEndDate() {
+        const startDateInput = document.getElementById('recurring-start-date');
+        const endDateInput = document.getElementById('recurring-end-date');
+        const frequencySelect = document.getElementById('recurring-frequency');
+        const freqIntervalInput = document.getElementById('recurring-freq-interval');
+        const hintEl = document.getElementById('end-date-hint');
+        const warningEl = document.getElementById('end-date-warning');
+
+        const startDate = startDateInput.value;
+        const endDate = endDateInput.value;
+        const frequency = frequencySelect.value;
+        const interval = parseInt(freqIntervalInput.value) || 1;
+
+        // Reset
+        hintEl.textContent = 'ถ้าไม่ใส่จะทำงานไปเรื่อยๆ';
+        warningEl.style.display = 'none';
+
+        if (!startDate || !endDate) return;
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        // Check if end < start
+        if (end < start) {
+            warningEl.textContent = '⚠️ วันที่สิ้นสุดต้องหลังวันที่เริ่มต้น';
+            warningEl.style.display = 'block';
+            return;
+        }
+
+        // Calculate number of occurrences
+        let count = 0;
+        let currentDate = new Date(start);
+        let lastValidDate = null;
+
+        while (currentDate <= end) {
+            count++;
+            lastValidDate = new Date(currentDate);
+
+            if (frequency === 'daily') {
+                currentDate.setDate(currentDate.getDate() + interval);
+            } else if (frequency === 'weekly') {
+                currentDate.setDate(currentDate.getDate() + (7 * interval));
+            } else if (frequency === 'monthly') {
+                const targetDay = start.getDate();
+                let nextMonth = currentDate.getMonth() + interval;
+                let nextYear = currentDate.getFullYear();
+                while (nextMonth > 11) {
+                    nextMonth -= 12;
+                    nextYear++;
+                }
+                currentDate = new Date(nextYear, nextMonth, 1);
+                const lastDayOfMonth = new Date(nextYear, nextMonth + 1, 0).getDate();
+                currentDate.setDate(Math.min(targetDay, lastDayOfMonth));
+            }
+        }
+
+        // Check if end date is aligned
+        const daysDiff = Math.floor((end - lastValidDate) / (1000 * 60 * 60 * 24));
+
+        if (daysDiff === 0) {
+            // Perfect alignment
+            hintEl.textContent = `✅ รวม ${count} งวด (ลงล็อคพอดี)`;
+            hintEl.style.color = '#10b981';
+        } else {
+            // Has remainder
+            const lastDateStr = lastValidDate.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            hintEl.textContent = `รวม ${count} งวด`;
+            hintEl.style.color = '';
+            warningEl.textContent = `⚠️ งวดสุดท้าย: ${lastDateStr} (เหลือเศษ ${daysDiff} วัน)`;
+            warningEl.style.display = 'block';
+        }
     }
 
     // Listen to start date, frequency, and interval changes
     document.getElementById('recurring-start-date').addEventListener('change', updateNextRunDate);
     document.getElementById('recurring-frequency').addEventListener('change', updateNextRunDate);
     document.getElementById('recurring-freq-interval').addEventListener('input', updateNextRunDate);
+    document.getElementById('recurring-end-date').addEventListener('change', validateEndDate);
 
     // Initialize next run date on page load
     updateNextRunDate();
