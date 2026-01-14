@@ -84,6 +84,7 @@ function calculateMonthlyRecurring(rules, month, year) {
     let totalIncome = 0;
     let totalExpense = 0;
     const expenseByCategory = {}; // {category_id: {amount, name, icon, color}}
+    const expensePayments = []; // Individual payment items for list display
 
     rules.forEach(rule => {
         // Start from rule's start_date, not next_run_date
@@ -131,6 +132,17 @@ function calculateMonthlyRecurring(rules, month, year) {
                 } else {
                     totalExpense += amount;
 
+                    // Add to expense payments list for display
+                    expensePayments.push({
+                        name: rule.category?.name_th || rule.category?.name || rule.note || 'รายจ่ายประจำ',
+                        amount: amount,
+                        date: new Date(currentDate),
+                        type: 'recurring',
+                        icon: rule.category?.icon || 'repeat',
+                        color: rule.category?.color || '#8b5cf6',
+                        category_id: rule.category_id
+                    });
+
                     // Track by category
                     const catId = rule.category_id;
                     if (!expenseByCategory[catId]) {
@@ -160,14 +172,16 @@ function calculateMonthlyRecurring(rules, month, year) {
     console.log('[Analytics] Recurring calculation result:', {
         totalIncome,
         totalExpense,
-        categoryCount: Object.keys(expenseByCategory).length
+        categoryCount: Object.keys(expenseByCategory).length,
+        expensePaymentsCount: expensePayments.length
     });
 
     return {
         income: totalIncome,
         expense: totalExpense,
         balance: totalIncome - totalExpense,
-        expense_by_category: Object.values(expenseByCategory)
+        expense_by_category: Object.values(expenseByCategory),
+        expense_payments: expensePayments // Individual payment items for list display
     };
 }
 
@@ -1056,25 +1070,15 @@ async function loadMonthlyPayments() {
         // Note: Summary cards were removed from HTML (now using Simple Dashboard)
         // The data is already displayed in updateSimpleDashboard()
 
-        // Build payment list
+        // Build payment list - use expense_payments from calculateMonthlyRecurring for consistency
         const allPayments = [];
 
-        // Add recurring expenses
-        recurringRules.forEach(rule => {
-            if (rule.type === 'expense' && rule.next_run_date) {
-                const nextDate = new Date(rule.next_run_date);
-                if (nextDate.getMonth() === currentMonth && nextDate.getFullYear() === currentYear) {
-                    allPayments.push({
-                        name: rule.category?.name_th || rule.note || 'รายจ่ายประจำ',
-                        amount: rule.amount / 100,
-                        date: nextDate,
-                        type: 'recurring',
-                        icon: rule.category?.icon || 'repeat',
-                        color: rule.category?.color || '#8b5cf6'
-                    });
-                }
-            }
-        });
+        // Add recurring expenses from calculated data (consistent with Simple Dashboard)
+        if (recurringMonthly.expense_payments) {
+            recurringMonthly.expense_payments.forEach(payment => {
+                allPayments.push(payment);
+            });
+        }
 
         // Add loan payments
         loanPayments.forEach(loan => {
