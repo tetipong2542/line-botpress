@@ -261,7 +261,15 @@
             <!-- วันที่สิ้นสุด (Optional) -->
             <div class="form-group">
                 <label class="form-label">วันที่สิ้นสุด (ไม่บังคับ)</label>
-                <input type="date" class="form-input" id="recurring-end-date">
+                <div class="end-date-row">
+                    <input type="date" class="form-input end-date-input" id="recurring-end-date">
+                    <span class="end-date-or">หรือ</span>
+                    <div class="installments-input-group">
+                        <input type="number" class="form-input installments-input" id="recurring-installments" min="1"
+                            max="999" placeholder="งวด">
+                        <span class="installments-label">งวด</span>
+                    </div>
+                </div>
                 <small class="form-hint" id="end-date-hint">ถ้าไม่ใส่จะทำงานไปเรื่อยๆ</small>
                 <small class="form-warning" id="end-date-warning" style="display: none; color: #f59e0b;"></small>
             </div>
@@ -733,11 +741,60 @@
         }
     }
 
+    // Calculate end_date from installments count
+    function updateEndDateFromInstallments() {
+        const startDateInput = document.getElementById('recurring-start-date');
+        const endDateInput = document.getElementById('recurring-end-date');
+        const installmentsInput = document.getElementById('recurring-installments');
+        const frequencySelect = document.getElementById('recurring-frequency');
+        const freqIntervalInput = document.getElementById('recurring-freq-interval');
+
+        const startDate = startDateInput.value;
+        const installments = parseInt(installmentsInput.value);
+        const frequency = frequencySelect.value;
+        const interval = parseInt(freqIntervalInput.value) || 1;
+
+        if (!startDate || !installments || installments < 1) return;
+
+        const start = new Date(startDate);
+        let currentDate = new Date(start);
+
+        // Calculate end date for N installments
+        for (let i = 1; i < installments; i++) {
+            if (frequency === 'daily') {
+                currentDate.setDate(currentDate.getDate() + interval);
+            } else if (frequency === 'weekly') {
+                currentDate.setDate(currentDate.getDate() + (7 * interval));
+            } else if (frequency === 'monthly') {
+                const targetDay = start.getDate();
+                let nextMonth = currentDate.getMonth() + interval;
+                let nextYear = currentDate.getFullYear();
+                while (nextMonth > 11) { nextMonth -= 12; nextYear++; }
+                currentDate = new Date(nextYear, nextMonth, 1);
+                const lastDay = new Date(nextYear, nextMonth + 1, 0).getDate();
+                currentDate.setDate(Math.min(targetDay, lastDay));
+            }
+        }
+
+        // Set end_date
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        endDateInput.value = `${year}-${month}-${day}`;
+
+        // Validate
+        validateEndDate();
+    }
+
     // Listen to start date, frequency, and interval changes
     document.getElementById('recurring-start-date').addEventListener('change', updateNextRunDate);
     document.getElementById('recurring-frequency').addEventListener('change', updateNextRunDate);
     document.getElementById('recurring-freq-interval').addEventListener('input', updateNextRunDate);
-    document.getElementById('recurring-end-date').addEventListener('change', validateEndDate);
+    document.getElementById('recurring-end-date').addEventListener('change', () => {
+        document.getElementById('recurring-installments').value = ''; // Clear installments when manual date entered
+        validateEndDate();
+    });
+    document.getElementById('recurring-installments').addEventListener('input', updateEndDateFromInstallments);
 
     // Initialize next run date on page load
     updateNextRunDate();

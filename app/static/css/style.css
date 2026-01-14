@@ -11261,3 +11261,36 @@ a:focus-visible {
 .freq-unit-select {
     width: 120px !important;
 }
+
+/* ===== End Date Row with Installments ===== */
+.end-date-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.end-date-input {
+    flex: 1;
+}
+
+.end-date-or {
+    color: var(--text-secondary);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.installments-input-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.installments-input {
+    width: 60px !important;
+    text-align: center;
+}
+
+.installments-label {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
