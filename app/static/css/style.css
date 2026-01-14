@@ -10675,6 +10675,11 @@ a:focus-visible {
     font-weight: 500;
 }
 
+.breakdown-badge.paid-badge {
+    background: #10b98120;
+    color: #10b981;
+}
+
 .breakdown-right {
     display: flex;
     align-items: center;
