@@ -681,14 +681,55 @@
             hintEl.style.color = '#10b981';
             warningEl.style.display = 'none';
         } else {
-            // Has remainder - RED WARNING
-            const lastDateStr = lastValidDate.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            // Has remainder - RED WARNING with 3 suggestions
             hintEl.textContent = `รวม ${count} งวด`;
             hintEl.style.color = '';
-            warningEl.innerHTML = `<span style="color: #ef4444;">⚠️ เกินรอบที่กำหนด ${daysDiff} วัน</span><br>` +
-                `<span style="color: #6b7280; font-size: 11px;">แนะนำ: ใช้วันที่ ${lastDateStr} เพื่อให้ลงล็อคพอดี</span>`;
+
+            // Calculate 3 valid dates (count-1, count, count+1 occurrences)
+            const formatDate = (d) => d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+            // Get dates for count-1, count, count+1 occurrences
+            const suggestions = [];
+            let currentDateCalc = new Date(start);
+            let tempCount = 0;
+
+            while (tempCount < count + 2) {
+                tempCount++;
+                if (tempCount === count - 1 && count > 1) {
+                    suggestions.push({ count: count - 1, date: new Date(currentDateCalc) });
+                }
+                if (tempCount === count) {
+                    suggestions.push({ count: count, date: new Date(currentDateCalc) });
+                }
+                if (tempCount === count + 1) {
+                    suggestions.push({ count: count + 1, date: new Date(currentDateCalc) });
+                }
+
+                // Advance to next occurrence
+                if (frequency === 'daily') {
+                    currentDateCalc.setDate(currentDateCalc.getDate() + interval);
+                } else if (frequency === 'weekly') {
+                    currentDateCalc.setDate(currentDateCalc.getDate() + (7 * interval));
+                } else if (frequency === 'monthly') {
+                    const targetDay = start.getDate();
+                    let nextM = currentDateCalc.getMonth() + interval;
+                    let nextY = currentDateCalc.getFullYear();
+                    while (nextM > 11) { nextM -= 12; nextY++; }
+                    currentDateCalc = new Date(nextY, nextM, 1);
+                    const lastDay = new Date(nextY, nextM + 1, 0).getDate();
+                    currentDateCalc.setDate(Math.min(targetDay, lastDay));
+                }
+            }
+
+            // Build recommendation HTML
+            let suggestHtml = `<span style="color: #ef4444;">⚠️ เกินรอบที่กำหนด ${daysDiff} วัน</span><br>`;
+            suggestHtml += `<span style="color: #6b7280; font-size: 11px;">แนะนำวันที่ลงล็อค:</span><br>`;
+            suggestions.forEach(s => {
+                suggestHtml += `<span style="color: #3b82f6; font-size: 11px; cursor: pointer;" onclick="document.getElementById('recurring-end-date').value='${s.date.toISOString().split('T')[0]}'; validateEndDate();">• ${formatDate(s.date)} (${s.count} งวด)</span><br>`;
+            });
+
+            warningEl.innerHTML = suggestHtml;
             warningEl.style.display = 'block';
-            warningEl.style.color = '#ef4444';
         }
     }
 
