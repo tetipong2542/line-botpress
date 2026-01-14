@@ -238,6 +238,68 @@
         </div>
     </div>
 
+    <!-- Loan Summary Section -->
+    <div class="section" id="loan-summary-section" style="display: none;">
+        <div class="loan-summary-card">
+            <div class="forecast-header">
+                <div class="forecast-title">
+                    <i data-lucide="landmark"></i>
+                    <span>สินเชื่อ/ผ่อนชำระ</span>
+                </div>
+                <a href="/recurring?tab=loans" class="section-link">
+                    <i data-lucide="settings"></i>
+                    จัดการ
+                </a>
+            </div>
+
+            <!-- Loan Summary Cards -->
+            <div class="recurring-forecast-summary">
+                <div class="rf-summary-card expense">
+                    <div class="rf-icon">
+                        <i data-lucide="credit-card"></i>
+                    </div>
+                    <div class="rf-content">
+                        <span class="rf-label">ยอดหนี้คงเหลือ</span>
+                        <span class="rf-amount" id="loan-outstanding">฿0</span>
+                    </div>
+                </div>
+                <div class="rf-summary-card">
+                    <div class="rf-icon">
+                        <i data-lucide="calendar-check"></i>
+                    </div>
+                    <div class="rf-content">
+                        <span class="rf-label">งวดถัดไป</span>
+                        <span class="rf-amount" id="loan-next-due">-</span>
+                    </div>
+                </div>
+                <div class="rf-summary-card income">
+                    <div class="rf-icon">
+                        <i data-lucide="check-circle"></i>
+                    </div>
+                    <div class="rf-content">
+                        <span class="rf-label">ชำระแล้ว</span>
+                        <span class="rf-amount" id="loan-paid-total">฿0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Loans Preview -->
+            <div class="loan-preview-list" id="loan-preview-list">
+                <!-- Populated by JavaScript -->
+            </div>
+
+            <!-- Empty State -->
+            <div class="rf-empty" id="loan-empty" style="display: none;">
+                <i data-lucide="landmark"></i>
+                <p>ยังไม่มีสินเชื่อ</p>
+                <a href="/recurring?tab=loans" class="btn-secondary">
+                    <i data-lucide="plus"></i>
+                    เพิ่มสินเชื่อ
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- Month Comparison -->
     <div class="section" id="month-comparison-section" style="display: none;">
         <div class="comparison-card">
@@ -2899,6 +2961,93 @@
     loadHealthScore();
     loadForecast(3);
     loadRecurringForecast();
+    loadLoanSummary();
+
+    // ===== LOAN SUMMARY FOR DASHBOARD =====
+    async function loadLoanSummary() {
+        const section = document.getElementById('loan-summary-section');
+        const previewList = document.getElementById('loan-preview-list');
+        const emptyState = document.getElementById('loan-empty');
+
+        try {
+            // Fetch loan summary
+            const response = await API.get(buildApiUrl('loans') + '/summary');
+
+            if (!response.summary) {
+                console.log('[Loan] No loan summary');
+                return;
+            }
+
+            const summary = response.summary;
+
+            // Check if has active loans
+            if (summary.active_loans === 0) {
+                previewList.style.display = 'none';
+                emptyState.style.display = 'flex';
+                section.style.display = 'block';
+                lucide.createIcons();
+                return;
+            }
+
+            // Update summary cards
+            document.getElementById('loan-outstanding').textContent =
+                '฿' + (summary.total_outstanding / 100).toLocaleString('th-TH', { minimumFractionDigits: 0 });
+            document.getElementById('loan-paid-total').textContent =
+                '฿' + (summary.total_paid / 100).toLocaleString('th-TH', { minimumFractionDigits: 0 });
+
+            // Format next payment date
+            if (summary.next_payment_date) {
+                const date = new Date(summary.next_payment_date);
+                const day = date.getDate();
+                const month = date.toLocaleDateString('th-TH', { month: 'short' });
+                document.getElementById('loan-next-due').textContent = `${day} ${month}`;
+            } else {
+                document.getElementById('loan-next-due').textContent = '-';
+            }
+
+            // Fetch active loans for preview
+            const loansResponse = await API.get(buildApiUrl('loans') + '?active_only=true');
+            if (loansResponse.loans && loansResponse.loans.length > 0) {
+                renderLoanPreview(loansResponse.loans.slice(0, 3)); // Show max 3 loans
+            }
+
+            // Show section
+            previewList.style.display = 'block';
+            emptyState.style.display = 'none';
+            section.style.display = 'block';
+
+            lucide.createIcons();
+
+        } catch (error) {
+            console.error('[Loan] Load Loan Summary error:', error);
+            // Don't show section on error
+        }
+    }
+
+    function renderLoanPreview(loans) {
+        const container = document.getElementById('loan-preview-list');
+
+        const html = loans.map(loan => {
+            const progress = loan.progress_percentage || 0;
+            return `
+                <div class="loan-preview-item">
+                    <div class="loan-preview-info">
+                        <span class="loan-preview-name">${loan.name}</span>
+                        <span class="loan-preview-progress">${loan.paid_installments}/${loan.term_months} งวด</span>
+                    </div>
+                    <div class="loan-preview-bar">
+                        <div class="loan-preview-bar-fill" style="width: ${progress}%"></div>
+                    </div>
+                    <div class="loan-preview-amount">
+                        <span class="expense-text">฿${(loan.remaining_balance / 100).toLocaleString()}</span>
+                        <span class="loan-preview-monthly">฿${(loan.monthly_payment / 100).toLocaleString()}/เดือน</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = html;
+    }
 
     // ============================================================================
     // QUICK ENTRY MODAL - Numpad-First Fast Transaction Entry
