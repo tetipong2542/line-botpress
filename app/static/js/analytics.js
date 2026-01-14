@@ -399,6 +399,10 @@ function updateSimpleDashboard(summary, recurringMonthly, loanMonthly) {
         // Calculate pending loan
         const paidLoanAmount = loanMonthly.payments.filter(l => l.isPaid).reduce((sum, l) => sum + l.amount, 0);
         loanPendingAmount = loanExpense - paidLoanAmount;
+        
+        // Check if all loans are paid
+        const allLoansPaid = loanMonthly.payments.every(l => l.isPaid);
+        loanRow.classList.toggle('all-paid', allLoansPaid);
     } else {
         loanCount.style.display = 'none';
         loanRow.style.display = 'none';
@@ -420,8 +424,13 @@ function updateSimpleDashboard(summary, recurringMonthly, loanMonthly) {
         if (result) {
             recurringPendingAmount = result.pendingAmount;
         }
+        
+        // Check if all recurring are paid
+        const allRecurringPaid = recurringPayments.every(r => r.isPaid);
+        recurringRow.classList.toggle('all-paid', allRecurringPaid);
     } else {
         recurringCountEl.style.display = 'none';
+        recurringRow.classList.remove('all-paid');
         document.getElementById('recurring-detail-list').innerHTML = '';
     }
 

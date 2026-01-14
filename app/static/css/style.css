@@ -10870,6 +10870,106 @@ a:focus-visible {
     color: #f59e0b;
 }
 
+/* ===== Recurring Detail List ===== */
+.recurring-detail-list {
+    padding-left: 18px;
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
+.recurring-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 13px;
+}
+
+.recurring-detail-connector {
+    color: var(--border);
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.recurring-detail-name {
+    flex: 1;
+    color: var(--text);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.recurring-detail-amount {
+    font-weight: 600;
+    color: #ef4444;
+}
+
+.recurring-detail-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.recurring-detail-badge.pending {
+    background: #ef444420;
+    color: #ef4444;
+}
+
+.recurring-detail-badge.paid {
+    background: #10b98120;
+    color: #10b981;
+}
+
+/* Recurring Detail Paid State */
+.recurring-detail-item.is-paid {
+    opacity: 0.7;
+}
+
+.recurring-detail-name.paid {
+    text-decoration: line-through;
+    color: var(--text-secondary);
+}
+
+.recurring-detail-amount.paid {
+    text-decoration: line-through;
+    color: #10b981;
+}
+
+/* Recurring Summary Section */
+.recurring-summary {
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+    padding-top: 8px;
+}
+
+.recurring-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 12px;
+}
+
+.recurring-summary-amount {
+    font-weight: 600;
+}
+
+.recurring-summary-amount.paid {
+    color: #10b981;
+}
+
+/* ===== All Paid Parent Row ===== */
+.breakdown-item.all-paid .breakdown-amount {
+    text-decoration: line-through;
+    color: #10b981 !important;
+}
+
+.breakdown-item.all-paid .breakdown-percent {
+    color: #10b981;
+}
+
 /* ===== Payment Badge ===== */
 .payment-badge {
     font-size: 10px;
